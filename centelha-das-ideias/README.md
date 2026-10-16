@@ -10,6 +10,7 @@ Jogo 3D (Three.js) com dois modos:
 
 ## Jogar
 
+- **Pela web:** [abra A Centelha das Ideias](https://anderhonorato.github.io/Games/). O jogo roda no navegador de computador ou celular; em celular, use a tela na horizontal.
 - **Código-fonte atual:** https://github.com/AnderHonorato/Games/tree/main/centelha-das-ideias
 - **Protótipo original:** https://claude.ai/artifact/NNYiRYmQDY8fcm7PwDtSHy
 - **Arquivo único (offline):** `pnpm install && pnpm compilar` e abra `dist/index.html` no navegador.
@@ -71,17 +72,18 @@ As habilidades disparam sozinhas, cada uma com recarga e velocidade próprias.
   próprios; sem voz disponível, usa bipes com entonação). Inimigos resmungam com vozes sintetizadas.
 - Recorde de tempo salvo por personagem no navegador.
 
-### Jogar junto (mesmo Wi-Fi)
+### Multijogador local (até 4 pessoas)
 
 Até 4 pessoas, cada uma no seu celular ou PC. No menu, toque em **Jogar junto**.
 Nome, roupa e arma acompanham cada jogador. Para selecionar um mapa, todos precisam do XP exigido.
 
-- **Pelo link do jogo (sem instalar nada):** quem cria a sala toca em **Criar sala → Convidar alguém**
-  e manda o código (ou mostra o QR) para o amigo. O amigo toca em **Entrar numa sala**, cola o código
-  e devolve o código de resposta, que o anfitrião cola. A conexão é direta entre os aparelhos (WebRTC).
+- **Na versão web:** todos abrem o link acima. Quem cria a sala toca em **Criar sala → Convidar alguém**
+  e compartilha o código (ou QR). Cada convidado toca em **Entrar numa sala**, usa esse código e devolve
+  o código de resposta para o anfitrião. A partida trafega diretamente entre os aparelhos por WebRTC;
+  o site não guarda partidas nem exige conta.
 - **Com um computador no Wi-Fi (sem códigos):** `pnpm install && pnpm compilar && pnpm lan`. Todos abrem
   o endereço que aparecer (ex.: `http://192.168.0.12:8080`); uma pessoa toca em **Criar sala** e as
-  outras em **Entrar**.
+  outras em **Entrar**. O computador precisa permanecer ligado durante a partida.
 
 Na partida em grupo cada um tem personagem, build e cartas próprias; a experiência é do time. Quem
 cai pode ser levantado por um colega que fique perto por 3 segundos; a partida acaba quando todos
@@ -117,6 +119,8 @@ pnpm compilar && node ferramentas/gerar-artefato.mjs   # arquivo único + versã
 ```
 
 Documentação: [campanha v2](docs/campanha-v2.md), `docs/design.md` (seção 13 descreve a versão 3D), `docs/tecnologia.md` (referências oficiais).
+
+O workflow **Centelha Web** valida tipos e testes e publica `dist/` no GitHub Pages ao atualizar a branch `main`.
 
 O aplicativo pausa ao ir para segundo plano ou usar Voltar. Ao retornar, toque em **Continuar**;
 a partida não recomeça sozinha. Na aventura, o progresso também é salvo nesses eventos.

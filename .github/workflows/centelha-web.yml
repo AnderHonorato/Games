@@ -1,0 +1,74 @@
+name: Centelha Web
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "centelha-das-ideias/**"
+      - ".github/workflows/centelha-web.yml"
+  pull_request:
+    paths:
+      - "centelha-das-ideias/**"
+      - ".github/workflows/centelha-web.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
+    defaults:
+      run:
+        working-directory: centelha-das-ideias
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v6
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: "10.17.1"
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22.20.0"
+          cache: pnpm
+          cache-dependency-path: centelha-das-ideias/pnpm-lock.yaml
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+      - name: Verificar tipos
+        run: pnpm tipos
+      - name: Executar testes
+        run: pnpm testar
+      - name: Compilar jogo web
+        run: pnpm compilar
+      - name: Configurar GitHub Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
+      - name: Enviar build web
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: centelha-das-ideias/dist
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

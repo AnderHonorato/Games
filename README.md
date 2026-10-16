@@ -4,7 +4,7 @@ Projetos de jogos de Ander Honorato.
 
 ## Claude — A Centelha das Ideias
 
-[Abrir o projeto](centelha-das-ideias) · [Campanha e recursos](centelha-das-ideias/docs/campanha-v2.md) · [Android](centelha-das-ideias/docs/android.md)
+[Jogar pela web](https://anderhonorato.github.io/Games/) · [Abrir o projeto](centelha-das-ideias) · [Campanha e recursos](centelha-das-ideias/docs/campanha-v2.md) · [Android](centelha-das-ideias/docs/android.md)
 
 Aventura 3D e sobrevivência em tela deitada. Personagens expressivos e personalizáveis,
 três mundos liberados pelo XP permanente da conta, armas iniciais, avanços individuais,
