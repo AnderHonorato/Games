@@ -83,16 +83,21 @@ async function cinema(page, tipo) {
   assert.ok((await page.locator('.rg-cinema h2').textContent()).trim());
   assert.ok((await page.locator('.rg-cinema p').textContent()).trim());
 }
-async function terminarCinema(page) {
+async function terminarCinema(page, derrotar = false) {
   // Consumir só a apresentação: 8 s também simulava vários segundos de combate
   // depois que o próprio jogo reduz a invencibilidade para 1 s.
-  await page.evaluate(() => {
+  const tipo = await page.evaluate((derrotar) => {
     const api = window.__sobrevivencia;
     const c = api.estado().cinematica;
-    if (c) api.avancar(Math.max(0, c.duracao - c.tempo) + 1 / 60);
+    if (c) {
+      api.avancar(Math.max(0, c.duracao - c.tempo - 1 / 60));
+      for (let i = 0; api.estado().cinematica && i < 3; i++) api.avancar(1 / 60);
+    }
     api.invencivel();
-  });
-  await esperarEstado(page, 'jogando');
+    if (derrotar) api.derrotarChefes();
+    return c?.tipo;
+  }, derrotar);
+  await esperarEstado(page, derrotar && tipo === 'mega' ? 'transicao' : 'jogando');
 }
 try {
   const page = await contexto.newPage();
@@ -274,9 +279,8 @@ try {
   await cinema(page, 'mini');
   await cinema(guest, 'mini');
   assert.equal((await estado(guest)).cinematica.nome, (await estado(page)).cinematica.nome);
-  await terminarCinema(page);
+  await terminarCinema(page, true);
   await esperarEstado(guest, 'jogando');
-  await page.evaluate(() => window.__sobrevivencia.derrotarChefes());
   await page.evaluate(() => window.__sobrevivencia.xp(12));
   await esperarEstado(page, 'nivel');
   await esperarEstado(guest, 'nivel');
@@ -291,13 +295,22 @@ try {
   await page.waitForFunction(() =>
     window.__sobrevivencia.mpJogadores().some((j) => j.nome === 'Noa' && j.x > 79)
   );
-  const xpAntes = [(await estado(page)).xpConta, (await estado(guest)).xpConta];
   await page.evaluate(() => window.__sobrevivencia.tempo(180));
   await simular(page, 0.1);
+  // Cristais do minichefe podem abrir outras ofertas entre dois comandos reais
+  // do navegador. Concluir cada oferta mantém o teste na progressão pública.
+  for (let i = 0; (await estado(page)).estado === 'nivel' && i < 12; i++) {
+    await esperarEstado(guest, 'nivel');
+    await page.evaluate(() => window.__sobrevivencia.mpEscolher(0));
+    await guest.evaluate(() => window.__sobrevivencia.mpEscolher(0));
+    await page.evaluate(() => window.__sobrevivencia.avancar(0.1));
+  }
   await cinema(page, 'mega');
   await cinema(guest, 'mega');
-  await terminarCinema(page);
-  await page.evaluate(() => window.__sobrevivencia.derrotarChefes());
+  // O snapshot da apresentação também confirma o XP anterior. Antes disso o
+  // convidado ainda pode estar esperando o prêmio de 1 XP da sentinela.
+  const xpAntes = [(await estado(page)).xpConta, (await estado(guest)).xpConta];
+  await terminarCinema(page, true);
   await cinema(page, 'transicao');
   await cinema(guest, 'transicao');
   await terminarCinema(page);

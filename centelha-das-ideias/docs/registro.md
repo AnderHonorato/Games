@@ -14,7 +14,11 @@ Registro curto para retomar o trabalho após interrupções. Mais recente no top
 - Coop sincroniza nomes, roupas, armas, XP, mapa e cinemáticas. Posições usam identificador de fase para rejeitar mensagens atrasadas após portal/reinício.
 - Corrigidos retorno solo após prévia de mapa bloqueado, XP desatualizado da sala, persistência do mapa convidado e clique após editar nome.
 - Verificação atual: 112 testes unitários e TypeScript/Vite aprovados; rota completa da aventura aprovada sem erros de navegador.
-- Verificação final de campanha, paisagem e APK em andamento. Teste físico no Galaxy A35 e conexão WebRTC entre aparelhos continuam necessários.
+- Campanha de navegador aprovada: perfil, três armas, chefes, pausa, transição e cooperação em memória; reset de posição/build/nível e XP sem duplicação.
+- Paisagem aprovada em 844×390 e 640×360, nos dois modos, com controles dentro da tela.
+- APK final: assembleDebug + lintDebug aprovados (0 erros, 3 avisos), assinatura v2 válida, versão 2/0.2.0 em sensorLandscape; assets idênticos ao HTML final.
+- Teste físico no Galaxy A35 e conexão WebRTC entre aparelhos continuam necessários. O teste WebRTC deste ambiente não concluiu o carregamento da segunda aba; não é considerado aprovado.
+- GitHub Actions: setup-android configurado com platform-tools, evitando o pacote legado tools que não existe mais no SDK.
 
 ## Continuação — 15/10/2026
 
