@@ -10,7 +10,7 @@ Jogo 3D (Three.js) com dois modos:
 
 ## Jogar
 
-- **Pela web:** [abra A Centelha das Ideias](https://anderhonorato.github.io/Games/). O jogo roda no navegador de computador ou celular; em celular, use a tela na horizontal.
+- **Pela web (após ativar GitHub Pages):** [abra A Centelha das Ideias](https://anderhonorato.github.io/Games/). O jogo roda no navegador de computador ou celular; em celular, use a tela na horizontal.
 - **Código-fonte atual:** https://github.com/AnderHonorato/Games/tree/main/centelha-das-ideias
 - **Protótipo original:** https://claude.ai/artifact/NNYiRYmQDY8fcm7PwDtSHy
 - **Arquivo único (offline):** `pnpm install && pnpm compilar` e abra `dist/index.html` no navegador.
@@ -120,7 +120,7 @@ pnpm compilar && node ferramentas/gerar-artefato.mjs   # arquivo único + versã
 
 Documentação: [campanha v2](docs/campanha-v2.md), `docs/design.md` (seção 13 descreve a versão 3D), `docs/tecnologia.md` (referências oficiais).
 
-O workflow **Centelha Web** valida tipos e testes e publica `dist/` no GitHub Pages ao atualizar a branch `main`.
+O workflow **Centelha Web** valida tipos e testes e publica `dist/` no GitHub Pages. A primeira vez requer habilitar Pages em **Settings → Pages → Build and deployment → Source: GitHub Actions** e iniciar o workflow manualmente; depois, alterações no código do jogo publicam automaticamente.
 
 O aplicativo pausa ao ir para segundo plano ou usar Voltar. Ao retornar, toque em **Continuar**;
 a partida não recomeça sozinha. Na aventura, o progresso também é salvo nesses eventos.

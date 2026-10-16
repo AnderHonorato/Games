@@ -6,10 +6,13 @@ on:
     branches: [main]
     paths:
       - "centelha-das-ideias/**"
-      - ".github/workflows/centelha-web.yml"
+      - "!centelha-das-ideias/**/*.md"
+      - "!centelha-das-ideias/README.md"
   pull_request:
     paths:
       - "centelha-das-ideias/**"
+      - "!centelha-das-ideias/**/*.md"
+      - "!centelha-das-ideias/README.md"
       - ".github/workflows/centelha-web.yml"
 
 permissions:
