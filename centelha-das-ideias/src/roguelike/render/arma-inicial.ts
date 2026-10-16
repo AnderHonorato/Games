@@ -1,0 +1,61 @@
+/** Silhuetas equipadas: recursos exclusivos do modelo dono. */
+import * as THREE from 'three';
+import { armaInicial, type IdArmaInicial } from '../dados/armas-iniciais';
+export function criarArmaInicial(id: IdArmaInicial): THREE.Group {
+  const grupo = new THREE.Group();
+  grupo.name = `arma-${id}`;
+  const metal = new THREE.MeshStandardMaterial({
+    color: armaInicial(id).cor,
+    roughness: 0.3,
+    metalness: 0.65,
+  });
+  const cabo = new THREE.MeshStandardMaterial({ color: '#4a3040', roughness: 0.85 });
+  const brilho = new THREE.MeshStandardMaterial({
+    color: '#c4f4ff',
+    emissive: '#559dcc',
+    emissiveIntensity: 0.9,
+    roughness: 0.25,
+  });
+  function parte(geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z = 0) {
+    const malha = new THREE.Mesh(geo, mat);
+    malha.position.set(x, y, z);
+    malha.castShadow = true;
+    grupo.add(malha);
+    return malha;
+  }
+  if (id === 'lamina') {
+    parte(new THREE.CylinderGeometry(0.065, 0.07, 0.34, 8), cabo, 0, 0);
+    parte(new THREE.BoxGeometry(0.48, 0.09, 0.14), metal, 0, 0.19);
+    parte(new THREE.BoxGeometry(0.17, 0.95, 0.065), metal, 0, 0.7);
+    parte(new THREE.ConeGeometry(0.12, 0.28, 4), metal, 0, 1.31).rotation.y = Math.PI / 4;
+    parte(new THREE.OctahedronGeometry(0.11), brilho, 0, -0.23);
+  } else if (id === 'cajado') {
+    parte(new THREE.CylinderGeometry(0.055, 0.075, 1.9, 9), cabo, 0, 0.4);
+    const aro = parte(new THREE.TorusGeometry(0.25, 0.06, 8, 24), metal, 0, 1.43);
+    aro.rotation.y = Math.PI / 7;
+    parte(new THREE.OctahedronGeometry(0.2), brilho, 0, 1.43);
+    parte(new THREE.CylinderGeometry(0.095, 0.08, 0.2, 8), metal, 0, -0.57);
+  } else {
+    parte(new THREE.CylinderGeometry(0.065, 0.085, 1.25, 8), cabo, 0, 0.35);
+    parte(new THREE.BoxGeometry(0.95, 0.5, 0.48), metal, 0, 1.06);
+    parte(new THREE.BoxGeometry(0.12, 0.56, 0.53), brilho, 0, 1.06);
+    parte(new THREE.OctahedronGeometry(0.12), metal, 0, -0.36);
+  }
+  grupo.rotation.z = -0.18;
+  grupo.scale.setScalar(0.82);
+  return grupo;
+}
+export function descartarArmaInicial(grupo: THREE.Group): void {
+  const geometrias = new Set<THREE.BufferGeometry>(),
+    materiais = new Set<THREE.Material>();
+  grupo.removeFromParent();
+  grupo.traverse((o) => {
+    if (o instanceof THREE.Mesh) {
+      geometrias.add(o.geometry);
+      for (const mat of Array.isArray(o.material) ? o.material : [o.material]) materiais.add(mat);
+    }
+  });
+  for (const g of geometrias) g.dispose();
+  for (const m of materiais) m.dispose();
+  grupo.clear();
+}

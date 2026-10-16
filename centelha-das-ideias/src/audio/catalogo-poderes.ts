@@ -1,0 +1,37 @@
+/** Catálogo sem dependências de execução, compartilhado pelo contrato e pelas receitas. */
+export const SOM_POR_PODER = {
+  centelhaOrbital: 'poderCentelhaOrbital',
+  raioCadeia: 'poderRaioCadeia',
+  bolaFogo: 'poderBolaFogo',
+  lancaGelo: 'poderLancaGelo',
+  novaGlacial: 'poderNovaGlacial',
+  chuvaMeteoros: 'poderChuvaMeteoros',
+  laminaVento: 'poderLaminaVento',
+  chicoteLuz: 'poderChicoteLuz',
+  auraSagrada: 'poderAuraSagrada',
+  tornado: 'poderTornado',
+  misseis: 'poderMisseis',
+  espinhosTerra: 'poderEspinhosTerra',
+  laserGiratorio: 'poderLaserGiratorio',
+  discoDados: 'poderDiscoDados',
+  nuvemToxica: 'poderNuvemToxica',
+  relampagoCeleste: 'poderRelampagoCeleste',
+  escudoCristal: 'poderEscudoCristal',
+  buracoNegro: 'poderBuracoNegro',
+  serraCircular: 'poderSerraCircular',
+  pulsoSonico: 'poderPulsoSonico',
+  droneDados: 'poderDroneDados',
+  estrelasGemeas: 'poderEstrelasGemeas',
+  cuspeToxico: 'poderCuspeToxico',
+  ondaProfunda: 'poderOndaProfunda',
+  firewall: 'poderFirewall',
+  coletorLixo: 'poderColetorLixo',
+  breakpoint: 'poderBreakpoint',
+  recursao: 'poderRecursao',
+} as const;
+export type IdPoderSonoro = keyof typeof SOM_POR_PODER;
+export type IdSomPoder = (typeof SOM_POR_PODER)[IdPoderSonoro];
+export const SONS_PODERES: readonly IdSomPoder[] = Object.values(SOM_POR_PODER);
+export function somDoPoder(id: string): IdSomPoder | undefined {
+  return Object.hasOwn(SOM_POR_PODER, id) ? SOM_POR_PODER[id as IdPoderSonoro] : undefined;
+}

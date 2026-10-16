@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Claude — A Centelha das Ideias</string>
+    <string name="back_title">Jogo pausado</string>
+    <string name="back_message">Fique na tela de pausa ou deixe o jogo em segundo plano. Para jogar novamente, toque em Continuar no próprio jogo.</string>
+    <string name="back_stay">Ficar no jogo</string>
+    <string name="back_leave">Segundo plano</string>
+    <string name="load_error_title">Não foi possível abrir o jogo</string>
+    <string name="load_error_message">O conteúdo offline não pôde ser carregado. Reabra o aplicativo ou instale novamente o APK completo.</string>
+    <string name="load_error_retry">Tentar de novo</string>
+</resources>
