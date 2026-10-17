@@ -82,8 +82,8 @@ describe('vantagens interativas da arena', () => {
   });
 });
 
-describe('cristais de experiência sólidos', () => {
-  it('possui quatro silhuetas facetadas próprias, com vértices e cores finitos', () => {
+describe('energia de experiência mágica', () => {
+  it('possui quatro silhuetas luminosas próprias, com vértices e cores finitos', () => {
     const contagens: number[] = [];
     for (let tipo = 0; tipo < 4; tipo++) {
       const geo = geometriaCristalXp(tipo),
@@ -91,17 +91,19 @@ describe('cristais de experiência sólidos', () => {
       contagens.push(geo.attributes.position.count);
       expect([...geo.attributes.position.array].every(Number.isFinite)).toBe(true);
       expect([...geo.attributes.color.array].every((v) => v >= 0 && v <= 1)).toBe(true);
-      expect(mat.blending).toBe(THREE.NormalBlending);
-      expect(mat.transparent).toBe(false);
-      expect(mat.emissiveIntensity).toBeLessThan(0.2);
-      expect(mat.gradientMap).toBe(gradienteToon());
+      expect(mat.isMeshBasicMaterial).toBe(true);
+      expect(mat.vertexColors).toBe(true);
+      expect(mat.blending).toBe(THREE.AdditiveBlending);
+      expect(mat.transparent).toBe(true);
+      expect(mat.depthWrite).toBe(false);
+      expect(mat.toneMapped).toBe(false);
       geo.dispose();
       mat.dispose();
     }
     expect(new Set(contagens).size).toBe(4);
   });
 
-  it('anima tamanhos legíveis e halos discretos, mesmo com entradas inválidas', () => {
+  it('anima energia legível e halos luminosos controlados, mesmo com entradas inválidas', () => {
     let anterior = 0;
     for (let tipo = 0; tipo < 4; tipo++) {
       const v = visualCristalXp(tipo, 20, 0.2);
@@ -115,8 +117,9 @@ describe('cristais de experiência sólidos', () => {
             .every(Number.isFinite)
         ).toBe(true);
         expect(visual.y).toBeGreaterThan(0.5);
-        expect(visual.y).toBeLessThan(1.1);
-        expect(visual.haloIntensidade).toBeLessThan(0.1);
+        expect(visual.y).toBeLessThan(1.3);
+        expect(visual.haloIntensidade).toBeGreaterThan(0.12);
+        expect(visual.haloIntensidade).toBeLessThan(0.35);
         expect(visual.escalaY).toBeLessThan(0.8);
       }
     }

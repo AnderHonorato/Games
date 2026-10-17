@@ -12,6 +12,7 @@ import { PainelSala } from './ui-sala';
 import { criarAtelie, ARMAS_INICIAIS } from './ui-personalizacao';
 import { MAPAS, mapa, mapaDesbloqueado } from './dados/mapas';
 import { pedirTelaDeitada } from '../motor/tela-deitada';
+import { seletorModos, VERSAO_JOGO } from '../ui/modos';
 import {
   ATRIBUTOS_BASE,
   MAX_ATIVAS,
@@ -22,7 +23,7 @@ import {
   type Oferta,
 } from './nucleo/progresso';
 
-const MODO_VERSAO = 'Roguelike · Sobrevivência — v0.3.0';
+const MODO_VERSAO = `Roguelike · Sobrevivência — ${VERSAO_JOGO}`;
 
 const ROTULOS: Partial<Record<keyof Atributos, { nome: string; formato: 'pct' | 'num' | 'mult' }>> =
   {
@@ -183,6 +184,13 @@ export class InterfaceSobrevivencia {
       (e.target instanceof HTMLElement && e.target.matches('input,select,textarea'))
     )
       return;
+    // Enter/Espaço em controles devem executar apenas a ativação nativa.
+    if (
+      (e.code === 'Enter' || e.code === 'Space') &&
+      e.target instanceof HTMLElement &&
+      e.target.closest('button,a')
+    )
+      return;
     if (p.estado === 'menu') {
       const i = PERSONAGENS.findIndex((d) => d.id === this.selecao);
       const grade = this.camadaMenu.querySelector('.rg-cartas-personagem');
@@ -314,6 +322,7 @@ export class InterfaceSobrevivencia {
     topo.append(
       el('div', 'rg-menu-sobre', 'A CENTELHA DAS IDEIAS'),
       el('div', 'rg-modo-versao', MODO_VERSAO),
+      seletorModos('sobrevivencia'),
       el('h1', 'rg-menu-titulo', 'Acenda sua jornada.'),
       el(
         'div',
@@ -322,7 +331,7 @@ export class InterfaceSobrevivencia {
       )
     );
     const abas = el('nav', 'rg-menu-abas');
-    abas.setAttribute('aria-label', 'Preparar aventura');
+    abas.setAttribute('aria-label', 'Preparar sobrevivência');
     for (const [id, texto] of [
       ['heroi', 'Herói'],
       ['atelie', 'Ateliê'],

@@ -52,7 +52,9 @@ try {
   let falhou = false;
   for (const [script, args] of [
     ['testes/e2e/paisagem.mjs', [url]],
+    ['testes/e2e/modos-v4.mjs', [url]],
     ['testes/e2e/pausa-v3.mjs', [url]],
+    ['testes/e2e/desempenho-v4.mjs', []],
     ['testes/e2e/campanha-v2.mjs', [url]],
     ['testes/e2e/rota.mjs', [url]],
     ['ferramentas/testar-multijogador.mjs', ['--url', url]],

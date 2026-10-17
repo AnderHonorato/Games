@@ -3,6 +3,8 @@
  * inimigos por segundo, tipos novos, mais vida e eventos de horda e chefes.
  */
 
+import { MAX_POPULACAO } from '../nucleo/limites-populacao';
+
 export type IdInimigo =
   | 'chiado'
   | 'spam'
@@ -20,7 +22,9 @@ export type IdInimigo =
   | 'ponteiroNulo'
   | 'pilha'
   | 'bloco'
-  | 'ransomware';
+  | 'ransomware'
+  | 'morcegoRunico'
+  | 'arraiaCeleste';
 
 export interface DefInimigo {
   id: IdInimigo;
@@ -68,7 +72,7 @@ export const INIMIGOS: Record<IdInimigo, DefInimigo> = {
     dano: 6,
     raio: 0.45,
     cristal: 0,
-    cor: '#7b6aa8',
+    cor: '#b797e5',
     aparece: 0,
     peso: 10,
     voz: 'chiado',
@@ -100,7 +104,7 @@ export const INIMIGOS: Record<IdInimigo, DefInimigo> = {
     dano: 6,
     raio: 0.4,
     cristal: 0,
-    cor: '#4f9fb0',
+    cor: '#61c9cf',
     aparece: 50,
     peso: 6,
     voz: 'zumbido',
@@ -116,7 +120,7 @@ export const INIMIGOS: Record<IdInimigo, DefInimigo> = {
     dano: 15,
     raio: 0.85,
     cristal: 1,
-    cor: '#4b3d6b',
+    cor: '#ac9bc8',
     aparece: 100,
     peso: 3,
     voz: 'estatica',
@@ -164,7 +168,7 @@ export const INIMIGOS: Record<IdInimigo, DefInimigo> = {
     dano: 22,
     raio: 1.3,
     cristal: 2,
-    cor: '#c94b4b',
+    cor: '#e78675',
     aparece: 270,
     peso: 0.6,
     voz: 'trollbug',
@@ -180,7 +184,7 @@ export const INIMIGOS: Record<IdInimigo, DefInimigo> = {
     dano: 30,
     raio: 2.1,
     cristal: 3,
-    cor: '#2b1f45',
+    cor: '#aa79c7',
     aparece: 99999,
     peso: 0,
     voz: 'chefe',
@@ -331,13 +335,47 @@ export const INIMIGOS: Record<IdInimigo, DefInimigo> = {
     dano: 32,
     raio: 2,
     cristal: 3,
-    cor: '#1f3b2a',
+    cor: '#8fcbb0',
     aparece: 99999,
     peso: 0,
     voz: 'chefe',
     grito: ['PAGUE O RESGATE!'],
     comportamento: 'chefe',
     altura: 3.6,
+  },
+  morcegoRunico: {
+    id: 'morcegoRunico',
+    nome: 'Morcego Rúnico',
+    vida: 19,
+    velocidade: 4.1,
+    dano: 8,
+    raio: 0.47,
+    cristal: 1,
+    cor: '#c29bdc',
+    aparece: 95,
+    peso: 2.8,
+    voz: 'zumbido',
+    grito: ['frrr', 'runa!'],
+    comportamento: 'voador',
+    altura: 2.1,
+    descricao: 'Asas recortadas e runas douradas anunciam seu mergulho pela horda.',
+  },
+  arraiaCeleste: {
+    id: 'arraiaCeleste',
+    nome: 'Arraia Celeste',
+    vida: 34,
+    velocidade: 3.2,
+    dano: 12,
+    raio: 0.65,
+    cristal: 1,
+    cor: '#9ddce4',
+    aparece: 185,
+    peso: 1.6,
+    voz: 'alucinacao',
+    grito: ['fuuush'],
+    comportamento: 'voador',
+    altura: 2.3,
+    descricao: 'Uma silhueta larga e azul que desliza acima dos inimigos terrestres.',
   },
 };
 
@@ -357,7 +395,7 @@ export function multDano(t: number): number {
 
 export const INTERVALO_CHEFE = 180;
 export const INTERVALO_HORDA = 60;
-export const MAX_INIMIGOS = 420;
+export const MAX_INIMIGOS = MAX_POPULACAO;
 
 export const VALOR_CRISTAL = [1, 4, 15, 60];
 

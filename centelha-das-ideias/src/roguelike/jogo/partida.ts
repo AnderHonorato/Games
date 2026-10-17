@@ -43,7 +43,6 @@ import {
 import {
   INIMIGOS,
   INTERVALO_HORDA,
-  MAX_INIMIGOS,
   VALOR_CRISTAL,
   multDano,
   multVelocidade,
@@ -59,13 +58,27 @@ import {
   gerarOfertas,
   valoresHabilidade,
   xpParaNivel,
+  MAX_ATIVAS,
   type Atributos,
   type EstadoBuild,
   type Oferta,
 } from '../nucleo/progresso';
 import { criarArena, RAIO_ARENA, type Arena } from '../render/arena';
 import { InteracoesMapa, type InteracaoMapa } from './interacoes-mapa';
-import { geometriaCristalXp, materialCristalXp, visualCristalXp } from '../render/cristais-xp';
+import {
+  geometriaCristalXp,
+  materialCristalXp,
+  visualCristalXp,
+  geometriaFaiscaXp,
+  materialFaiscaXp,
+} from '../render/cristais-xp';
+import {
+  creditoSurgimento,
+  MAX_POPULACAO,
+  limitePopulacao,
+  podeSurgir,
+} from '../nucleo/limites-populacao';
+import { MAX_ORBES_POR_ANEL, posicaoOrbital } from '../nucleo/orbitas';
 import { geometriaInimigo, geometriaProjetil, OLHOS, type FormaProjetil } from '../render/formas';
 import { Halos, Lote } from '../render/instancias';
 import { SistemaFx, type PosProcesso } from '../fx/indice';
@@ -142,6 +155,7 @@ interface Inimigo {
   ataque?: { tipo: TipoAtaque; t: number; ax: number; az: number };
   /** Vírus: quantas vezes já se copiou. */
   geracao?: number;
+  reservaChefe?: boolean;
   /** Worm: últimas posições (para desenhar o corpo). */
   rastro?: number[];
 }
@@ -509,6 +523,24 @@ export class Partida {
   private itens: Item[] = [];
   private cristais: Cristal[] = [];
   private acumulado = 0;
+  private hordasPendentes: { def: DefInimigo; x: number; z: number; n: number; k: number }[] = [];
+  private creditoHorda = 0;
+  private finaisManifestadas = new Set<number>();
+  private gradeLivres: Inimigo[][] = [];
+  private tiposSurgimento = Object.values(INIMIGOS).filter((d) => d.peso > 0);
+  private posOrbita = { x: 0, z: 0 };
+  private visualXp = visualCristalXp(0, 0, 0);
+  private corOlhos = new THREE.Color();
+  private coresHabilidade = new Map<string, THREE.Color>();
+  private corSegmento = new THREE.Color();
+  private coresEstado = {
+    elite: new THREE.Color('#ffd27a'),
+    gelo: new THREE.Color('#bdf2ff'),
+    lento: new THREE.Color('#8fe3ff'),
+    fogo: new THREE.Color('#ff7a3d'),
+    veneno: new THREE.Color('#9dff5c'),
+    ataque: new THREE.Color('#ff3b3b'),
+  };
   private proximoId = 1;
   private rnd = criarAleatorio(Date.now() & 0xffff);
   private grade = new Map<number, Inimigo[]>();
@@ -517,6 +549,7 @@ export class Partida {
   private lotesProj = new Map<FormaProjetil, Lote>();
   private lotesCristal: Lote[] = [];
   private loteOrbita: Lote;
+  private loteFaiscasXp: Lote;
   /** Corpo segmentado dos Worms. */
   private loteSegmentos: Lote;
   private aura: THREE.Mesh;
@@ -616,12 +649,15 @@ export class Partida {
     const matInimigo = new THREE.MeshToonMaterial({
       color: '#ffffff',
       gradientMap: gradienteToon(),
+      vertexColors: true,
+      emissive: '#ffffff',
+      emissiveIntensity: 0.055,
     });
     for (const id of Object.keys(INIMIGOS) as IdInimigo[]) {
       const lote = new Lote(
         geometriaInimigo(id),
         matInimigo,
-        INIMIGOS[id].comportamento === 'chefe' ? 4 : MAX_INIMIGOS,
+        MAX_POPULACAO,
         this.qualidade === 'alta'
       );
       this.lotesInimigos.set(id, lote);
@@ -630,7 +666,7 @@ export class Partida {
     this.loteOlhos = new Lote(
       new THREE.SphereGeometry(1, 8, 6),
       new THREE.MeshBasicMaterial({ color: '#ffffff' }),
-      MAX_INIMIGOS * 2 + 8
+      MAX_POPULACAO * 2
     );
     this.cena.add(this.loteOlhos.malha);
     const matProj = new THREE.MeshBasicMaterial({
@@ -653,7 +689,7 @@ export class Partida {
         f === 'serra' || f === 'disco'
           ? new THREE.MeshToonMaterial({ color: '#ffffff', gradientMap: gradienteToon() })
           : matProj,
-        700
+        Math.max(700, MAX_JOGADORES * MAX_ATIVAS * MAX_ORBES_POR_ANEL)
       );
       this.lotesProj.set(f, lote);
       this.cena.add(lote.malha);
@@ -661,16 +697,18 @@ export class Partida {
     this.loteSegmentos = new Lote(
       new THREE.SphereGeometry(1, 12, 8),
       new THREE.MeshToonMaterial({ color: '#ffffff', gradientMap: gradienteToon() }),
-      MAX_INIMIGOS,
+      MAX_POPULACAO * 5,
       this.qualidade === 'alta'
     );
     this.cena.add(this.loteSegmentos.malha);
     this.loteOrbita = new Lote(
       new THREE.OctahedronGeometry(0.5, 0),
       new THREE.MeshBasicMaterial({ color: '#ffffff' }),
-      200
+      MAX_JOGADORES * MAX_ATIVAS * MAX_ORBES_POR_ANEL * 2
     );
     this.cena.add(this.loteOrbita.malha);
+    this.loteFaiscasXp = new Lote(geometriaFaiscaXp(), materialFaiscaXp(), 320);
+    this.cena.add(this.loteFaiscasXp.malha);
     for (let t = 0; t < 4; t++) {
       const lote = new Lote(geometriaCristalXp(t), materialCristalXp(t), 2400);
       this.lotesCristal.push(lote);
@@ -713,6 +751,9 @@ export class Partida {
   definirModoLeve(leve: boolean): void {
     this.modoLeve = leve;
     this.pos.definirQualidade(leve ? 'baixa' : this.qualidade);
+    this.renderizador.shadowMap.enabled = !leve && this.qualidade !== 'baixa';
+    this.sol.castShadow = !leve && this.qualidade !== 'baixa';
+    this.redimensionar();
     try {
       localStorage.setItem('centelha-sobrevivencia:leve', leve ? '1' : '0');
     } catch {
@@ -725,7 +766,7 @@ export class Partida {
     const h = window.innerHeight;
     const dpr = Math.min(
       window.devicePixelRatio || 1,
-      this.qualidade === 'alta' ? 2 : this.qualidade === 'media' ? 1.5 : 1
+      this.modoLeve ? 1 : this.qualidade === 'alta' ? 1.75 : this.qualidade === 'media' ? 1.35 : 1
     );
     this.renderizador.setPixelRatio(dpr);
     this.renderizador.setSize(w, h, false);
@@ -836,7 +877,6 @@ export class Partida {
     this.local.xpConta = this.conta.dados.xp;
   }
   private apresentarChefe(tipo: 'mini' | 'mega'): void {
-    this.ciclo[tipo] = true;
     this.j = this.local;
     const defMapa = mapa(this.mapaId);
     const p = this.pontoBorda(12);
@@ -853,8 +893,9 @@ export class Partida {
             ...(this.mapaId === 'forja' ? INIMIGOS.ransomware : INIMIGOS.chefe),
             nome: defMapa.chefeNome,
           };
-    const chefe = this.criarInimigo(def, p.x, p.z, false);
+    const chefe = this.criarInimigo(def, p.x, p.z, false, true);
     if (!chefe) return;
+    this.ciclo[tipo] = true;
     this.chefeAtual = chefe;
     if (tipo === 'mega') this.chefeMegaId = chefe.id;
     this.cinematica = {
@@ -1169,7 +1210,7 @@ export class Partida {
   private deslocarBlink(jg: Jogador, distancia: number): void {
     jg.x += jg.dashX * distancia;
     jg.z += jg.dashZ * distancia;
-    this.colidirObstaculos(jg, 0.42);
+    this.colidirObstaculos(jg, 0.42, jg.def.voo ?? 0);
     const d = Math.hypot(jg.x, jg.z);
     if (d > RAIO_ARENA) {
       jg.x *= RAIO_ARENA / d;
@@ -1395,6 +1436,9 @@ export class Partida {
     this.chefeMegaId = 0;
     this.congelado = 0;
     this.acumulado = 0;
+    this.hordasPendentes = [];
+    this.creditoHorda = 0;
+    this.finaisManifestadas = new Set();
     this.grade?.clear();
     if (!preservarCampanha) {
       this.xpCampanha = 0;
@@ -1497,7 +1541,7 @@ export class Partida {
       const def = habilidade(s.id);
       const ant = antigos.get(s.id);
       return ant
-        ? { ...ant, nivel: s.nivel }
+        ? { ...ant, nivel: s.nivel, timer: ant.nivel < 10 && s.nivel >= 10 ? 0 : ant.timer }
         : {
             def,
             idx: this.j.indice * HABILIDADES.length + HABILIDADES.indexOf(def),
@@ -1758,23 +1802,32 @@ export class Partida {
 
     // ------------------- tempo: hordas, chefes, noite
     this.noite = Math.min(1, Math.max(0, (this.tempo - 200) / 360));
-    if (this.tempo >= this.proximaHorda) {
-      this.proximaHorda += INTERVALO_HORDA;
+    if (this.autoridade && this.tempo >= this.proximaHorda && !this.hordasPendentes.length) {
+      this.proximaHorda = this.tempo + INTERVALO_HORDA;
       this.horda();
     }
 
-    this.acumulado += taxaSurgimento(this.tempo) * dt;
-    while (this.acumulado >= 1) {
-      this.acumulado -= 1;
-      this.surgirAleatorio();
+    if (this.autoridade) {
+      this.emitirHordaPendente(dt);
+      this.acumulado = creditoSurgimento(this.acumulado, taxaSurgimento(this.tempo), dt);
+      if (this.acumulado >= 1 && this.temVagaInimigo()) {
+        this.acumulado -= 1;
+        this.surgirAleatorio();
+      }
     }
 
-    // ------------------- grade espacial
+    // Recicla as listas da grade, sem alocar uma lista por célula em cada passo.
+    const livres = (this.gradeLivres ??= []);
+    for (const lista of this.grade.values()) {
+      lista.length = 0;
+      livres.push(lista);
+    }
     this.grade.clear();
     for (const i of this.inimigos) {
+      if (!i.vivo) continue;
       const k = this.chave(i.x, i.z);
       let l = this.grade.get(k);
-      if (!l) this.grade.set(k, (l = []));
+      if (!l) this.grade.set(k, (l = livres.pop() ?? []));
       l.push(i);
     }
 
@@ -1858,7 +1911,7 @@ export class Partida {
     }
     this.x += this.vx * dt;
     this.z += this.vz * dt;
-    this.colidirObstaculos(this, 0.42);
+    this.colidirObstaculos(this, 0.42, this.def.voo ?? 0);
     const dc = Math.hypot(this.x, this.z);
     if (dc > RAIO_ARENA) {
       this.x *= RAIO_ARENA / dc;
@@ -1981,8 +2034,9 @@ export class Partida {
   private tmpLista: Inimigo[] = [];
   private tmpLista2: Inimigo[] = [];
 
-  private colidirObstaculos(e: { x: number; z: number }, r: number): void {
+  private colidirObstaculos(e: { x: number; z: number }, r: number, altura = 0): void {
     for (const o of this.arena.obstaculosPerto(e.x, e.z)) {
+      if (altura > 0 && o.altura !== undefined && o.altura < altura) continue;
       const dx = e.x - o.x;
       const dz = e.z - o.z;
       const d = Math.hypot(dx, dz);
@@ -1996,9 +2050,26 @@ export class Partida {
 
   // ------------------------------------------------------------------ surgimento
 
-  private criarInimigo(def: DefInimigo, x: number, z: number, elite = false): Inimigo | null {
-    if (!this.autoridade) return null;
-    if (this.inimigos.length >= MAX_INIMIGOS && def.comportamento !== 'chefe') return null;
+  private temVagaInimigo(chefe = false): boolean {
+    let vivos = 0,
+      chefes = 0;
+    for (const i of this.inimigos)
+      if (i.vivo) {
+        vivos++;
+        if (i.reservaChefe || i.def.comportamento === 'chefe') chefes++;
+      }
+    return podeSurgir(vivos, this.jogadores.length, chefe, chefes);
+  }
+
+  private criarInimigo(
+    def: DefInimigo,
+    x: number,
+    z: number,
+    elite = false,
+    reservaChefe = false
+  ): Inimigo | null {
+    if (!this.autoridade || !this.temVagaInimigo(reservaChefe || def.comportamento === 'chefe'))
+      return null;
     const mv = multVida(this.tempo) * (elite ? 6 : 1);
     const vida =
       def.vida * mv * (def.comportamento === 'chefe' ? 1 + this.chefesDerrotados * 0.8 : 1);
@@ -2028,6 +2099,7 @@ export class Partida {
       recarga: 2 + this.rnd() * 2,
       vivo: true,
       elite,
+      reservaChefe,
       fase: this.rnd() * 10,
       hits: new Float32Array(HABILIDADES.length * MAX_JOGADORES),
     };
@@ -2056,13 +2128,13 @@ export class Partida {
     const vivos = this.ativos();
     if (vivos.length) this.j = vivos[Math.floor(this.rnd() * vivos.length)];
     const t = this.tempo;
-    const tipos = (Object.values(INIMIGOS) as DefInimigo[]).filter(
-      (d) => d.peso > 0 && d.aparece <= t
-    );
-    const total = tipos.reduce((s, d) => s + d.peso, 0);
+    const tipos = this.tiposSurgimento;
+    let total = 0;
+    for (const d of tipos) if (d.aparece <= t) total += d.peso;
     let r = this.rnd() * total;
     let def = tipos[0];
     for (const d of tipos) {
+      if (d.aparece > t) continue;
       r -= d.peso;
       if (r <= 0) {
         def = d;
@@ -2086,17 +2158,32 @@ export class Partida {
     const n = Math.round(
       Math.min(70, 26 + Math.floor(this.tempo / 15)) / Math.sqrt(Math.max(1, vivos.length))
     );
-    for (const jg of vivos)
-      for (let k = 0; k < n; k++) {
-        const a = (k / n) * Math.PI * 2;
-        const x = jg.x + Math.cos(a) * 17;
-        const z = jg.z + Math.sin(a) * 17;
-        if (Math.hypot(x, z) < RAIO_ARENA) this.criarInimigo(def, x, z);
-      }
+    for (const jg of vivos) this.hordasPendentes.push({ def, x: jg.x, z: jg.z, n, k: 0 });
     this.mostrarBanner('HORDA!', 'O Ruído cercou você', '#ff6b5a', 2.5);
     this.som('inimigoAlerta', {}, 0);
     this.vozes.resmungar(def.voz, this.x, this.z);
     this.sentir('surpreso', 1.5);
+  }
+
+  /** A horda mantém seu tipo e anel; as vagas são preenchidas no máximo a 12/s. */
+  private emitirHordaPendente(dt: number): void {
+    if (!this.hordasPendentes.length) {
+      this.creditoHorda = 0;
+      return;
+    }
+    this.creditoHorda = Math.min(1, this.creditoHorda + dt * 12);
+    while (this.creditoHorda >= 1 && this.hordasPendentes.length && this.temVagaInimigo()) {
+      const h = this.hordasPendentes[0];
+      const a = (h.k / h.n) * Math.PI * 2;
+      const x = h.x + Math.cos(a) * 17,
+        z = h.z + Math.sin(a) * 17;
+      if (Math.hypot(x, z) < RAIO_ARENA) {
+        if (!this.criarInimigo(h.def, x, z)) break;
+        this.creditoHorda -= 1;
+      }
+      h.k++;
+      if (h.k >= h.n) this.hordasPendentes.shift();
+    }
   }
 
   // ------------------------------------------------------------------ dano
@@ -2396,14 +2483,16 @@ export class Partida {
     h.timer -= dt;
     h.fase += dt;
     const c = h.def.comportamento;
+    const finais = (this.finaisManifestadas ??= new Set());
     if (
       ['orbita', 'aura', 'laser', 'drone'].includes(c) &&
       h.timer <= 0 &&
-      (h.disparos === 0 || !v.evo10 || c === 'aura' || c === 'drone')
+      (h.disparos === 0 || !v.evo10 || !finais.has(h.idx) || c === 'aura' || c === 'drone')
     ) {
       manifestarPoder(this.fx, h.def.id, this.x, this.z, h.nivel, this.angulo);
       tocarSomPoder(this.audio, h.def.id, this.x, this.z, h.nivel);
       h.disparos++;
+      if (v.evo10) finais.add(h.idx);
     }
     // comportamentos contínuos
     if (c === 'orbita') return this.orbita(h, v);
@@ -2476,7 +2565,13 @@ export class Partida {
   }
 
   private corHab(h: HabAtiva): THREE.Color {
-    return new THREE.Color(h.def.cor);
+    const cores = (this.coresHabilidade ??= new Map());
+    let cor = cores.get(h.def.cor);
+    if (!cor) {
+      cor = new THREE.Color(h.def.cor);
+      cores.set(h.def.cor, cor);
+    }
+    return cor;
   }
 
   private orbita(h: HabAtiva, v: ReturnType<typeof valoresHabilidade>): void {
@@ -2489,11 +2584,7 @@ export class Partida {
     const ativa = permanente || this.tempo < h.ativaAte;
     if (!ativa) return;
     const sentido = Math.sign(h.def.base.velocidade) || 1;
-    const aneis: { r: number; s: number; n: number }[] = [
-      { r: v.area, s: sentido, n: v.quantidade },
-    ];
-    if (v.evo5 && h.def.id === 'centelhaOrbital')
-      aneis.push({ r: v.area * 0.6, s: -sentido, n: Math.max(2, v.quantidade - 1) });
+    const numeroAneis = v.evo5 && h.def.id === 'centelhaOrbital' ? 2 : 1;
     const forma: FormaProjetil =
       h.def.id === 'serraCircular' ? 'serra' : h.def.id === 'escudoCristal' ? 'cristal' : 'estrela';
     const escala =
@@ -2504,15 +2595,18 @@ export class Partida {
           : 0.55;
     const raioAcerto = escala * 0.65 + 0.2;
     const cor = this.corHab(h);
-    for (const a of aneis) {
-      for (let k = 0; k < a.n; k++) {
-        const ang = h.fase * Math.abs(v.velocidade) * a.s + (k / a.n) * Math.PI * 2;
-        const ox = this.x + Math.cos(ang) * a.r;
-        const oz = this.z + Math.sin(ang) * a.r;
+    for (let anel = 0; anel < numeroAneis; anel++) {
+      const raio = v.area * (anel ? 0.6 : 1);
+      const quantidade = anel ? Math.max(2, v.quantidade - 1) : v.quantidade;
+      const velocidade = Math.abs(v.velocidade) * sentido * (anel ? -1 : 1);
+      for (let k = 0; k < quantidade; k++) {
+        posicaoOrbital(h.fase, velocidade, k, quantidade, raio, this.x, this.z, this.posOrbita);
+        const ox = this.posOrbita.x,
+          oz = this.posOrbita.z;
         const lote = forma === 'estrela' ? this.loteOrbita : this.lotesProj.get(forma)!;
         lote.por(
           ox,
-          0.8,
+          0.8 + (this.j.def.voo ?? 0),
           oz,
           escala,
           forma === 'serra' ? escala : escala,
@@ -2523,10 +2617,10 @@ export class Partida {
           cor
         );
         this.fx.projetilRastro(
-          `o${h.idx}:${a.r.toFixed(2)}:${k}`,
+          `o${h.idx}:${anel}:${k}`,
           h.def.elemento,
           ox,
-          0.8,
+          0.8 + (this.j.def.voo ?? 0),
           oz,
           forma === 'serra' ? 1.2 : 0.8,
           forma !== 'serra'
@@ -2613,7 +2707,8 @@ export class Partida {
       this.som('refletir', { volume: 0.6, tom: 0.7 }, 0.3);
     }
     if (!permanente && this.tempo >= h.ativaAte) return;
-    const largura = v.evo5 ? 0.9 : 0.55;
+    const largura = (v.evo5 ? 0.9 : 0.55) * Math.sqrt(v.area / Math.max(0.01, h.def.base.area));
+    const altura = 0.9 + (this.j.def.voo ?? 0);
     const cores = v.evo5 ? ['#ff5cf0', '#5cc8ff', '#ffe45c', '#7dffb0'] : [h.def.cor];
     for (let k = 0; k < v.quantidade; k++) {
       const ang = h.fase * v.velocidade + (k / v.quantidade) * Math.PI * 2;
@@ -2622,15 +2717,15 @@ export class Partida {
       const cor = cores[k % cores.length];
       this.fx.laser(
         `l${h.idx}:${k}`,
-        { x: this.x, y: 0.9, z: this.z },
-        { x: this.x + cx * v.area, y: 0.9, z: this.z + cz * v.area },
+        { x: this.x, y: altura, z: this.z },
+        { x: this.x + cx * v.area, y: altura, z: this.z + cz * v.area },
         largura * 0.6,
         cor
       );
       if (this.rnd() < dt * 30)
         this.brilhos.emitir({
           x: this.x + cx * v.area,
-          y: 0.9,
+          y: altura,
           z: this.z + cz * v.area,
           vy: 1,
           vida: 0.3,
@@ -2664,7 +2759,8 @@ export class Partida {
       const r = estrelas ? 1.4 : 1.9;
       const ox = this.x + Math.cos(ang) * r;
       const oz = this.z + Math.sin(ang) * r;
-      const oy = estrelas ? 1.5 : 2 + Math.sin(h.fase * 3 + k) * 0.2;
+      const voo = this.j.def.voo ?? 0;
+      const oy = voo + (estrelas ? 1.5 : 2 + Math.sin(h.fase * 3 + k) * 0.2);
       (estrelas ? this.loteOrbita : this.lotesProj.get('disco')!).por(
         ox,
         oy,
@@ -2698,7 +2794,7 @@ export class Partida {
           az = Math.sin(Math.atan2(dz, dx) + desv);
           void d;
         }
-        this.novoProjetil(h, v, ox, oy - 0.4, oz, ax, az, {
+        this.novoProjetil(h, v, ox, oy - 0.4 - voo, oz, ax, az, {
           forma: estrelas ? 'estrela' : 'orbe',
           escala: estrelas ? 0.42 : 0.32,
           perfura: v.evo10 ? 99 : v.perfura,
@@ -2744,6 +2840,14 @@ export class Partida {
       atingidos: new Set(),
       ...o,
     };
+    // Projéteis e drones fornecem dimensões de nível 1; ricochetes/bumerangues já usam v.area.
+    if (h.def.comportamento === 'projetil' || h.def.comportamento === 'drone') {
+      const crescimento = v.area / Math.max(0.01, h.def.base.area);
+      if (o.escala !== undefined) p.escala = o.escala * crescimento;
+      if (o.raio !== undefined) p.raio = o.raio * crescimento;
+      else if (o.escala !== undefined) p.raio = Math.max(0.2, p.escala * 0.65);
+    }
+    p.y += this.j.def.voo ?? 0;
     this.projeteis.push(p);
     return p;
   }
@@ -2762,7 +2866,7 @@ export class Partida {
           escala: 0.55,
           raio: 0.45,
           profundidade: 2 + (v.evo5 ? 1 : 0),
-          perfura: 1,
+          perfura: v.perfura,
         });
       }
       this.som('ataqueCajado', { volume: 0.3, tom: 2 }, 0.08);
@@ -2797,7 +2901,7 @@ export class Partida {
           escala: v.evo10 ? 1.3 : 0.7,
           raio: v.evo10 ? 0.9 : 0.5,
           explode: v.area,
-          perfura: v.evo10 ? 99 : 1,
+          perfura: v.evo10 ? 99 : v.perfura,
         });
       }
       this.som('ataqueCajado', { volume: 0.5, tom: 0.8 }, 0.1);
@@ -2888,12 +2992,18 @@ export class Partida {
       cone = { ang: Math.atan2(this.dirZ, this.dirX), abertura: 1.25 };
     if (id === 'ondaProfunda' && !v.evo5)
       cone = { ang: Math.atan2(this.dirZ, this.dirX), abertura: 1.8 };
-    const ondas = id === 'novaGlacial' && v.evo10 ? 3 : id === 'pulsoSonico' && v.evo5 ? 2 : 1;
+    const ondas = Math.max(
+      v.quantidade,
+      id === 'novaGlacial' && v.evo10 ? 3 : id === 'pulsoSonico' && v.evo5 ? 2 : 1
+    );
     for (let k = 0; k < ondas; k++) {
-      this.agendar(() => {
-        if (this.estado === 'menu') return;
-        this.criarOnda(h, v, cone);
-      }, k * 350);
+      this.agendar(
+        () => {
+          if (this.estado === 'menu') return;
+          this.criarOnda(h, v, cone);
+        },
+        k * Math.min(150, 800 / ondas)
+      );
     }
     this.som(
       id === 'novaGlacial' ? 'criarEscudo' : 'chefeOnda',
@@ -3463,7 +3573,7 @@ export class Partida {
   }
 
   private breakpoint(h: HabAtiva, v: ReturnType<typeof valoresHabilidade>): void {
-    const alvos = this.gruposMaiores(v.alcance, v.evo10 ? 3 : v.quantidade);
+    const alvos = this.gruposMaiores(v.alcance, v.evo10 ? Math.max(3, v.quantidade) : v.quantidade);
     if (!alvos.length) {
       h.timer = 0.5;
       return;
@@ -3759,10 +3869,10 @@ export class Partida {
         if (i.recarga <= 0) {
           i.recarga = 6 + this.rnd() * 3;
           if (this.autoridade && (i.geracao ?? 0) < 2 && this.contarTipo('virus') < 90) {
-            i.geracao = (i.geracao ?? 0) + 1;
             const a = this.rnd() * Math.PI * 2;
             const copia = this.criarInimigo(i.def, i.x + Math.cos(a), i.z + Math.sin(a), i.elite);
             if (copia) {
+              i.geracao = (i.geracao ?? 0) + 1;
               copia.geracao = i.geracao;
               copia.vida = i.vida;
               copia.recarga = 6 + this.rnd() * 3;
@@ -4548,14 +4658,17 @@ export class Partida {
         jg.avancoTempo > 0
           ? Math.sin((1 - jg.avancoTempo / jg.avancoDuracao) * Math.PI) * av.salto
           : 0;
-      jg.modelo.raiz.position.set(jg.x, salto, jg.z);
+      const voo = jg.caido ? 0 : (jg.def.voo ?? 0);
+      jg.y = voo;
+      const flutuar = voo > 0 ? Math.sin(this.tempo * 2.8 + jg.indice) * 0.09 : 0;
+      jg.modelo.raiz.position.set(jg.x, voo + flutuar + salto, jg.z);
       const piscar =
         jg.invencivel > 0 && jg.invencivel < 0.7 && Math.floor(jg.invencivel * 16) % 2 === 0;
       jg.modelo.raiz.visible = visivelMenu && !piscar;
       jg.modelo.sombraContato.visible = visivelMenu;
       jg.modelo.atualizar(dt, {
         velocidade: menu || jg.caido ? 0 : Math.hypot(jg.vx, jg.vz),
-        noChao: jg.avancoTempo <= 0,
+        noChao: voo === 0 && jg.avancoTempo <= 0,
         vy: 0,
         angulo: menu
           ? Math.sin(this.menuGiro) * 0.28
@@ -4574,7 +4687,7 @@ export class Partida {
       });
       // caído: deitado e transparente até alguém levantar
       jg.modelo.raiz.rotation.z = jg.caido ? Math.PI / 2.2 : 0;
-      jg.modelo.posicionarSombra(jg.x, 0, jg.z, 0);
+      jg.modelo.posicionarSombra(jg.x, 0, jg.z, voo + salto);
       const anel = jg.modelo.raiz.getObjectByName('anelGiro');
       if (anel) anel.rotation.z += dt * 2;
       const aura = this.aurasJogador.get(jg);
@@ -4594,21 +4707,22 @@ export class Partida {
     this.loteSegmentos.iniciar();
     for (const l of this.lotesCristal) l.iniciar();
     const cor = this.corTmp;
-    const olhoCor = new THREE.Color(this.noite > 0.4 ? '#ff6b5a' : '#fff27a');
+    const olhoCor = this.corOlhos.set(this.noite > 0.4 ? '#ff6b5a' : '#fff27a');
+    this.loteFaiscasXp.iniciar();
     for (const i of this.inimigos) {
+      if (!i.vivo) continue;
       const lote = this.lotesInimigos.get(i.def.id)!;
       const esc = i.raio / i.def.raio;
-      cor.set(i.def.cor);
-      if (i.elite) cor.lerp(new THREE.Color('#ffd27a'), 0.35);
-      if (i.congelado > 0) cor.lerp(new THREE.Color('#bdf2ff'), 0.7);
-      else if (i.lento > 0) cor.lerp(new THREE.Color('#8fe3ff'), 0.3);
-      if (i.queimar > 0) cor.lerp(new THREE.Color('#ff7a3d'), 0.25);
-      if (i.veneno > 0) cor.lerp(new THREE.Color('#9dff5c'), 0.25);
+      cor.setRGB(1, 1, 1);
+      if (i.elite) cor.lerp(this.coresEstado.elite, 0.35);
+      if (i.congelado > 0) cor.lerp(this.coresEstado.gelo, 0.7);
+      else if (i.lento > 0) cor.lerp(this.coresEstado.lento, 0.3);
+      if (i.queimar > 0) cor.lerp(this.coresEstado.fogo, 0.25);
+      if (i.veneno > 0) cor.lerp(this.coresEstado.veneno, 0.25);
       if (i.flash > 0) {
-        if (i.def.comportamento === 'chefe') cor.lerp(new THREE.Color('#ffffff'), 0.35);
-        else cor.setRGB(1, 1, 1);
+        cor.multiplyScalar(i.def.comportamento === 'chefe' ? 1.35 : 1.8);
       }
-      if (i.ataque) cor.lerp(new THREE.Color('#ff3b3b'), 0.4 + Math.sin(this.tempo * 30) * 0.2);
+      if (i.ataque) cor.lerp(this.coresEstado.ataque, 0.4 + Math.sin(this.tempo * 30) * 0.2);
       const pulo =
         i.def.comportamento === 'perseguir' || i.def.comportamento === 'enxame'
           ? Math.abs(Math.sin(i.fase * 9)) * 0.12
@@ -4647,7 +4761,7 @@ export class Partida {
         );
       if (i.rastro) {
         // corpo do Worm: segmentos seguindo o caminho da cabeça
-        const seg = cor.clone().multiplyScalar(0.85);
+        const seg = this.corSegmento.set(i.def.cor).multiply(cor).multiplyScalar(0.85);
         for (let k = 1; k <= 5; k++) {
           const idx = Math.min(i.rastro.length - 2, k * 4);
           if (idx < 0) break;
@@ -4671,7 +4785,7 @@ export class Partida {
       const o = OLHOS[i.def.id];
       const cs = Math.cos(i.ang);
       const sn = Math.sin(i.ang);
-      for (const lado of [-1, 1]) {
+      for (let lado = -1; lado <= 1; lado += 2) {
         const lx = lado * o.sep * esc;
         const lz = o.z * esc;
         this.loteOlhos.por(
@@ -4695,7 +4809,7 @@ export class Partida {
     for (const c of this.cristais) {
       if (Math.abs(c.x - this.x) > raioVisivel || Math.abs(c.z - this.z) > raioVisivel) continue;
       const t = c.t;
-      const visual = visualCristalXp(t, this.tempo, c.fase);
+      const visual = visualCristalXp(t, this.tempo, c.fase, this.visualXp);
       this.lotesCristal[t].por(
         c.x,
         visual.y,
@@ -4709,10 +4823,26 @@ export class Partida {
         visual.cor
       );
       this.halos.por(c.x, visual.y, c.z, visual.halo, visual.cor, visual.haloIntensidade);
+      if ((c.x - this.x) ** 2 + (c.z - this.z) ** 2 < 18 * 18) {
+        const tamanho = visual.faiscaEscala;
+        this.loteFaiscasXp.por(
+          c.x + visual.faiscaX,
+          visual.y + visual.faiscaY,
+          c.z + visual.faiscaZ,
+          tamanho,
+          tamanho,
+          tamanho,
+          0,
+          visual.rotacao,
+          0,
+          this.corTmp.set(visual.cor).multiplyScalar(visual.faiscaIntensidade)
+        );
+      }
     }
     for (const l of this.lotesInimigos.values()) l.concluir();
     this.loteOlhos.concluir();
     this.loteSegmentos.concluir();
+    this.loteFaiscasXp.concluir();
     this.loteOrbita.concluir();
     for (const l of this.lotesProj.values()) l.concluir();
     for (const l of this.lotesCristal) l.concluir();
@@ -4766,15 +4896,20 @@ export class Partida {
       this.menuGiro += dt * 0.6;
       this.menuEntrada = Math.min(1, this.menuEntrada + dt * 0.45);
       const chegada = 1 - Math.pow(1 - this.menuEntrada, 3);
+      const alturaMenu = this.local.def.voo ?? 0;
       if (this.camera.aspect < 1) {
         // retrato: o personagem fica no alto, acima do painel de escolha
-        this.camera.position.set(this.x, 2.6, this.z + 7.6 + (1 - chegada) * 2);
-        this.camera.lookAt(this.x, -0.55, this.z);
+        this.camera.position.set(this.x, 2.6 + alturaMenu, this.z + 7.6 + (1 - chegada) * 2);
+        this.camera.lookAt(this.x, -0.55 + alturaMenu, this.z);
       } else {
-        this.camera.position.set(this.x + 0.2, 2.2, this.z + 5.2 + (1 - chegada) * 1.8);
+        this.camera.position.set(
+          this.x + 0.2,
+          2.2 + alturaMenu,
+          this.z + 5.2 + (1 - chegada) * 1.8
+        );
         this.camera.lookAt(
           this.x - Math.tan(THREE.MathUtils.degToRad(23)) * 5.2 * this.camera.aspect * 0.54,
-          0.95,
+          0.95 + alturaMenu,
           this.z
         );
       }
@@ -4933,6 +5068,9 @@ export class Partida {
       this.fx.limpar();
       this.congelado = 0;
       this.acumulado = 0;
+      this.hordasPendentes = [];
+      this.creditoHorda = 0;
+      this.finaisManifestadas = new Set();
       this.noite = 0;
       this.grade.clear();
       this.tiposVistos.clear();
@@ -5118,7 +5256,15 @@ export class Partida {
     const porId = new Map(this.inimigos.map((i) => [i.id, i]));
     const vistos = new Set<number>();
     const N = 16;
-    for (let k = 0; k + N <= ini.length; k += N) {
+    const limiteRede = limitePopulacao(this.jogadores.length);
+    const indicesRede: number[] = [];
+    for (let k = 0; k + N <= ini.length; k += N)
+      if (INIMIGOS[tipos[ini[k + 1]]]?.comportamento === 'chefe' || ini[k] === Number(m.ch))
+        indicesRede.push(k);
+    for (let k = 0; k + N <= ini.length && indicesRede.length < limiteRede; k += N)
+      if (INIMIGOS[tipos[ini[k + 1]]]?.comportamento !== 'chefe' && ini[k] !== Number(m.ch))
+        indicesRede.push(k);
+    for (const k of indicesRede.slice(0, limiteRede)) {
       const id = ini[k];
       vistos.add(id);
       let i = porId.get(id);

@@ -13,6 +13,7 @@ import { Partida } from './roguelike/jogo/partida';
 import { CONTA_CHAVE } from './roguelike/nucleo/conta';
 import { InterfaceSobrevivencia } from './roguelike/ui';
 import { Interface } from './ui/interface';
+import { modoDaUrl } from './ui/modos';
 
 const PASSO = 1 / 60;
 
@@ -69,14 +70,6 @@ function lerRecordes(): Record<string, string> {
     /* sem armazenamento */
   }
   return r;
-}
-
-function modoAventura(): boolean {
-  try {
-    return new URLSearchParams(window.location.search).get('modo') === 'aventura';
-  } catch {
-    return false;
-  }
 }
 
 /** Laço com passo fixo; desenha uma vez por quadro. */
@@ -150,7 +143,7 @@ async function iniciar(): Promise<void> {
   } catch {
     /* segue com a fonte do sistema */
   }
-  if (!modoAventura()) {
+  if (modoDaUrl() === 'sobrevivencia') {
     iniciarSobrevivencia(canvas, raizUi);
     return;
   }

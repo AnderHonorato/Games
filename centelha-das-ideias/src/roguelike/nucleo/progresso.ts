@@ -12,6 +12,8 @@ import {
   type Valores,
 } from '../dados/habilidades';
 
+import { perfilOrbita } from './orbitas';
+
 export const NIVEL_MAX_HABILIDADE = 10;
 export const MAX_ATIVAS = 10;
 export const MAX_PASSIVAS = 5;
@@ -107,23 +109,31 @@ export function valoresHabilidade(
   const evo10 = n >= 10;
   const extraQtd = def.maisQuantidade.filter((l) => l <= n).length;
   // A evolução final rompe a curva: compara diretamente com o nível 9.
-  // Níveis 1..9 conservam os valores e as evoluções existentes.
+  // Cada nível amplia o alcance visual, preservando as mecânicas e os marcos de evolução.
   const curva = evo10 ? 9 : n;
   const fatorDano = (1 + 0.16 * (curva - 1)) * (evo5 ? 1.15 : 1) * (evo10 ? 2.5 : 1);
+  const orbita =
+    def.comportamento === 'orbita' ? perfilOrbita(def, n, at.area, at.quantidade) : null;
   return {
     dano: b.dano * fatorDano * at.dano,
     recarga: b.recarga * Math.pow(0.955, curva - 1) * (evo10 ? 0.65 : 1) * at.recarga,
     velocidade:
+      orbita?.velocidade ??
       b.velocidade *
-      (1 + 0.03 * (n - 1)) *
-      (def.comportamento === 'projetil' ||
-      def.comportamento === 'drone' ||
-      def.comportamento === 'bumerangue' ||
-      def.comportamento === 'ricochete'
-        ? at.velocidadeProjetil
-        : 1),
-    area: b.area * (1 + 0.05 * (curva - 1)) * (evo10 ? 1.5 : 1) * at.area,
-    quantidade: b.quantidade + extraQtd + Math.floor(at.quantidade) + (evo10 ? 2 : 0),
+        (1 + 0.07 * (n - 1)) *
+        (def.comportamento === 'projetil' ||
+        def.comportamento === 'drone' ||
+        def.comportamento === 'bumerangue' ||
+        def.comportamento === 'ricochete'
+          ? at.velocidadeProjetil
+          : 1),
+    area: orbita?.raio ?? b.area * (1 + 0.09 * (curva - 1)) * (evo10 ? 1.5 : 1) * at.area,
+    quantidade:
+      orbita?.quantidade ??
+      Math.min(
+        24,
+        b.quantidade + extraQtd + Math.floor(at.quantidade) + (evo5 ? 1 : 0) + (evo10 ? 2 : 0)
+      ),
     duracao: b.duracao * (1 + 0.04 * (curva - 1)) * (evo10 ? 1.35 : 1) * at.duracao,
     perfura: b.perfura + (b.perfura < 50 ? Math.floor((n - 1) / 3) : 0),
     alcance: b.alcance * (1 + 0.02 * (n - 1)),

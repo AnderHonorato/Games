@@ -43,7 +43,17 @@ const COR_CORPO = '#D97757';
 const COR_ESCURA = '#B65A3E';
 
 export type IdentidadeVisual =
-  'claude' | 'gpt' | 'gemini' | 'llama' | 'mistral' | 'deepseek' | 'aurora' | 'nox' | 'byte';
+  | 'claude'
+  | 'gpt'
+  | 'gemini'
+  | 'llama'
+  | 'mistral'
+  | 'deepseek'
+  | 'aurora'
+  | 'nox'
+  | 'byte'
+  | 'aeria'
+  | 'fenix';
 
 // Cadências próprias do roguelike; o modelo sem identidade conserva a aventura.
 const CADENCIAS: Record<
@@ -59,6 +69,8 @@ const CADENCIAS: Record<
   aurora: { passo: 0.94, salto: 1.15, balanco: 0.09, pulso: 3.8, amplitude: 1.12 },
   nox: { passo: 1.22, salto: 0.35, balanco: 0.025, pulso: 2.8, amplitude: 0.78 },
   byte: { passo: 1.08, salto: 1.45, balanco: 0.055, pulso: 5.2, amplitude: 0.98 },
+  aeria: { passo: 0.8, salto: 0.6, balanco: 0.07, pulso: 4.3, amplitude: 0.35 },
+  fenix: { passo: 0.7, salto: 0.8, balanco: 0.04, pulso: 2.6, amplitude: 0.5 },
 };
 
 /** Aparência do personagem (o mesmo esqueleto animado serve para todos). */
@@ -122,6 +134,7 @@ export class ModeloClaude {
   private materiaisCosmeticos: THREE.MeshToonMaterial[] = [];
   private capa: THREE.Object3D | null = null;
   private asas: THREE.Object3D[] = [];
+  private asasVoo: { pivo: THREE.Group; lado: number }[] = [];
   private aura: THREE.Group | null = null;
   private readonly identidade?: IdentidadeVisual;
   private aderecoIdentidade: THREE.Group | null = null;
@@ -321,6 +334,7 @@ export class ModeloClaude {
     this.materiaisCosmeticos.length = 0;
     this.cosmeticos.length = 0;
     this.asas.length = 0;
+    this.asasVoo.length = 0;
     this.capa = null;
     this.aura = null;
     this.aderecoIdentidade = null;
@@ -344,6 +358,7 @@ export class ModeloClaude {
     this.cosmeticos.length = 0;
     this.materiaisCosmeticos.length = 0;
     this.asas.length = 0;
+    this.asasVoo.length = 0;
     this.capa = null;
     this.aura = null;
     this.aderecoIdentidade = null;
@@ -892,6 +907,173 @@ export class ModeloClaude {
           );
           break;
         }
+        case 'aeria': {
+          const asaMat = material(p.corDetalhe);
+          asaMat.side = THREE.DoubleSide;
+          asaMat.opacity = 0.72;
+          asaMat.userData.opacidadeBase = 0.72;
+          for (const lado of [-1, 1]) {
+            const asa = new THREE.Group();
+            asa.name = `asa-eterea-${lado < 0 ? 'esquerda' : 'direita'}`;
+            asa.position.set(lado * 0.25, 0.12, -0.32);
+            identidade.add(asa);
+            for (let i = 0; i < 2; i++) {
+              const petala = malha(
+                asa,
+                new THREE.SphereGeometry(1, 14, 10),
+                asaMat,
+                lado * (i === 0 ? 0.55 : 0.4),
+                i === 0 ? 0.26 : -0.23,
+                0,
+                'membrana-eterea'
+              );
+              petala.scale.set(i === 0 ? 0.68 : 0.49, i === 0 ? 0.31 : 0.23, 0.045);
+              petala.rotation.z = lado * (i === 0 ? 0.46 : -0.4);
+              for (let j = 0; j < 3; j++) {
+                const nervura = caixa(
+                  asa,
+                  lado * (0.28 + j * 0.2),
+                  (i === 0 ? 0.17 : -0.12) + j * (i === 0 ? 0.09 : -0.065),
+                  0.045,
+                  0.3,
+                  0.018,
+                  0.025,
+                  detalhe,
+                  'nervura-da-asa'
+                );
+                nervura.rotation.z = lado * (i === 0 ? 0.45 : -0.4);
+              }
+            }
+            this.asasVoo.push({ pivo: asa, lado });
+          }
+          const saia = malha(
+            identidade,
+            new THREE.CylinderGeometry(0.31, 0.52, 0.35, 7),
+            tecido,
+            0,
+            -0.39,
+            0,
+            'vestido-de-petalas'
+          );
+          saia.scale.z = 0.8;
+          for (const lado of [-1, 1]) {
+            const antena = malha(
+              identidade,
+              new THREE.ConeGeometry(0.025, 0.3, 6),
+              detalhe,
+              lado * 0.19,
+              0.64,
+              0,
+              'antena-da-fada'
+            );
+            antena.rotation.z = -lado * 0.3;
+            malha(
+              adereco,
+              new THREE.OctahedronGeometry(0.055),
+              detalhe,
+              lado * 0.24,
+              0.81,
+              0,
+              'orvalho-luminoso'
+            );
+          }
+          break;
+        }
+        case 'fenix': {
+          const fogo = material('#ffb54a');
+          const brasa = material('#ff643b');
+          for (const lado of [-1, 1]) {
+            const asa = new THREE.Group();
+            asa.name = `asa-flamejante-${lado < 0 ? 'esquerda' : 'direita'}`;
+            asa.position.set(lado * 0.3, 0.19, -0.27);
+            identidade.add(asa);
+            const ombro = caixa(
+              asa,
+              lado * 0.16,
+              0.03,
+              0,
+              0.43,
+              0.25,
+              0.2,
+              tecido,
+              'armadura-da-asa'
+            );
+            ombro.rotation.z = lado * 0.25;
+            for (let i = 0; i < 7; i++) {
+              const pena = malha(
+                asa,
+                new THREE.ConeGeometry(0.13, 0.75 - i * 0.045, 5),
+                i % 2 === 0 ? fogo : brasa,
+                lado * (0.38 + i * 0.12),
+                0.14 - i * 0.075,
+                0,
+                'pena-flamejante'
+              );
+              pena.rotation.z = -lado * (0.85 + i * 0.09);
+              pena.scale.z = 0.42;
+            }
+            this.asasVoo.push({ pivo: asa, lado });
+            const greva = grupo(lado < 0 ? this.peE : this.peD, `garra-${lado}`);
+            for (let i = 0; i < 3; i++) {
+              const garra = malha(
+                greva,
+                new THREE.ConeGeometry(0.025, 0.16, 5),
+                metal,
+                (i - 1) * 0.065,
+                -0.12,
+                0.18,
+                'garra-solar'
+              );
+              garra.rotation.x = Math.PI / 2;
+            }
+          }
+          const peito = caixa(
+            identidade,
+            0,
+            -0.09,
+            0.38,
+            0.49,
+            0.39,
+            0.14,
+            tecido,
+            'peitoral-da-forja'
+          );
+          peito.rotation.z = Math.PI / 4;
+          const bico = malha(
+            identidade,
+            new THREE.ConeGeometry(0.1, 0.27, 4),
+            metal,
+            0,
+            -0.03,
+            0.54,
+            'bico-solar'
+          );
+          bico.rotation.x = Math.PI / 2;
+          for (let i = 0; i < 3; i++) {
+            const crista = malha(
+              identidade,
+              new THREE.ConeGeometry(0.08, 0.4 - i * 0.06, 5),
+              i === 1 ? fogo : brasa,
+              (i - 1) * 0.14,
+              0.62,
+              -0.03,
+              'crista-de-fogo'
+            );
+            crista.rotation.z = -(i - 1) * 0.3;
+            const cauda = malha(
+              adereco,
+              new THREE.ConeGeometry(0.1, 0.7, 5),
+              i === 1 ? brasa : fogo,
+              (i - 1) * 0.18,
+              -0.41,
+              -0.52,
+              'cauda-de-brasa'
+            );
+            cauda.rotation.x = -2.2;
+            cauda.rotation.z = (i - 1) * 0.25;
+          }
+          break;
+        }
         case 'byte': {
           caixa(identidade, 0.17, 0.58, -0.02, 0.055, 0.3, 0.055, metal, 'antena-digital');
           malha(
@@ -993,7 +1175,8 @@ export class ModeloClaude {
     const falando = e.falando || this.falaRestante > 0;
     const t = this.tempo;
     const vel = e.velocidade;
-    const andando = e.noChao && vel > 0.4;
+    const voador = this.identidade === 'aeria' || this.identidade === 'fenix';
+    const andando = !voador && e.noChao && vel > 0.4;
     const cadencia = this.identidade ? CADENCIAS[this.identidade] : undefined;
 
     // giro suave com inclinação nas curvas
@@ -1024,7 +1207,9 @@ export class ModeloClaude {
     const quique = andando
       ? Math.abs(Math.sin(this.fase)) * 0.07 * Math.min(1, vel / 4) * (cadencia?.salto ?? 1)
       : 0;
-    let corpoY = quique;
+    // A posição física de voo pertence ao jogador; aqui só há oscilação das asas.
+    let corpoY =
+      quique + (voador ? Math.sin(t * (this.identidade === 'aeria' ? 4.3 : 2.6)) * 0.07 : 0);
     let inclinaAlvo = limitar(vel * 0.035, 0, 0.26);
     let rolar = 0;
     let girarY = 0;
@@ -1093,7 +1278,7 @@ export class ModeloClaude {
       this.peD.rotation.x = -passo * (cadencia?.amplitude ?? 0.9);
       this.peE.position.y = 0.2 + Math.max(0, Math.sin(this.fase)) * 0.09;
       this.peD.position.y = 0.2 + Math.max(0, -Math.sin(this.fase)) * 0.09;
-    } else if (!e.noChao) {
+    } else if (!e.noChao || voador) {
       this.peE.rotation.x = aproximar(this.peE.rotation.x, -0.6, 12, dt);
       this.peD.rotation.x = aproximar(this.peD.rotation.x, 0.4, 12, dt);
       this.peE.position.y = aproximar(this.peE.position.y, 0.3, 12, dt);
@@ -1125,9 +1310,9 @@ export class ModeloClaude {
         alvoDX -= 0.2;
       }
     }
-    if (!e.noChao) {
-      alvoEZ = -1.5;
-      alvoDZ = 1.5;
+    if (!e.noChao || voador) {
+      alvoEZ = voador ? -0.55 : -1.5;
+      alvoDZ = voador ? 0.55 : 1.5;
       alvoEX = -0.3;
       alvoDX = -0.3;
     }
@@ -1218,6 +1403,20 @@ export class ModeloClaude {
           alvoDZ = -0.8 + e.golpe * 0.6;
           this.corpo.position.y -= arco * 0.09;
           break;
+        case 'aeria': // A fada reúne o orvalho e o espalha com ambas as mãos.
+          alvoEX = -1.1 - arco * 0.5;
+          alvoDX = -1.4;
+          alvoEZ = -0.8 - arco * 0.3;
+          alvoDZ = 0.8 + arco * 0.3;
+          this.corpo.rotation.z += Math.sin(e.golpe * Math.PI * 2) * 0.12;
+          break;
+        case 'fenix': // A ave arma um rasante com o peito e as garras à frente.
+          alvoEX = -0.75 - arco * 0.4;
+          alvoDX = alvoEX;
+          alvoEZ = -1.1;
+          alvoDZ = 1.1;
+          this.corpo.rotation.x += arco * 0.22;
+          break;
         case 'byte': // Soco de luva com contrapeso mecânico.
           alvoDX = -0.5 - arco * 1.8;
           alvoDZ = 0.1;
@@ -1257,6 +1456,15 @@ export class ModeloClaude {
     for (let i = 0; i < this.asas.length; i++) {
       this.asas[i].rotation.y = (i === 0 ? -1 : 1) * (0.25 + Math.sin(t * 6) * 0.22);
     }
+    for (const { pivo, lado } of this.asasVoo) {
+      const fada = this.identidade === 'aeria';
+      const batida = Math.sin(t * ((fada ? 13 : 6) + vel * 0.35));
+      const golpe = e.golpe >= 0 ? Math.sin(e.golpe * Math.PI) : 0;
+      const abertura = e.defendendo ? 0.9 : e.conjurando > 0 ? -0.2 : 0.15;
+      pivo.rotation.y = lado * (abertura + batida * (fada ? 0.36 : 0.62) - golpe * 0.45);
+      pivo.rotation.z = lado * (0.08 + batida * 0.13 + golpe * 0.18 - e.ferido * 0.24);
+      pivo.rotation.x = -Math.min(0.28, vel * 0.025);
+    }
     if (this.aura) {
       this.aura.rotation.y = t * 0.65;
       this.aura.scale.setScalar(1 + Math.sin(t * 3) * 0.055);
@@ -1290,7 +1498,7 @@ export class ModeloClaude {
     this.flash = Math.max(0, this.flash - dt);
     const alfa = e.escondido ? 0.45 : 1;
     for (const m of this.materiais) {
-      m.opacity = aproximar(m.opacity, alfa, 10, dt);
+      m.opacity = aproximar(m.opacity, alfa * (m.userData.opacidadeBase ?? 1), 10, dt);
       m.emissive.setRGB(this.flash > 0 ? 1 : 0, this.flash > 0 ? 1 : 0, this.flash > 0 ? 1 : 0);
       m.depthWrite = m.opacity > 0.95;
     }

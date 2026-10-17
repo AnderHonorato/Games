@@ -2,6 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import { normalizarPersonalizacao, personalizacaoPadrao } from '../../src/render/personalizacao';
 import { ModeloClaude, type EstadoAnimacao } from '../../src/render/modelo-claude';
+import { Jogador } from '../../src/roguelike/jogo/jogador';
+import { HABILIDADES } from '../../src/roguelike/dados/habilidades';
+import { ataqueBasico } from '../../src/roguelike/dados/ataques-basicos';
 import { PERSONAGENS } from '../../src/roguelike/dados/personagens';
 import { gradienteToon } from '../../src/render/materiais';
 
@@ -195,7 +198,7 @@ describe('personagem em volume', () => {
     expect(boca.visible).toBe(false);
   });
 
-  it('conserva as nove identidades e mantém transformações finitas durante emoções e combate', () => {
+  it('conserva as onze identidades e mantém transformações finitas durante emoções e combate', () => {
     const humores = [
       'neutro',
       'feliz',
@@ -265,9 +268,9 @@ describe('personagem em volume', () => {
     explicito.descartar();
   });
 
-  it('oferece nove silhuetas e nove poses próprias de espera, caminhada e ataque', () => {
-    expect(PERSONAGENS).toHaveLength(9);
-    expect(new Set(PERSONAGENS.map((p) => p.id)).size).toBe(9);
+  it('oferece onze silhuetas e onze poses próprias de espera, caminhada e ataque', () => {
+    expect(PERSONAGENS).toHaveLength(11);
+    expect(new Set(PERSONAGENS.map((p) => p.id)).size).toBe(11);
     const silhuetas = new Set<string>();
     const modelos = PERSONAGENS.map((personagem) => {
       expect(personagem.aparencia.identidade).toBe(personagem.id);
@@ -280,7 +283,7 @@ describe('personagem em volume', () => {
       );
       return modelo;
     });
-    expect(silhuetas.size).toBe(9);
+    expect(silhuetas.size).toBe(11);
     for (const estado of [parado, { ...parado, velocidade: 4 }, { ...parado, golpe: 0.4 }]) {
       const poses = new Set<string>();
       for (const modelo of modelos) {
@@ -302,10 +305,87 @@ describe('personagem em volume', () => {
         }
         poses.add(valores.map((v) => v.toFixed(4)).join(','));
       }
-      expect(poses.size).toBe(9);
+      expect(poses.size).toBe(11);
     }
     for (const modelo of modelos) modelo.descartar();
   });
+
+  it('oferece voo físico somente à fada e à ave, com básicos próprios e iniciais válidas', () => {
+    expect(PERSONAGENS.filter((p) => p.voo).map((p) => p.id)).toEqual(['aeria', 'fenix']);
+    const nomes = new Set<string>();
+    for (const personagem of PERSONAGENS) {
+      expect(HABILIDADES.some((h) => h.id === personagem.habilidadeInicial)).toBe(true);
+      const ataque = ataqueBasico(personagem.id);
+      expect(ataque.dano).toBeGreaterThan(0);
+      expect(ataque.recarga).toBeGreaterThan(0);
+      nomes.add(ataque.nome);
+      const jogador = new Jogador(0, personagem.id, true);
+      expect(jogador.y).toBe(personagem.voo ?? 0);
+      expect(jogador.recargaAtaque).toBe(0);
+      expect(jogador.build).toEqual({ ativas: [], passivas: [] });
+      jogador.modelo.descartar();
+    }
+    expect(nomes.size).toBe(11);
+    const jogador = new Jogador(0, 'aeria', true);
+    jogador.trocarPersonagem('fenix');
+    expect(jogador.y).toBe(1.45);
+    jogador.trocarPersonagem('claude');
+    expect(jogador.y).toBe(0);
+    jogador.modelo.descartar();
+  });
+
+  it.each(['aeria', 'fenix'] as const)(
+    '%s conserva asas de voo em todas as roupas e anima defesa, dano, ataque e deslocamento',
+    (id) => {
+      const modelo = new ModeloClaude(PERSONAGENS.find((p) => p.id === id)!.aparencia);
+      modelo.raiz.position.set(3, 1.3, 4);
+      const prefixo = id === 'aeria' ? 'asa-eterea' : 'asa-flamejante';
+      for (const roupa of ['aventureiro', 'mago', 'guardiao'] as const) {
+        modelo.personalizar({
+          roupa,
+          cabeca: 'bone',
+          acessorio: 'oculos',
+          corRoupa: '#123456',
+          corDetalhe: '#abcdef',
+        });
+        const esquerda = modelo.raiz.getObjectByName(`${prefixo}-esquerda`)!;
+        const direita = modelo.raiz.getObjectByName(`${prefixo}-direita`)!;
+        expect(esquerda).toBeDefined();
+        expect(direita).toBeDefined();
+        const largura = new THREE.Box3().setFromObject(esquerda).getSize(new THREE.Vector3()).x;
+        expect(largura).toBeGreaterThan(0.9);
+        const poses = new Set<string>();
+        for (const estado of [
+          parado,
+          { ...parado, velocidade: 5, noChao: false },
+          { ...parado, golpe: 0.5 },
+          { ...parado, defendendo: true },
+          { ...parado, ferido: 0.7 },
+          { ...parado, conjurando: 1 },
+        ]) {
+          modelo.atualizar(1 / 60, estado);
+          poses.add(esquerda.rotation.toArray().join(','));
+          expect(esquerda.rotation.y).toBeCloseTo(-direita.rotation.y);
+          expect(modelo.raiz.position.toArray()).toEqual([3, 1.3, 4]);
+        }
+        expect(poses.size).toBe(6);
+        expect(modelo.raiz.getObjectByName('aba-do-bone')).toBeDefined();
+        const assinatura = modelo.raiz.getObjectByName(
+          id === 'aeria' ? 'vestido-de-petalas' : 'peitoral-da-forja'
+        ) as THREE.Mesh;
+        expect((assinatura.material as THREE.MeshToonMaterial).color.getHexString()).toBe('123456');
+        expect(
+          modelo.raiz.getObjectsByProperty(
+            'name',
+            id === 'aeria' ? 'membrana-eterea' : 'pena-flamejante'
+          )
+        ).toHaveLength(id === 'aeria' ? 4 : 14);
+        modelo.definirPoder(20);
+        expect(modelo.raiz.getObjectByName(`${prefixo}-esquerda`)).toBeDefined();
+      }
+      modelo.descartar();
+    }
+  );
 
   it('preserva assinaturas e cores escolhidas com evoluções cumulativas em 5, 10 e 20', () => {
     const marcas = {

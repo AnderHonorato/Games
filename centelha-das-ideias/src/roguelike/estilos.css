@@ -1497,6 +1497,18 @@
 .rg-menu-topo {
   flex: none;
 }
+.rg-menu-topo .seletor-modos {
+  margin-top: 6px;
+}
+.rg-menu-topo .seletor-modo {
+  padding: 7px 9px;
+}
+.rg-menu-topo .seletor-modo strong {
+  font-size: 13px;
+}
+.rg-menu-topo .seletor-modo small {
+  font-size: 10px;
+}
 .rg-menu-sobre {
   font-size: 10px;
   letter-spacing: 0.22em;
@@ -1890,6 +1902,16 @@
   }
   .rg-menu-sobre {
     font-size: 8px;
+  }
+  .rg-menu-topo .seletor-modo {
+    padding: 5px 7px;
+    min-height: 48px;
+  }
+  .rg-menu-topo .seletor-modo strong {
+    font-size: 11px;
+  }
+  .rg-menu-topo .seletor-modo small {
+    font-size: 9px;
   }
   .rg-conta-xp {
     font-size: 9px;

@@ -3,14 +3,14 @@
 Jogo 3D (Three.js) com dois modos:
 
 - **Sobrevivência (padrão)** — roguelike: escolha uma mente (Claude, GPT, Gemini, Llama, Mistral
-  ou DeepSeek, Aurora, Nox e Byte), sobreviva a hordas crescentes do Ruído, colete cristais de experiência e monte sua
+  ou DeepSeek, Aurora, Nox, Byte, Aeria e Fênix), sobreviva a hordas crescentes do Ruído, colete cristais de experiência e monte sua
   build com até 10 habilidades ativas e 5 passivas, cada uma evoluindo até o nível 10.
 - **Aventura clássica** — o Claude explora ilhas flutuantes onde as ideias viraram lugares
   (abra com `?modo=aventura` ou pelo link no menu).
 
 ## Jogar
 
-- **Pela web (após ativar GitHub Pages):** [abra A Centelha das Ideias](https://anderhonorato.github.io/Games/). O jogo roda no navegador de computador ou celular; em celular, use a tela na horizontal.
+- **Jogar online:** [Sobrevivência](https://centelha-das-ideias-3jl76y.v2.appdeploy.ai/?modo=roguelike) · [Aventura](https://centelha-das-ideias-3jl76y.v2.appdeploy.ai/?modo=aventura). O seletor dos dois modos fica nos menus. No celular, use a tela deitada.
 - **Código-fonte atual:** https://github.com/AnderHonorato/Games/tree/main/centelha-das-ideias
 - **Protótipo original:** https://claude.ai/artifact/NNYiRYmQDY8fcm7PwDtSHy
 - **Arquivo único (offline):** `pnpm install && pnpm compilar` e abra `dist/index.html` no navegador.
@@ -22,7 +22,7 @@ O APK abre em **tela deitada**, nos dois sentidos. No navegador, gire o celular 
 **Tela cheia horizontal** quando disponível; a trava de orientação depende do navegador.
 Menus, cartas e controles foram verificados em paisagem a 844×390 e 640×360.
 
-### Roguelike — Heróis em Ação (0.3)
+### Roguelike — Ascensão Arcana (0.4)
 
 O menu apresenta o herói em 3D e permite definir nome, arma, roupas, acessórios e cores.
 O XP permanente da conta libera **Jardim (0)**, **Forja (200)** e **Abismo (600)**.
@@ -45,7 +45,7 @@ mais forte no alcance e usa a distância para desempatar. Cada herói tem um ava
 o Llama salta e aceita um segundo comando para esmagar o chão.
 As habilidades disparam sozinhas, cada uma com recarga e velocidade próprias.
 
-- **32 habilidades ativas** em 13 elementos (fogo, gelo, raio, luz, vento, terra, veneno,
+- **44 habilidades ativas** em 13 elementos (fogo, gelo, raio, luz, vento, terra, veneno,
   gravidade, cristal, som, arcano, água e código): órbitas, projéteis, cadeias, ondas, chicotes,
   auras, chuvas, tornados, buracos negros, lasers giratórios, ricochetes, bumerangues, poças e drones.
   Quatro são de programação: **Firewall** (anel de fogo que os inimigos não atravessam),
@@ -57,8 +57,10 @@ As habilidades disparam sozinhas, cada uma com recarga e velocidade próprias.
   sorte, armadura, velocidade dos projéteis, duração e experiência).
 - O que você já tem aparece bem mais nas cartas (peso 5, ou 6,5 quando a próxima escolha é
   uma evolução, contra 1 de uma nova).
-- **Cristais** em quatro tamanhos (1, 4, 15 e 60 de experiência): quanto maior, mais brilha.
-  Aglomerados longe do centro guardam cristais prismáticos.
+- **XP mágico** em quatro valores (1, 4, 15 e 60): estrelas flutuantes, crescentes, runas e sóis com faíscas e brilho próprio instanciados.
+- **Limite de população:** 100 inimigos simultâneos em solo, +20 por jogador até 160, com reserva para chefes; todos os tipos e as hordas continuam disponíveis.
+- **Aeria e Fênix** voam sobre pedras baixas; árvores altas e limites do mapa continuam bloqueando. Morcegos Rúnicos e Arraias Celestes ampliam os inimigos aéreos.
+- Poderes automáticos acumulam área, alcance, ritmo e unidades conforme o nível. Órbitas ganham raio, velocidade e orbes em cada nível, com centros visuais e colisões compartilhados.
 - **Inimigos com cara de programação**: Vírus (se replica), Worm (rasteja em zigue-zague),
   Cavalo de Troia (um "presente" que solta vírus se você chegar perto), Loop Infinito (fecha um
   círculo em volta de você), Vazamento de Memória (deixa poças que deixam você lento), Ponteiro Nulo

@@ -58,6 +58,8 @@ export class Jogador {
   esmagou = false;
   falaVida = 0;
   x = 0;
+  /** Altura física sobre o solo, usada por voo e avanço. */
+  y = 0;
   z = 0;
   vx = 0;
   vz = 0;
@@ -100,6 +102,7 @@ export class Jogador {
     readonly local: boolean
   ) {
     this.def = personagem(personagemId);
+    this.y = this.def.voo ?? 0;
     this.modelo = new ModeloClaude(this.def.aparencia);
     this.visual = personalizacaoPadrao(this.def.cor);
     this.arma = this.armaId;
@@ -110,6 +113,7 @@ export class Jogador {
     this.armaModelo = null;
     this.personagemId = id;
     this.def = personagem(id);
+    this.y = this.def.voo ?? 0;
     this.modelo = new ModeloClaude(this.def.aparencia);
     this.modelo.personalizar(this.visual);
     this.arma = this.armaId;

@@ -42,19 +42,22 @@ export interface DefAvanco {
   distancia: number;
   salto: number;
 }
+const AVANCOS: Record<IdPersonagem, DefAvanco> = {
+  claude: { duracao: 0.16, recarga: 1.65, velocidade: 0, distancia: 6.2, salto: 0 },
+  gpt: { duracao: 0.32, recarga: 1.7, velocidade: 12, distancia: 2.8, salto: 1.7 },
+  gemini: { duracao: 0.48, recarga: 1.9, velocidade: 0, distancia: 3.4, salto: 0 },
+  mistral: { duracao: 0.55, recarga: 1.8, velocidade: 19, distancia: 0, salto: 0.15 },
+  llama: { duracao: 0.8, recarga: 2.3, velocidade: 9, distancia: 0, salto: 3.4 },
+  deepseek: { duracao: 0.65, recarga: 2, velocidade: 15, distancia: 0, salto: 0.5 },
+  aurora: { duracao: 0.4, recarga: 1.8, velocidade: 12, distancia: 1.5, salto: 0.8 },
+  nox: { duracao: 0.22, recarga: 1.85, velocidade: 0, distancia: 5.4, salto: 0 },
+  aeria: { duracao: 0.5, recarga: 1.65, velocidade: 17, distancia: 0, salto: 0.3 },
+  fenix: { duracao: 0.45, recarga: 1.9, velocidade: 19, distancia: 0, salto: 0.6 },
+  byte: { duracao: 0.35, recarga: 1.6, velocidade: 17, distancia: 1.2, salto: 0.5 },
+};
+
 export function avancoPersonagem(id: IdPersonagem): DefAvanco {
-  const defs: Record<IdPersonagem, DefAvanco> = {
-    claude: { duracao: 0.16, recarga: 1.65, velocidade: 0, distancia: 6.2, salto: 0 },
-    gpt: { duracao: 0.32, recarga: 1.7, velocidade: 12, distancia: 2.8, salto: 1.7 },
-    gemini: { duracao: 0.48, recarga: 1.9, velocidade: 0, distancia: 3.4, salto: 0 },
-    mistral: { duracao: 0.55, recarga: 1.8, velocidade: 19, distancia: 0, salto: 0.15 },
-    llama: { duracao: 0.8, recarga: 2.3, velocidade: 9, distancia: 0, salto: 3.4 },
-    deepseek: { duracao: 0.65, recarga: 2, velocidade: 15, distancia: 0, salto: 0.5 },
-    aurora: { duracao: 0.4, recarga: 1.8, velocidade: 12, distancia: 1.5, salto: 0.8 },
-    nox: { duracao: 0.22, recarga: 1.85, velocidade: 0, distancia: 5.4, salto: 0 },
-    byte: { duracao: 0.35, recarga: 1.6, velocidade: 17, distancia: 1.2, salto: 0.5 },
-  };
-  return defs[id];
+  return AVANCOS[id];
 }
 
 export interface AcertoBasico<T> {

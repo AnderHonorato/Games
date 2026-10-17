@@ -12,6 +12,7 @@ import { lerSalvamento } from '../nucleo/salvamento';
 import type { IdArma } from '../nucleo/tipos';
 import { instalarToque } from './toque';
 import { pedirTelaDeitada } from '../motor/tela-deitada';
+import { seletorModos, VERSAO_JOGO } from './modos';
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -346,6 +347,8 @@ export class Interface implements Ui {
         <b>Celular:</b> arraste à esquerda para andar, botões à direita (dá para andar, pular e atacar ao mesmo tempo).
       </div>`;
     const botoes = t.querySelector('.titulo-botoes')!;
+    const modos = seletorModos('aventura');
+    botoes.before(el('div', 'modo-versao-aventura', `Aventura · ${VERSAO_JOGO}`), modos);
     if (temSalvamento) {
       const c = el('button', 'botao principal', 'Continuar');
       c.addEventListener('click', () => {
@@ -363,9 +366,6 @@ export class Interface implements Ui {
       this.jogo.novoJogo();
     });
     botoes.append(n);
-    const sobrevivencia = el('a', 'botao', 'Modo Sobrevivência');
-    sobrevivencia.href = '?modo=sobrevivencia';
-    botoes.append(sobrevivencia);
     if (document.fullscreenEnabled) {
       const tela = el('button', 'botao', 'Tela cheia horizontal');
       tela.type = 'button';
@@ -389,7 +389,10 @@ export class Interface implements Ui {
     const j = this.jogo;
     const p = el('div', 'tela-pausa');
     const caixa = el('div', 'caixa-menu');
-    caixa.append(el('h2', '', 'Pausa'));
+    caixa.append(
+      el('div', 'modo-versao-aventura', `Aventura · ${VERSAO_JOGO}`),
+      el('h2', '', 'Pausa')
+    );
     const botao = (texto: string, fn: () => void, classe = '') => {
       const b = el('button', `botao ${classe}`, texto);
       b.addEventListener('click', fn);

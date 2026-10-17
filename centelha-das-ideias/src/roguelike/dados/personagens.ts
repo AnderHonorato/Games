@@ -8,7 +8,17 @@ import type { Aparencia } from '../../render/modelo-claude';
 import type { Atributos } from '../nucleo/progresso';
 
 export type IdPersonagem =
-  'claude' | 'gpt' | 'gemini' | 'llama' | 'mistral' | 'deepseek' | 'aurora' | 'nox' | 'byte';
+  | 'claude'
+  | 'gpt'
+  | 'gemini'
+  | 'llama'
+  | 'mistral'
+  | 'deepseek'
+  | 'aurora'
+  | 'nox'
+  | 'byte'
+  | 'aeria'
+  | 'fenix';
 
 export interface Voz {
   /** Tom (0..2) e velocidade (0.5..2) da síntese de voz. */
@@ -25,6 +35,8 @@ export interface DefPersonagem {
   descricao: string;
   cor: string;
   habilidadeInicial: string;
+  /** Altura física de voo sobre o solo; ausente para quem caminha. */
+  voo?: number;
   /** Modificadores sobre os atributos base. */
   atributos: Partial<Atributos>;
   aparencia: Aparencia;
@@ -414,6 +426,75 @@ export const PERSONAGENS: DefPersonagem[] = [
         'Minhas luvas ganharam potência! Você viu esse brilho?',
         'Versão turbinada, graças a você!',
       ],
+    },
+  },
+  {
+    id: 'aeria',
+    nome: 'Aeria',
+    titulo: 'A Fada do Céu Vivo',
+    descricao:
+      'Voa com asas etéreas sobre obstáculos baixos. Suas Agulhas de Orvalho abrem um leque de luz; muita velocidade, pouca vida.',
+    cor: '#86e6c9',
+    habilidadeInicial: 'laminaVento',
+    voo: 1.15,
+    atributos: { velocidade: 1.18, vidaMaxima: 80, duracao: 1.12 },
+    aparencia: {
+      identidade: 'aeria',
+      corCorpo: '#86e6c9',
+      corEscura: '#438c9d',
+      corCentelha: '#e3fff4',
+      corpo: () => {
+        const g = new THREE.SphereGeometry(0.46, 18, 14);
+        g.scale(0.84, 1.12, 0.85);
+        return g;
+      },
+      rostoZ: 0.38,
+    },
+    voz: { tom: 1.55, ritmo: 1.12, bipe: 'aeria' },
+    falas: {
+      inicio: [
+        'Você escolhe o horizonte. Eu abro as asas!',
+        'Vamos levar nossas ideias às nuvens?',
+      ],
+      nivel: ['Uma asa mais forte! Qual caminho você quer iluminar?', 'O céu ficou maior.'],
+      dano: ['Ai, minha asa! Me ajuda a encontrar uma corrente segura?', 'Vento contrário!'],
+      chefe: ['Mesmo esse grandalhão tem que olhar para cima. Voa comigo!'],
+      vitoria: ['Horizonte livre! Obrigada por voar comigo.'],
+      morte: ['Minhas asas descansam. Na próxima a gente alcança mais alto.'],
+      evolucao: ['Olha minhas asas de luz! Você me ajudou a florescer.'],
+    },
+  },
+  {
+    id: 'fenix',
+    nome: 'Fênix',
+    titulo: 'A Ave da Forja Solar',
+    descricao:
+      'Ave de armadura flamejante que voa sobre obstáculos baixos. Seu Rasante Solar varre a frente com fogo; mais dano e área, recargas lentas.',
+    cor: '#ff9656',
+    habilidadeInicial: 'bolaFogo',
+    voo: 1.45,
+    atributos: { dano: 1.15, area: 1.12, recarga: 1.12, vidaMaxima: 95 },
+    aparencia: {
+      identidade: 'fenix',
+      corCorpo: '#ff9656',
+      corEscura: '#9f3a46',
+      corCentelha: '#fff4a5',
+      corpo: () => {
+        const g = new THREE.OctahedronGeometry(0.51, 2);
+        g.scale(0.95, 1.1, 0.9);
+        return g;
+      },
+      rostoZ: 0.43,
+    },
+    voz: { tom: 0.88, ritmo: 1.06, bipe: 'fenix' },
+    falas: {
+      inicio: ['Você aponta o destino. Eu acendo o caminho!', 'Asas abertas, coração em brasa.'],
+      nivel: ['Mais uma chama! Escolhe onde vamos brilhar.', 'Minha forja está acesa.'],
+      dano: ['Faísca fora do lugar! Me guia para uma corrente melhor?', 'Minhas penas!'],
+      chefe: ['O céu é nosso. Vamos mostrar nossa coragem a esse gigante!'],
+      vitoria: ['Sol no horizonte! Essa vitória também é sua.'],
+      morte: ['Toda brasa guarda um recomeço. Voamos juntos outra vez.'],
+      evolucao: ['Minha armadura virou aurora! Você está vendo essas penas?'],
     },
   },
 ];

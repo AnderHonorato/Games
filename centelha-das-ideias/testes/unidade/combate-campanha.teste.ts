@@ -126,7 +126,7 @@ describe('combate manual', () => {
       expect(p.atacarManual()).toBe(false);
     }
   );
-  it('nove heróis têm nove mecânicas e escolhas de arma preservam seu ataque pessoal', () => {
+  it('onze heróis preservam as nove mecânicas e escolhas de arma preservam seu ataque pessoal', () => {
     expect(new Set(Object.values(ATAQUES_BASICOS).map((a) => a.mecanica)).size).toBe(9);
     const p = fixture();
     for (const arma of ARMAS_INICIAIS) {

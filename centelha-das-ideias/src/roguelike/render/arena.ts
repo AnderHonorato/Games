@@ -19,6 +19,8 @@ export interface Obstaculo {
   x: number;
   z: number;
   r: number;
+  /** Altura sólida; ausência mantém o obstáculo bloqueando personagens voadores. */
+  altura?: number;
 }
 
 export interface Arena {
@@ -107,7 +109,7 @@ function criarJardim(qualidade: 'alta' | 'media' | 'baixa'): Arena {
     const e = 0.8 + rnd() * 0.7;
     if (!livre(x, z, 0.5 * e)) continue;
     arvores.push({ x, z, e, tipo: rnd() < 0.3 ? 1 : 0 });
-    obstaculos.push({ x, z, r: 0.45 * e });
+    obstaculos.push({ x, z, r: 0.45 * e, altura: 4.5 * e });
   }
   for (let i = 0; i < 800 && rochas.length < 90; i++) {
     const a = rnd() * Math.PI * 2;
@@ -117,7 +119,7 @@ function criarJardim(qualidade: 'alta' | 'media' | 'baixa'): Arena {
     const r = 0.6 + rnd() * 1.3;
     if (!livre(x, z, r)) continue;
     rochas.push({ x, z, r });
-    obstaculos.push({ x, z, r: r * 0.9 });
+    obstaculos.push({ x, z, r: r * 0.9, altura: r * 1.05 });
   }
 
   const m4 = new THREE.Matrix4();

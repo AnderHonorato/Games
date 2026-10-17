@@ -14,6 +14,13 @@ let server;
 let browser;
 const erros = [];
 const resultados = [];
+// Partida usa Date.now() & 0xffff para o RNG; fixar a origem torna esta sonda reproduzível.
+const semente = 40403;
+const instalarSemente = (context) =>
+  context.addInitScript((valor) => {
+    const instante = Math.floor(Date.UTC(2026, 9, 17) / 65536) * 65536 + valor;
+    Date.now = () => instante;
+  }, semente);
 const estado = (page) => page.evaluate(() => window.__sobrevivencia.estado());
 async function centro(locator) {
   const box = await locator.boundingBox();
@@ -62,6 +69,8 @@ try {
     isMobile: true,
     reducedMotion: 'reduce',
   });
+  await instalarSemente(context);
+  console.log(`v3: semente fixa ${semente}`);
   const page = await context.newPage();
   page.setDefaultTimeout(12000);
   page.on('pageerror', (e) => erros.push(e.message));
@@ -71,13 +80,13 @@ try {
   await page.goto(url);
   await page.waitForFunction(() => window.__sobrevivencia?.estado);
   await page.locator('.rg-carta-personagem').first().waitFor();
-  assert.equal(await page.locator('.rg-carta-personagem').count(), 9);
-  assert.match(await page.locator('.rg-menu .rg-modo-versao').textContent(), /Roguelike.*v0\.3\.0/);
+  assert.equal(await page.locator('.rg-carta-personagem').count(), 11);
+  assert.match(await page.locator('.rg-menu .rg-modo-versao').textContent(), /Roguelike.*v0\.4\.0/);
   await page.setViewportSize({ width: 640, height: 360 });
   const menu = await page
     .locator('.rg-menu-conteudo')
     .evaluate((el) => ({ scroll: el.scrollHeight, height: el.clientHeight }));
-  assert.ok(menu.scroll > menu.height, 'nove heróis e detalhes rolam no conteúdo');
+  assert.ok(menu.scroll > menu.height, 'onze heróis e detalhes rolam no conteúdo');
   for (const locator of [
     page.locator('.rg-menu-base'),
     page.getByRole('button', { name: /Iniciar jornada/ }),
@@ -100,6 +109,8 @@ try {
     'aurora',
     'nox',
     'byte',
+    'aeria',
+    'fenix',
   ][colunas];
   assert.equal((await estado(page)).personagem, esperado, 'teclado usa número real de colunas CSS');
   await page.screenshot({ path: resolve(saida, 'menu-640x360.png') });
@@ -114,6 +125,8 @@ try {
     'aurora',
     'nox',
     'byte',
+    'aeria',
+    'fenix',
   ]) {
     await page.evaluate((id) => {
       window.__sobrevivencia.menu();
@@ -138,7 +151,7 @@ try {
     );
     resultados.push({ personagem: id, ataque: s.ataqueBasico.nome, inicio: 'jogando', J: true });
   }
-  console.log('v3: nove ataques e menu verificados');
+  console.log('v3: onze ataques e menu verificados');
   const pauseHit = await tocar(page, page.getByRole('button', { name: 'Pausar', exact: true }));
   await page.waitForFunction(() => window.__sobrevivencia.estado().estado === 'pausa');
   await congelado(page);
@@ -208,8 +221,39 @@ try {
       const ponto = api.pontosInteracoes().find((i) => i.tipo === tipo);
       api.posicionar(ponto.x, ponto.z);
     }, tipo);
-    await page.locator('.rg-usar').waitFor({ state: 'visible' });
-    const antes = await estado(page);
+    // A UI só é atualizada no desenho: ler estado e botão juntos evita aceitar
+    // um DOM do quadro anterior ao teleporte ou ao reinício da fixture.
+    const pronto = await page
+      .waitForFunction((esperado) => {
+        const atual = window.__sobrevivencia.estado();
+        const botao = document.querySelector('.rg-usar');
+        return atual.interacaoAtual?.tipo === esperado &&
+          botao &&
+          !botao.hidden &&
+          botao.getBoundingClientRect().width > 0
+          ? atual
+          : false;
+      }, tipo)
+      .catch(async (erro) => {
+        const atual = await estado(page);
+        console.error('Diagnóstico da interação ausente:', {
+          esperado: tipo,
+          semente,
+          estado: atual.estado,
+          x: atual.x,
+          z: atual.z,
+          interacao: atual.interacaoAtual,
+          pontos: await page.evaluate(() => window.__sobrevivencia.pontosInteracoes()),
+          botao: await page.locator('.rg-usar').textContent(),
+          atributos: await page.locator('.rg-usar').evaluate((e) => ({
+            hidden: e.hidden,
+            display: getComputedStyle(e).display,
+          })),
+        });
+        throw erro;
+      });
+    const antes = await pronto.jsonValue();
+    await pronto.dispose();
     assert.equal(antes.interacaoAtual.tipo, tipo);
     await page.screenshot({ path: resolve(saida, `interacao-${tipo}-844x390.png`) });
     await tocar(page, page.locator('.rg-usar'));
@@ -228,6 +272,7 @@ try {
   }
   await context.close();
   const desktop = await browser.newContext({ viewport: { width: 1260, height: 720 } });
+  await instalarSemente(desktop);
   const desk = await desktop.newPage();
   desk.on('pageerror', (e) => erros.push(e.message));
   await desk.goto(url);
@@ -239,6 +284,7 @@ try {
   await desk.screenshot({ path: resolve(saida, 'jogo-1260x720.png') });
   assert.deepEqual(erros, []);
   const relatorio = {
+    semente,
     pauseHit,
     personagens: resultados,
     interacoes,

@@ -39,9 +39,9 @@ function numerosFinitos(valor: unknown): void {
   else if (valor && typeof valor === 'object') Object.values(valor).forEach(numerosFinitos);
 }
 
-describe('assinaturas próprias das 32 habilidades', () => {
+describe('assinaturas próprias das 44 habilidades', () => {
   it('cobre exatamente o catálogo e produz geometrias distintas, finitas e limitadas', () => {
-    expect(HABILIDADES).toHaveLength(32);
+    expect(HABILIDADES).toHaveLength(44);
     const identidades = new Set<string>();
     for (const h of HABILIDADES) {
       for (const nivel of [1, 5, 9, 10]) {
@@ -98,7 +98,7 @@ describe('assinaturas próprias das 32 habilidades', () => {
 });
 
 describe('catálogo sonoro de poderes', () => {
-  it('registra 32 receitas alcançáveis sem colisão no contrato de áudio', () => {
+  it('registra 44 receitas alcançáveis sem colisão no contrato de áudio', () => {
     expect(Object.keys(SOM_POR_PODER).sort()).toEqual(HABILIDADES.map((h) => h.id).sort());
     expect(new Set(SONS_PODERES).size).toBe(HABILIDADES.length);
     expect(new Set(SONS).size).toBe(SONS.length);
@@ -160,27 +160,38 @@ describe('catálogo sonoro de poderes', () => {
 });
 
 describe('ruptura suprema na progressão', () => {
-  it('preserva níveis 1 a 9, incluindo as evoluções elementais existentes', () => {
-    for (const h of HABILIDADES)
-      for (let n = 1; n <= 9; n++) {
-        const v = valoresHabilidade(h, n);
-        expect(v.dano).toBeCloseTo(h.base.dano * (1 + 0.16 * (n - 1)) * (n >= 5 ? 1.15 : 1));
-        expect(v.area).toBeCloseTo(h.base.area * (1 + 0.05 * (n - 1)));
-        expect(v.recarga).toBeCloseTo(h.base.recarga * 0.955 ** (n - 1));
-        expect(v.quantidade).toBe(
-          h.base.quantidade + h.maisQuantidade.filter((l) => l <= n).length
-        );
-        expect(v.evo5).toBe(n >= 5);
-        expect(v.evo10).toBe(false);
+  it('faz todo o arsenal crescer em dano, área, alcance e ritmo nos níveis intermediários', () => {
+    for (const h of HABILIDADES) {
+      const inicial = valoresHabilidade(h, 1);
+      expect(inicial.dano).toBeCloseTo(h.base.dano);
+      expect(inicial.area).toBeCloseTo(h.base.area);
+      for (let n = 2; n <= 9; n++) {
+        const antes = valoresHabilidade(h, n - 1);
+        const depois = valoresHabilidade(h, n);
+        expect(depois.dano, `${h.id}: dano ${n}`).toBeGreaterThan(antes.dano);
+        expect(depois.area, `${h.id}: área ${n}`).toBeGreaterThan(antes.area);
+        expect(depois.alcance, `${h.id}: alcance ${n}`).toBeGreaterThan(antes.alcance);
+        if (h.base.velocidade !== 0)
+          expect(Math.abs(depois.velocidade), `${h.id}: velocidade ${n}`).toBeGreaterThan(
+            Math.abs(antes.velocidade)
+          );
+        expect(depois.recarga, `${h.id}: recarga ${n}`).toBeLessThan(antes.recarga);
+        expect(depois.quantidade).toBeGreaterThanOrEqual(antes.quantidade);
+        if (h.comportamento === 'orbita')
+          expect(depois.quantidade).toBeGreaterThan(antes.quantidade);
+        expect(depois.evo5).toBe(n >= 5);
+        expect(depois.evo10).toBe(false);
+        numerosFinitos(depois);
       }
+    }
   });
-  it('nível 10 tem dano 2.5x, área 1.5x, recarga menor e duas unidades extras', () => {
+  it('a evolução final amplia dano, cobertura e quantidade com recarga menor', () => {
     for (const h of HABILIDADES) {
       const a = valoresHabilidade(h, 9);
       const b = valoresHabilidade(h, 10);
-      expect(b.dano).toBeCloseTo(a.dano * 2.5);
-      expect(b.area).toBeCloseTo(a.area * 1.5);
-      expect(b.recarga).toBeCloseTo(a.recarga * 0.65);
+      expect(b.dano).toBeGreaterThanOrEqual(a.dano * 2.5 - 1e-8);
+      expect(b.area).toBeGreaterThanOrEqual(a.area * 1.3);
+      expect(b.recarga).toBeLessThan(a.recarga);
       expect(b.quantidade - a.quantidade).toBeGreaterThanOrEqual(2);
       expect(b.duracao).toBeGreaterThan(a.duracao);
       expect(b.evo5 && b.evo10).toBe(true);

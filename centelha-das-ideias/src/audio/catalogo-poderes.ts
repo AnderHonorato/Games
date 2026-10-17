@@ -32,6 +32,18 @@ export const SOM_POR_PODER = {
   dadosCaoticos: 'poderDadosCaoticos',
   espelhoPrismatico: 'poderEspelhoPrismatico',
   orquestraOrbital: 'poderOrquestraOrbital',
+  serpenteEletrica: 'poderSerpenteEletrica',
+  portalBumerangue: 'poderPortalBumerangue',
+  constelacao: 'poderConstelacao',
+  sinoGravitacional: 'poderSinoGravitacional',
+  jardimEspinhos: 'poderJardimEspinhos',
+  furacaoLaminas: 'poderFuracaoLaminas',
+  marioneteAstral: 'poderMarioneteAstral',
+  mandalaMeteoro: 'poderMandalaMeteoro',
+  ancoraCeleste: 'poderAncoraCeleste',
+  bolhasEstase: 'poderBolhasEstase',
+  enxameVespas: 'poderEnxameVespas',
+  tempestadeEspadas: 'poderTempestadeEspadas',
 } as const;
 export type IdPoderSonoro = keyof typeof SOM_POR_PODER;
 export type IdSomPoder = (typeof SOM_POR_PODER)[IdPoderSonoro];

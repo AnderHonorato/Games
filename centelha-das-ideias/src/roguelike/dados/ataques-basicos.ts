@@ -113,6 +113,28 @@ export const ATAQUES_BASICOS: Record<IdPersonagem, DefAtaqueBasico> = {
     recarga: 0.62,
     forca: 4,
   },
+  aeria: {
+    nome: 'Agulhas de Orvalho',
+    descricao: 'Três agulhas etéreas atravessam um leque diante da fada.',
+    icone: '❋',
+    cor: '#b6fff0',
+    mecanica: 'leque',
+    dano: 19,
+    alcance: 8,
+    recarga: 0.43,
+    forca: 5,
+  },
+  fenix: {
+    nome: 'Rasante Solar',
+    descricao: 'Uma frente de fogo cobre o rasante da ave e empurra os inimigos.',
+    icone: '♨',
+    cor: '#ffc069',
+    mecanica: 'onda',
+    dano: 34,
+    alcance: 6.8,
+    recarga: 0.86,
+    forca: 16,
+  },
 };
 export function ataqueBasico(id: IdPersonagem): DefAtaqueBasico {
   return ATAQUES_BASICOS[id] ?? ATAQUES_BASICOS.claude;

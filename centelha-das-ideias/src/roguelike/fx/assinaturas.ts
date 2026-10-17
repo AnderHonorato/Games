@@ -2,6 +2,7 @@
 import { HABILIDADES } from '../dados/habilidades';
 import type { SistemaFx } from './indice';
 import { ESTILO_PLANO } from './ondas';
+import { trilhasArtefato } from './especiais';
 
 export interface AssinaturaPoder {
   /** Pontos locais intercalados x,y,z; no máximo 12 trilhas de 60 pontos. */
@@ -783,8 +784,11 @@ export function desenharAssinatura(id: string, nivel = 1): AssinaturaPoder | nul
       }
       trilhas.push(anel(1.8, 0.2));
       break;
-    default:
-      return null;
+    default: {
+      const novas = trilhasArtefato(id, n);
+      if (!novas) return null;
+      trilhas.push(...novas);
+    }
   }
   // Cada marco acrescenta uma construção própria (ramificações, via, torre, ondas),
   // conservando o orçamento por manifestação mesmo quando a forma base já usa 12 fitas.
@@ -793,7 +797,7 @@ export function desenharAssinatura(id: string, nivel = 1): AssinaturaPoder | nul
     trilhas.splice(Math.max(0, 12 - novas.length));
     trilhas.push(...novas);
   }
-  const escala = n === 10 ? 1.55 : 1 + (n - 1) * 0.025;
+  const escala = n === 10 ? 2.4 : 1 + (n - 1) * 0.08;
   return {
     trilhas: trilhas.map((pontos) => pontos.map((v) => v * escala)),
     escala,

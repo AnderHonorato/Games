@@ -1,4 +1,4 @@
-/** Timbres e ritmos próprios das 32 habilidades. Toda automação usa o relógio WebAudio. */
+/** Timbres e ritmos próprios das 44 habilidades. Toda automação usa o relógio WebAudio. */
 import { SOM_POR_PODER, somDoPoder, type IdPoderSonoro, type IdSomPoder } from './catalogo-poderes';
 import type { ApiAudio } from './contrato';
 import type { DefinicaoSom, Receita } from './sons';
@@ -339,6 +339,95 @@ const RECEITAS: Record<IdPoderSonoro, Emissao> = {
       sino(k, s, t + d + 0.06, 440 * 2 ** (n / 12) * q, 0.16, 0.09);
     });
     [440, 554.37, 659.25].forEach((f) => nota(k, s, t + 0.52, f * q, 0.28, 0.065, 'triangle'));
+  },
+  serpenteEletrica(k, s, t, q) {
+    for (let j = 0; j < 7; j++) {
+      curva(
+        k,
+        s,
+        t + j * 0.043,
+        (j % 2 ? 1600 : 500) * q,
+        (j % 2 ? 750 : 1900) * q,
+        0.065,
+        0.07,
+        'pulso'
+      );
+    }
+    ar(k, s, t + 0.31, 0.09, 4800, 1200, 0.1, 'branco');
+  },
+  portalBumerangue(k, s, t, q) {
+    curva(k, s, t, 240 * q, 1600 * q, 0.21, 0.13, 'oco');
+    ar(k, s, t + 0.17, 0.065, 2600, 600, 0.11);
+    curva(k, s, t + 0.28, 1600 * q, 240 * q, 0.24, 0.13, 'oco');
+    metal(k, s, t + 0.51, 720 * q, 1.62, 0.14, 0.07);
+  },
+  constelacao(k, s, t, q) {
+    [0, 7, 14, 21, 28].forEach((n, j) =>
+      sino(k, s, t + j * 0.097, 420 * 2 ** (n / 12) * q, 0.24 + j * 0.03, 0.065)
+    );
+    nota(k, s, t + 0.49, 210 * q, 0.32, 0.09, 'suave');
+  },
+  sinoGravitacional(k, s, t, q) {
+    sino(k, s, t, 190 * q, 0.72, 0.17);
+    metal(k, s, t + 0.015, 380 * q, 2.76, 0.56, 0.08);
+    curva(k, s, t + 0.24, 150 * q, 55 * q, 0.43, 0.16);
+    sino(k, s, t + 0.48, 95 * q, 0.4, 0.1);
+  },
+  jardimEspinhos(k, s, t, q) {
+    for (let j = 0; j < 5; j++) {
+      ar(k, s, t + j * 0.083, 0.054 + j * 0.006, 450, 1600 + j * 200, 0.06, 'marrom');
+      nota(k, s, t + j * 0.083 + 0.025, (270 + j * 110) * q, 0.11, 0.055, 'triangle');
+    }
+  },
+  furacaoLaminas(k, s, t, q) {
+    ar(k, s, t, 0.54, 300, 3800, 0.13, 'branco');
+    for (let j = 0; j < 4; j++) {
+      metal(k, s, t + j * 0.115, (620 + j * 130) * q, 3.72, 0.055, 0.08);
+      curva(k, s, t + j * 0.115 + 0.04, 1700 * q, 550 * q, 0.09, 0.05);
+    }
+  },
+  marioneteAstral(k, s, t, q) {
+    [0, 0.17, 0.31].forEach((d, j) => {
+      nota(k, s, t + d, (540 - j * 90) * q, 0.18, 0.085, 'pulso');
+      metal(k, s, t + d + 0.03, (1080 - j * 180) * q, 1.015, 0.2, 0.04);
+    });
+    ar(k, s, t + 0.52, 0.04, 5800, 1600, 0.08, 'branco');
+  },
+  mandalaMeteoro(k, s, t, q) {
+    sino(k, s, t, 620 * q, 0.31, 0.08);
+    for (let j = 0; j < 3; j++) {
+      ar(k, s, t + 0.15 + j * 0.135, 0.13, 2100, 320, 0.075, 'marrom');
+      metal(k, s, t + 0.25 + j * 0.135, (130 - j * 15) * q, 0.63, 0.17, 0.12);
+    }
+    nota(k, s, t + 0.66, 62 * q, 0.28, 0.14, 'suave');
+  },
+  ancoraCeleste(k, s, t, q) {
+    metal(k, s, t, 180 * q, 4.19, 0.22, 0.15);
+    for (let j = 0; j < 4; j++)
+      metal(k, s, t + 0.09 + j * 0.057, (700 - j * 85) * q, 2.13, 0.04, 0.06);
+    curva(k, s, t + 0.37, 95 * q, 38 * q, 0.3, 0.19);
+    ar(k, s, t + 0.4, 0.13, 650, 150, 0.08, 'marrom');
+  },
+  bolhasEstase(k, s, t, q) {
+    [0, 0.14, 0.33].forEach((d, j) =>
+      curva(k, s, t + d, (320 + j * 120) * q, (620 + j * 210) * q, 0.105, 0.09, 'oco')
+    );
+    sino(k, s, t + 0.51, 2210 * q, 0.23, 0.055);
+    ar(k, s, t + 0.53, 0.065, 6500, 2500, 0.09, 'branco');
+  },
+  enxameVespas(k, s, t, q) {
+    for (let j = 0; j < 6; j++) {
+      nota(k, s, t + j * 0.062, (210 + (j % 3) * 34) * q, 0.035, 0.06, 'sawtooth');
+    }
+    curva(k, s, t + 0.39, 1250 * q, 280 * q, 0.06, 0.12, 'pulso');
+    ar(k, s, t + 0.43, 0.04, 3600, 1700, 0.06);
+  },
+  tempestadeEspadas(k, s, t, q) {
+    for (let j = 0; j < 4; j++) {
+      ar(k, s, t + j * 0.086, 0.07, 3600, 600, 0.06, 'branco');
+      metal(k, s, t + j * 0.086 + 0.06, (1000 + j * 210) * q, 3.91, 0.15, 0.085);
+    }
+    sino(k, s, t + 0.46, 530 * q, 0.26, 0.06);
   },
 };
 

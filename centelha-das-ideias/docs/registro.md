@@ -2,6 +2,17 @@
 
 Registro curto para retomar o trabalho após interrupções. Mais recente no topo.
 
+## Ascensão Arcana — 17/10/2026
+
+- Versão 0.4.0: Aventura e Sobrevivência acessíveis nos dois menus, mantendo conta, salvamento e URL. Aventura nunca havia sido retirada; faltava o acesso no título padrão.
+- Onze heróis: Aeria e Fênix têm asas animadas, levitação e passagem sobre rochas baixas; golpes manuais fixos preservados. Dezenove inimigos com cores por parte, rostos, dentes, roupas, carapaças e chefes legíveis, mais Morcego Rúnico/Arraia Celeste.
+- Quarenta e quatro poderes: 32 anteriores preservados e 12 novos. Autoataques acumulativos inspirados na dinâmica de Vampire Survivors; dano, área, velocidade e quantidade crescem. Órbitas usam perfil único de raio/giro/unidades para visual e colisão em todos os níveis. Corrigidos ganhos ignorados de ondas, perfuração, escala de projéteis e unidades dos especiais antigos.
+- XP mágico com quatro silhuetas de energia, autoluz aditiva controlada, faíscas instanciadas e sem luz por item.
+- População limitada a 100 solo e +20 por participante até 160, incluindo chefes; reserva de duas vagas de apresentação e fila de horda com emissão limitada. Menos alocações por quadro e lotes agrupados preservam os efeitos.
+- Tipos e build aprovados, 274 testes unitários em 21 arquivos aprovados. Troca real dos dois modos validada em 844×390, 640×360, 1260×720, com perfil/URL intactos e zero erros.
+- Sonda de lotação no mesmo navegador: versão antiga 420 normais/450 com chefes; versão atual 98 normais/100 com chefes e após horda. Custo de 30 passos de simulação após aquecimento: 16.1–20.3 ms antes, 5.9–6.4 ms depois. São medições sintéticas de CPU, não FPS de um aparelho físico.
+- Conferência visual integrada aprovada: dois voadores, XP mágico e 12 poderes novos nos níveis 1/10 sem erros de página. Regressão do dist completo também aprovada: 11 ataques iniciais, pausa simples/multitoque/cartas/cinemática, três interações finitas e ataque desktop. Publicação online em andamento. Teste em Android físico e WebRTC entre aparelhos permanece necessário.
+
 ## Heróis em Ação — 17/10/2026
 
 - Roguelike 0.3: ataque básico pessoal de cada herói já habilitado ao iniciar; funciona com J e botão Ataque, independente de cartas, slots, XP ou sorteio.
