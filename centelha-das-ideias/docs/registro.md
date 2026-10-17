@@ -11,7 +11,7 @@ Registro curto para retomar o trabalho após interrupções. Mais recente no top
 - População limitada a 100 solo e +20 por participante até 160, incluindo chefes; reserva de duas vagas de apresentação e fila de horda com emissão limitada. Menos alocações por quadro e lotes agrupados preservam os efeitos.
 - Tipos e build aprovados, 274 testes unitários em 21 arquivos aprovados. Troca real dos dois modos validada em 844×390, 640×360, 1260×720, com perfil/URL intactos e zero erros.
 - Sonda de lotação no mesmo navegador: versão antiga 420 normais/450 com chefes; versão atual 98 normais/100 com chefes e após horda. Custo de 30 passos de simulação após aquecimento: 16.1–20.3 ms antes, 5.9–6.4 ms depois. São medições sintéticas de CPU, não FPS de um aparelho físico.
-- Conferência visual integrada aprovada: dois voadores, XP mágico e 12 poderes novos nos níveis 1/10 sem erros de página. Regressão do dist completo também aprovada: 11 ataques iniciais, pausa simples/multitoque/cartas/cinemática, três interações finitas e ataque desktop. Publicação online em andamento. Teste em Android físico e WebRTC entre aparelhos permanece necessário.
+- Conferência visual integrada aprovada: dois voadores, XP mágico e 12 poderes novos nos níveis 1/10 sem erros de página. Regressão do dist completo também aprovada: 11 ataques iniciais, pausa simples/multitoque/cartas/cinemática, três interações finitas e ataque desktop. Publicação online 0.4.0 concluída no AppDeploy. Sonda do endereço público confirmou HTTP 200, 11 heróis, voo, ataque, pausa e abertura real de Aventura, com zero erros de página. Teste em Android físico e WebRTC entre aparelhos permanece necessário.
 
 ## Heróis em Ação — 17/10/2026
 
