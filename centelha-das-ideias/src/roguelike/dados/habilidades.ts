@@ -35,7 +35,8 @@ export type Comportamento =
   | 'drone'
   | 'muro'
   | 'coletor'
-  | 'breakpoint';
+  | 'breakpoint'
+  | 'especial';
 
 export interface Valores {
   /** Dano por acerto. */
@@ -574,6 +575,71 @@ export const HABILIDADES: DefHabilidade[] = [
     maisQuantidade: [6],
     evolucao5: 'Recursão profunda: um nível a mais de divisões',
     evolucao10: 'Estouro de pilha: divide em três a cada nível',
+  },
+  {
+    id: 'tremFantasma',
+    nome: 'Trem Fantasma',
+    descricao: 'Uma locomotiva espectral atravessa a horda em uma via reta, com vagões e empurrão.',
+    elemento: 'gravidade',
+    comportamento: 'especial',
+    icone: '🚂',
+    cor: '#9bd9db',
+    cor2: '#c4a2ff',
+    base: v({
+      dano: 24,
+      recarga: 4.2,
+      velocidade: 19,
+      area: 1.8,
+      quantidade: 2,
+      duracao: 1.1,
+      alcance: 16,
+    }),
+    maisQuantidade: [3, 7],
+    evolucao5: 'Engates assombrados: vagões deixam uma onda que puxa para os trilhos',
+    evolucao10: 'Estação do Além: três trens avançam por vias paralelas',
+  },
+  {
+    id: 'dadosCaoticos',
+    nome: 'Dados Caóticos',
+    descricao:
+      'Lança um dado de verdade: cada face de 1 a 6 escolhe um padrão e um dano diferentes.',
+    elemento: 'arcano',
+    comportamento: 'especial',
+    icone: '⚄',
+    cor: '#c49bff',
+    cor2: '#ffe6a4',
+    base: v({ dano: 15, recarga: 3.4, area: 2.1, quantidade: 1, alcance: 12, duracao: 0.9 }),
+    maisQuantidade: [],
+    evolucao5: 'Sorte em dobro: a face se repete girada em um segundo lançamento',
+    evolucao10: 'Seis Absoluto: sempre tira 6 e dispara uma estrela de doze raios',
+  },
+  {
+    id: 'espelhoPrismatico',
+    nome: 'Espelho Prismático',
+    descricao: 'Dois prismas laterais convergem feixes para o mesmo inimigo.',
+    elemento: 'cristal',
+    comportamento: 'especial',
+    icone: '◈',
+    cor: '#7eeeff',
+    cor2: '#ff8adf',
+    base: v({ dano: 13, recarga: 2.8, area: 2.2, quantidade: 2, alcance: 13, duracao: 0.8 }),
+    maisQuantidade: [],
+    evolucao5: 'Refração: cada feixe se divide depois do ponto de convergência',
+    evolucao10: 'Catedral de Luz: seis prismas convergem e explodem em um vitral radiante',
+  },
+  {
+    id: 'orquestraOrbital',
+    nome: 'Orquestra Orbital',
+    descricao: 'Notas giram no compasso de quatro batidas e projetam coroas de som.',
+    elemento: 'som',
+    comportamento: 'especial',
+    icone: '♫',
+    cor: '#ff9fd8',
+    cor2: '#ffe9a8',
+    base: v({ dano: 12, recarga: 3.6, area: 5.8, quantidade: 4, alcance: 11, duracao: 1.2 }),
+    maisQuantidade: [],
+    evolucao5: 'Contratempo: notas atravessam a horda entre cada batida',
+    evolucao10: 'Grande Finale: um acorde final cobre a arena e arremessa os inimigos',
   },
 ];
 export interface DefPassiva {

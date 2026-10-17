@@ -195,7 +195,7 @@ describe('personagem em volume', () => {
     expect(boca.visible).toBe(false);
   });
 
-  it('conserva as seis identidades e mantém transformações finitas durante emoções e combate', () => {
+  it('conserva as nove identidades e mantém transformações finitas durante emoções e combate', () => {
     const humores = [
       'neutro',
       'feliz',
@@ -234,6 +234,124 @@ describe('personagem em volume', () => {
       let quantidadeDepois = 0;
       modelo.raiz.traverse(() => quantidadeDepois++);
       expect(quantidadeDepois).toBe(quantidadeAntes);
+      modelo.descartar();
+    }
+  });
+
+  it('mantém o modelo clássico de aventura quando não recebe identidade', () => {
+    const aventura = new ModeloClaude();
+    const explicito = new ModeloClaude({ corCorpo: '#D97757', corEscura: '#B65A3E' });
+    for (const estado of [parado, { ...parado, velocidade: 4 }, { ...parado, golpe: 0.45 }]) {
+      for (let i = 0; i < 20; i++) {
+        aventura.atualizar(1 / 60, estado);
+        explicito.atualizar(1 / 60, estado);
+      }
+      for (const nome of [
+        'pivo-corpo',
+        'pivo-braco-direito',
+        'pivo-braco-esquerdo',
+        'pivo-pe-direito',
+      ]) {
+        const a = aventura.raiz.getObjectByName(nome)!;
+        const b = explicito.raiz.getObjectByName(nome)!;
+        expect(a.position.toArray()).toEqual(b.position.toArray());
+        expect(a.rotation.toArray()).toEqual(b.rotation.toArray());
+      }
+    }
+    aventura.definirPoder(5);
+    expect(aventura.raiz.getObjectByName('insignia-evolucao')).toBeUndefined();
+    expect(aventura.raiz.getObjectByName('adereco-animado')).toBeUndefined();
+    aventura.descartar();
+    explicito.descartar();
+  });
+
+  it('oferece nove silhuetas e nove poses próprias de espera, caminhada e ataque', () => {
+    expect(PERSONAGENS).toHaveLength(9);
+    expect(new Set(PERSONAGENS.map((p) => p.id)).size).toBe(9);
+    const silhuetas = new Set<string>();
+    const modelos = PERSONAGENS.map((personagem) => {
+      expect(personagem.aparencia.identidade).toBe(personagem.id);
+      const modelo = new ModeloClaude(personagem.aparencia);
+      const identidade = modelo.raiz.getObjectByName(`identidade-${personagem.id}`)!;
+      expect(identidade).toBeDefined();
+      const limites = new THREE.Box3().setFromObject(identidade);
+      silhuetas.add(
+        [...limites.min.toArray(), ...limites.max.toArray()].map((v) => v.toFixed(4)).join(',')
+      );
+      return modelo;
+    });
+    expect(silhuetas.size).toBe(9);
+    for (const estado of [parado, { ...parado, velocidade: 4 }, { ...parado, golpe: 0.4 }]) {
+      const poses = new Set<string>();
+      for (const modelo of modelos) {
+        for (let i = 0; i < 30; i++) modelo.atualizar(1 / 60, estado);
+        const valores: number[] = [];
+        for (const nome of [
+          'pivo-corpo',
+          'pivo-braco-direito',
+          'pivo-braco-esquerdo',
+          'pivo-pe-direito',
+        ]) {
+          const pivo = modelo.raiz.getObjectByName(nome)!;
+          valores.push(
+            ...pivo.position.toArray(),
+            pivo.rotation.x,
+            pivo.rotation.y,
+            pivo.rotation.z
+          );
+        }
+        poses.add(valores.map((v) => v.toFixed(4)).join(','));
+      }
+      expect(poses.size).toBe(9);
+    }
+    for (const modelo of modelos) modelo.descartar();
+  });
+
+  it('preserva assinaturas e cores escolhidas com evoluções cumulativas em 5, 10 e 20', () => {
+    const marcas = {
+      aurora: ['vestido-musical', 'fone-musical', 'halo-musical'],
+      nox: ['orelha-sombria', 'capa-do-crepusculo'],
+      byte: ['antena-digital', 'painel-lateral', 'luva-digital'],
+    };
+    for (const [id, nomes] of Object.entries(marcas)) {
+      const modelo = new ModeloClaude(PERSONAGENS.find((p) => p.id === id)!.aparencia);
+      modelo.personalizar({
+        roupa: 'guardiao',
+        cabeca: 'bone',
+        acessorio: 'oculos',
+        corRoupa: '#123456',
+        corDetalhe: '#abcdef',
+      });
+      for (const nome of nomes) expect(modelo.raiz.getObjectByName(nome)).toBeDefined();
+      const assinatura = modelo.raiz.getObjectByName(
+        id === 'byte' ? 'painel-lateral' : nomes[0]
+      ) as THREE.Mesh;
+      expect((assinatura.material as THREE.MeshToonMaterial).color.getHexString()).toBe('123456');
+      modelo.definirPoder(4);
+      expect(modelo.raiz.getObjectByName('insignia-evolucao')).toBeUndefined();
+      modelo.definirPoder(5);
+      const insignia = modelo.raiz.getObjectByName('insignia-evolucao');
+      expect(insignia).toBeDefined();
+      modelo.definirPoder(9);
+      expect(modelo.raiz.getObjectByName('insignia-evolucao')).toBe(insignia);
+      expect(modelo.raiz.getObjectByName('coroa-evolucao')).toBeUndefined();
+      modelo.definirPoder(10);
+      expect(modelo.raiz.getObjectByName('insignia-evolucao')).toBeDefined();
+      expect(modelo.raiz.getObjectByName('coroa-evolucao')).toBeDefined();
+      modelo.definirPoder(20);
+      for (const nome of [
+        ...nomes,
+        'insignia-evolucao',
+        'coroa-evolucao',
+        'aura-evolucao',
+        'aba-do-bone',
+        'aro-oculos',
+      ]) {
+        expect(modelo.raiz.getObjectByName(nome)).toBeDefined();
+      }
+      modelo.definirPoder(1);
+      expect(modelo.raiz.getObjectByName('insignia-evolucao')).toBeUndefined();
+      modelo.descartar();
     }
   });
 });

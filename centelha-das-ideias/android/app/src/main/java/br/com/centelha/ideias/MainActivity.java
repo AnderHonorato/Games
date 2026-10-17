@@ -27,7 +27,7 @@ import java.io.ByteArrayInputStream;
 /** Host do build local: sem servidor, sem bridge JS nativa, sem página remota. */
 public final class MainActivity extends Activity {
     private static final String START_URL =
-            "https://appassets.androidplatform.net/assets/web/index.html";
+            "https://appassets.androidplatform.net/assets/web/index.html?modo=roguelike";
     private WebView webView;
     private AlertDialog backDialog;
     private boolean foreground;

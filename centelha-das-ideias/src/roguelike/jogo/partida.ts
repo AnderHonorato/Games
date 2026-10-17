@@ -8,8 +8,13 @@ import * as THREE from 'three';
 import { Conta, normalizarNome } from '../nucleo/conta';
 import { mapa, mapaDesbloqueado, type IdMapa } from '../dados/mapas';
 import { armaInicial, type IdArmaInicial } from '../dados/armas-iniciais';
+import { ataqueBasico } from '../dados/ataques-basicos';
 import { normalizarPersonalizacao, type Personalizacao } from '../../render/personalizacao';
-import { selecionarAlvoManual, avancoPersonagem } from '../nucleo/combate-manual';
+import {
+  selecionarAlvoManual,
+  avancoPersonagem,
+  acertosAtaqueBasico,
+} from '../nucleo/combate-manual';
 import {
   novoCiclo,
   marcoCampanha,
@@ -59,12 +64,15 @@ import {
   type Oferta,
 } from '../nucleo/progresso';
 import { criarArena, RAIO_ARENA, type Arena } from '../render/arena';
+import { InteracoesMapa, type InteracaoMapa } from './interacoes-mapa';
+import { geometriaCristalXp, materialCristalXp, visualCristalXp } from '../render/cristais-xp';
 import { geometriaInimigo, geometriaProjetil, OLHOS, type FormaProjetil } from '../render/formas';
 import { Halos, Lote } from '../render/instancias';
 import { SistemaFx, type PosProcesso } from '../fx/indice';
 import type { Mensagem } from '../rede/canal';
 import { Vozes } from '../voz';
 import { Jogador, MAX_JOGADORES, type HabAtiva } from './jogador';
+import { lancarPoderEspecial } from './poderes-especiais';
 
 /** Ganchos que o multijogador instala na partida. */
 export interface GanchosRede {
@@ -77,7 +85,7 @@ export interface GanchosRede {
   rerrolar(): void;
   /** Anfitrião: a partida terminou. */
   fim(): void;
-  acao?(tipo: 'ataque' | 'avanco'): void;
+  acao?(tipo: 'ataque' | 'avanco' | 'interagir'): void;
 }
 
 export type EstadoPartida =
@@ -257,9 +265,6 @@ export interface NumeroDano {
 }
 
 const CORES_CRISTAL = ['#5fd8ff', '#6dff9a', '#ffcf4a', '#ffffff'];
-const TAM_CRISTAL = [0.2, 0.3, 0.44, 0.7];
-const HALO_CRISTAL = [0.7, 1.15, 2.1, 4.2];
-const BRILHO_CRISTAL = [0.55, 0.85, 1.35, 2.3];
 
 export class Partida {
   readonly conta = new Conta();
@@ -286,6 +291,7 @@ export class Partida {
   readonly audio: ApiAudio;
   readonly vozes: Vozes;
   arena: Arena;
+  private interacoesMapa: InteracoesMapa | null = null;
   readonly poeira = new SistemaParticulas(1400, false);
   readonly brilhos = new SistemaParticulas(2600, true);
   readonly halos = new Halos(3200);
@@ -593,6 +599,7 @@ export class Partida {
     this.audio = criarAudio();
     this.vozes = new Vozes(this.audio);
     this.arena = criarArena(this.qualidade, this.mapaId);
+    this.interacoesMapa = new InteracoesMapa(this.cena, this.mapaId, this.arena.obstaculos);
     this.local.nome = this.conta.dados.nome;
     this.local.arma = this.conta.dados.armaInicial;
     this.local.visual = this.conta.visual(this.local.personagemId);
@@ -665,16 +672,7 @@ export class Partida {
     );
     this.cena.add(this.loteOrbita.malha);
     for (let t = 0; t < 4; t++) {
-      const lote = new Lote(
-        new THREE.OctahedronGeometry(1, 0),
-        new THREE.MeshToonMaterial({
-          color: '#ffffff',
-          gradientMap: gradienteToon(),
-          emissive: CORES_CRISTAL[t],
-          emissiveIntensity: 0.35 + t * 0.25,
-        }),
-        2400
-      );
+      const lote = new Lote(geometriaCristalXp(t), materialCristalXp(t), 2400);
       this.lotesCristal.push(lote);
       this.cena.add(lote.malha);
     }
@@ -816,6 +814,8 @@ export class Partida {
     this.arena.descartar();
     this.mapaId = id;
     this.arena = criarArena(this.qualidade, id);
+    this.interacoesMapa?.descartar();
+    this.interacoesMapa = new InteracoesMapa(this.cena, id, this.arena.obstaculos);
     this.cena.add(this.arena.grupo);
     this.chaveCeu = -1;
   }
@@ -940,46 +940,173 @@ export class Partida {
     if (!jg || jg.caido || jg.ausente || jg.recargaAtaque > 0) return false;
     if (!this.autoridade && !jg.local) return false;
     const arma = armaInicial(jg.arma),
+      basico = ataqueBasico(jg.personagemId),
       anterior = this.j;
     this.j = jg;
-    jg.recargaAtaque = arma.recarga;
+    // A arma equipada afina potência/alcance/ritmo sem trocar o ataque pessoal.
+    const alcance =
+      basico.alcance * (jg.arma === 'cajado' ? 1.35 : jg.arma === 'martelo' ? 0.95 : 1);
+    const dano = basico.dano * (arma.dano / 23) ** 0.55 * jg.atributos.dano;
+    jg.recargaAtaque = basico.recarga * (arma.recarga / 0.42) ** 0.45;
     jg.golpe = 0.3;
-    const alvo = selecionarAlvoManual(this.inimigos, jg.x, jg.z, arma.alcance);
+    const alvo = selecionarAlvoManual(this.inimigos, jg.x, jg.z, alcance);
     if (alvo) {
-      jg.dirX = (alvo.x - jg.x) / (Math.hypot(alvo.x - jg.x, alvo.z - jg.z) || 1);
-      jg.dirZ = (alvo.z - jg.z) / (Math.hypot(alvo.x - jg.x, alvo.z - jg.z) || 1);
+      const d = Math.hypot(alvo.x - jg.x, alvo.z - jg.z) || 1;
+      jg.dirX = (alvo.x - jg.x) / d;
+      jg.dirZ = (alvo.z - jg.z) / d;
       jg.angulo = Math.atan2(jg.dirX, jg.dirZ);
     }
-    const x = alvo?.x ?? jg.x + jg.dirX * 2,
-      z = alvo?.z ?? jg.z + jg.dirZ * 2;
-    this.cortarVisual(
-      jg.x,
-      jg.z,
-      Math.atan2(jg.dirZ, jg.dirX),
-      Math.min(arma.alcance, 4),
-      arma.cor,
-      '#ffffff'
-    );
-    this.fx.impacto(
-      jg.arma === 'cajado' ? 'luz' : 'terra',
-      x,
-      0.8,
-      z,
-      jg.arma === 'martelo' ? 2 : 0.8
-    );
-    this.som(jg.arma === 'martelo' ? 'paredeQuebrada' : 'ataqueEspada', { volume: 0.65 }, 0);
-    if (this.autoridade && alvo) {
-      const alvos =
-        jg.arma === 'cajado'
-          ? [alvo]
-          : this.inimigos.filter(
-              (i) =>
-                i.vivo &&
-                Math.hypot(i.x - x, i.z - z) <= arma.raio + i.raio &&
-                Math.hypot(i.x - jg.x, i.z - jg.z) <= arma.alcance + i.raio
+    const ox = jg.x,
+      oz = jg.z,
+      dx = jg.dirX,
+      dz = jg.dirZ;
+    const tx = alvo?.x ?? ox + dx * Math.min(3, alcance),
+      tz = alvo?.z ?? oz + dz * Math.min(3, alcance);
+    const ang = Math.atan2(dz, dx),
+      cor = basico.cor;
+    const visual = () => {
+      switch (basico.mecanica) {
+        case 'corte':
+          this.cortarVisual(ox, oz, ang, alcance, cor, '#fff2ce');
+          break;
+        case 'cadeia':
+          this.fx.impacto('raio', tx, 0.8, tz, 0.8);
+          break;
+        case 'cruz':
+          this.cortarVisual(tx - dx * 3, tz - dz * 3, ang, 6, cor, '#ffffff');
+          this.agendar(
+            () => this.cortarVisual(tx + dz * 3, tz - dx * 3, ang + Math.PI / 2, 6, cor, '#ffffff'),
+            130
+          );
+          break;
+        case 'impacto':
+          this.fx.erupcaoTerra(tx, tz, 3);
+          this.tremer(0.18);
+          break;
+        case 'leque':
+          for (const giro of [-0.42, 0, 0.42])
+            this.cortarVisual(ox, oz, ang + giro, alcance, cor, '#efffff');
+          break;
+        case 'onda':
+          this.fx.nova(ox, oz, alcance, 'agua', 0.4, ang, Math.PI / 2);
+          break;
+        case 'notas':
+          for (let n = 0; n < 3; n++) {
+            const tocar = () => {
+              this.fx.nova(ox, oz, (alcance * (n + 1)) / 3, 'luz', 0.3);
+              this.som('energizar', { volume: 0.3, tom: 1.1 + n * 0.25 }, 0);
+            };
+            if (n) this.agendar(tocar, n * 120);
+            else tocar();
+          }
+          break;
+        case 'convergencia':
+          this.fx.explosao('gravidade', tx, tz, 3.6);
+          for (let n = 0; n < 6; n++) {
+            const a = (n * Math.PI) / 3;
+            this.raioVisual(
+              tx + Math.cos(a) * 3.6,
+              0.4,
+              tz + Math.sin(a) * 3.6,
+              tx,
+              1,
+              tz,
+              cor,
+              0.08
             );
-      for (const i of alvos)
-        this.causarDano(i, arma.dano * jg.atributos.dano, -1, 'luz', jg.dirX, jg.dirZ, arma.forca);
+          }
+          break;
+        case 'fork':
+          this.raioVisual(ox, 1, oz, tx, 0.8, tz, cor, 0.15);
+          this.fx.chuvaCodigo(tx, tz, 1, 0.35);
+          break;
+      }
+    };
+    visual();
+    this.som(
+      basico.mecanica === 'impacto'
+        ? 'paredeQuebrada'
+        : basico.mecanica === 'corte' || basico.mecanica === 'cruz'
+          ? 'ataqueEspada'
+          : basico.mecanica === 'onda'
+            ? 'passoAgua'
+            : basico.mecanica === 'leque'
+              ? 'esquiva'
+              : 'ataqueCajado',
+      {
+        volume: 0.65,
+        tom:
+          0.8 +
+          [
+            'claude',
+            'gpt',
+            'gemini',
+            'llama',
+            'mistral',
+            'deepseek',
+            'aurora',
+            'nox',
+            'byte',
+          ].indexOf(jg.personagemId) *
+            0.1,
+      },
+      0
+    );
+    const acertos = acertosAtaqueBasico(
+      basico.mecanica,
+      this.inimigos,
+      ox,
+      oz,
+      dx,
+      dz,
+      alcance,
+      alvo
+    );
+    let eloX = ox,
+      eloZ = oz;
+    for (const acerto of acertos) {
+      const i = acerto.alvo;
+      const inicioX = basico.mecanica === 'fork' ? tx : eloX,
+        inicioZ = basico.mecanica === 'fork' ? tz : eloZ;
+      const aplicar = () => {
+        if (!i.vivo) return;
+        if (basico.mecanica === 'cadeia' || basico.mecanica === 'fork')
+          this.raioVisual(
+            inicioX,
+            0.9,
+            inicioZ,
+            i.x,
+            0.9,
+            i.z,
+            cor,
+            basico.mecanica === 'fork' ? 0.12 : 0.2
+          );
+        if (this.autoridade)
+          this.causarDano(
+            i,
+            dano * acerto.multiplicador,
+            -1,
+            basico.mecanica === 'onda'
+              ? 'agua'
+              : basico.mecanica === 'convergencia'
+                ? 'gravidade'
+                : basico.mecanica === 'impacto'
+                  ? 'terra'
+                  : basico.mecanica === 'fork'
+                    ? 'codigo'
+                    : basico.mecanica === 'cadeia'
+                      ? 'raio'
+                      : 'luz',
+            acerto.dx,
+            acerto.dz,
+            basico.forca * (jg.arma === 'martelo' ? 1.4 : 1),
+            { lento: basico.mecanica === 'onda' }
+          );
+      };
+      if (acerto.atraso > 0) this.agendar(aplicar, acerto.atraso * 1000);
+      else aplicar();
+      eloX = i.x;
+      eloZ = i.z;
     }
     if (jg.local && !this.autoridade) this.rede?.acao?.('ataque');
     this.j = anterior;
@@ -1070,7 +1197,35 @@ export class Partida {
           i.vz += jg.dashZ * dt * 25;
         }
   }
-  executarAcaoRemota(indice: number, tipo: 'ataque' | 'avanco'): boolean {
+  get interacaoAtual(): InteracaoMapa | null {
+    if (this.estado !== 'jogando' || this.local.caido || this.local.ausente) return null;
+    return this.interacoesMapa?.proxima(this.local.x, this.local.z) ?? null;
+  }
+  interagirMapa(indice = this.local.indice): boolean {
+    if (this.estado !== 'jogando' || this.cinematica) return false;
+    const jogador = this.jogadores.find((j) => j.indice === indice);
+    if (!jogador || jogador.caido || jogador.ausente || (!this.autoridade && !jogador.local))
+      return false;
+    const interacao = this.interacoesMapa?.proxima(jogador.x, jogador.z);
+    if (!interacao) return false;
+    if (!this.autoridade) {
+      this.rede?.acao?.('interagir');
+      return true;
+    }
+    if (!this.interacoesMapa?.usar(interacao.id)) return false;
+    if (interacao.tipo === 'fonte')
+      jogador.vida = Math.min(
+        jogador.atributos.vidaMaxima,
+        jogador.vida + jogador.atributos.vidaMaxima * 0.35
+      );
+    else if (interacao.tipo === 'totem') jogador.invencivel = Math.max(jogador.invencivel, 6);
+    else jogador.rerrolagens++;
+    this.fx.impacto('luz', interacao.x, 0.7, interacao.z, 1.5);
+    this.som('energizar', { volume: 0.6, tom: 1.2 }, 0);
+    this.aoMudar();
+    return true;
+  }
+  executarAcaoRemota(indice: number, tipo: 'ataque' | 'avanco' | 'interagir'): boolean {
     if (this.papel !== 'anfitriao' || !Number.isInteger(indice)) return false;
     const jg = this.jogadores.find((j) => j.indice === indice);
     if (!jg || jg.local) return false;
@@ -1078,7 +1233,9 @@ export class Partida {
       ? this.atacarManual(indice)
       : tipo === 'avanco'
         ? this.avancarEspecial(indice)
-        : false;
+        : tipo === 'interagir'
+          ? this.interagirMapa(indice)
+          : false;
   }
 
   // ------------------------------------------------------------------ início
@@ -1228,6 +1385,7 @@ export class Partida {
   iniciar(preservarCampanha = false): void {
     if (this.papel === 'solo') this.restaurarMapaPessoal();
     this.nivel = 1;
+    this.interacoesMapa?.reset();
     this.eventos = [];
     this.fx.limpar();
     this.entrada.soltarTudo();
@@ -1487,13 +1645,15 @@ export class Partida {
     if (this.papel !== 'solo') {
       // em grupo a partida não para: só este jogador fica de fora (e protegido)
       if (this.estado === 'jogando' || this.estado === 'nivel') this.local.ausente = p;
+      this.entrada.soltarTudo();
       this.aoMudar();
       return;
     }
-    if (p && ['jogando', 'cinematica', 'transicao'].includes(this.estado)) {
+    if (p && ['jogando', 'nivel', 'cinematica', 'transicao'].includes(this.estado)) {
       this.estadoAntesPausa = this.estado;
       this.estado = 'pausa';
     } else if (!p && this.estado === 'pausa') this.estado = this.estadoAntesPausa;
+    this.entrada.soltarTudo();
     this.aoMudar();
   }
 
@@ -1514,13 +1674,19 @@ export class Partida {
 
   passo(dt: number): void {
     this.entrada.iniciarPasso();
+    if (this.estado === 'jogando') this.interacoesMapa?.atualizar(dt);
     VENTO.tempo.value += dt;
     VENTO.forca.value = 0.55 + Math.sin(VENTO.tempo.value * 0.15) * 0.25;
     const ent = this.entrada;
     if (ent.apertou('pausa')) {
       if (this.papel !== 'solo') this.pausar(!this.local.ausente);
-      else if (this.estado === 'jogando') this.pausar(true);
+      else if (['jogando', 'nivel', 'cinematica', 'transicao'].includes(this.estado))
+        this.pausar(true);
       else if (this.estado === 'pausa') this.pausar(false);
+    }
+    if (this.estado === 'pausa') {
+      this.entrada.finalizarPasso();
+      return;
     }
     if (this.estado === 'nivel') {
       for (let k = 0; k < 4; k++)
@@ -1664,6 +1830,7 @@ export class Partida {
       (this.j.caido ? 0 : 1) *
       (lentoPoca ? 0.55 : 1);
     this.invencivel = Math.max(0, this.invencivel - dt);
+    if (!parado && ent.apertou('interagir')) this.interagirMapa();
     if (!parado && ent.apertou('atacar')) this.atacarManual();
     if (!parado && (ent.apertou('pular') || ent.apertou('esquivar'))) this.avancarEspecial();
     if (this.dash > 0) {
@@ -1990,7 +2157,7 @@ export class Partida {
         break;
     }
     if (opcoes.lento) i.lento = Math.max(i.lento, 1);
-    if (forca > 0) {
+    if (forca !== 0) {
       const res =
         i.def.comportamento === 'chefe' ? 0.08 : i.elite || i.def.id === 'trollBug' ? 0.35 : 1;
       i.vx += ex * forca * res;
@@ -2248,6 +2415,26 @@ export class Partida {
     manifestarPoder(this.fx, h.def.id, this.x, this.z, h.nivel, this.angulo);
     tocarSomPoder(this.audio, h.def.id, this.x, this.z, h.nivel);
     h.disparos++;
+    if (
+      lancarPoderEspecial({
+        id: h.def.id,
+        nivel: h.nivel,
+        valores: v,
+        x: this.x,
+        z: this.z,
+        angulo: Math.atan2(this.dirZ, this.dirX),
+        inimigos: this.inimigos,
+        rnd: this.rnd,
+        agendar: (acao, segundos) => this.agendar(acao, segundos * 1000),
+        atingir: (alvo, dano, elemento, dx, dz, forca) => {
+          if (!this.autoridade) return;
+          const distancia = Math.hypot(dx, dz) || 1;
+          this.causarDano(alvo, dano, h.idx, elemento, dx / distancia, dz / distancia, forca);
+        },
+        fx: this.fx,
+      })
+    )
+      return;
     switch (c) {
       case 'projetil':
         this.dispararProjetil(h, v);
@@ -4508,30 +4695,20 @@ export class Partida {
     for (const c of this.cristais) {
       if (Math.abs(c.x - this.x) > raioVisivel || Math.abs(c.z - this.z) > raioVisivel) continue;
       const t = c.t;
-      const s = TAM_CRISTAL[t];
-      const y = 0.45 + Math.sin(this.tempo * 2.5 + c.fase) * 0.12 + s;
-      let corC: THREE.ColorRepresentation = CORES_CRISTAL[t];
-      if (t === 3) corC = new THREE.Color().setHSL((this.tempo * 0.2 + c.fase) % 1, 0.8, 0.82);
+      const visual = visualCristalXp(t, this.tempo, c.fase);
       this.lotesCristal[t].por(
         c.x,
-        y,
+        visual.y,
         c.z,
-        s,
-        s * 1.5,
-        s,
+        visual.escalaX,
+        visual.escalaY,
+        visual.escalaZ,
         0,
-        this.tempo * (1 + t * 0.5) + c.fase,
+        visual.rotacao,
         0,
-        corC
+        visual.cor
       );
-      this.halos.por(
-        c.x,
-        y,
-        c.z,
-        HALO_CRISTAL[t] * (1 + Math.sin(this.tempo * 4 + c.fase) * 0.12),
-        t === 3 ? corC : CORES_CRISTAL[t],
-        BRILHO_CRISTAL[t] * (1 + this.noite * 0.6)
-      );
+      this.halos.por(c.x, visual.y, c.z, visual.halo, visual.cor, visual.haloIntensidade);
     }
     for (const l of this.lotesInimigos.values()) l.concluir();
     this.loteOlhos.concluir();
@@ -4669,6 +4846,7 @@ export class Partida {
       t: 'estado',
       mapa: this.mapaId,
       campanhaId: this.campanhaId,
+      interacoes: this.interacoesMapa?.snapshot(),
       ciclo: { ...this.ciclo },
       cinematica: this.cinematica ? { ...this.cinematica } : null,
       falaAtual: this.falaAtual ? { ...this.falaAtual } : null,
@@ -4741,6 +4919,9 @@ export class Partida {
     const novaCampanha = typeof m.campanhaId === 'string' && m.campanhaId !== this.campanhaId;
     const reiniciarFase = mudouMapa || novaCampanha;
     if (mudouMapa) this.aplicarMapaRemoto(idMapa);
+    if (novaCampanha) this.interacoesMapa?.reset();
+    if (m.interacoes && typeof m.interacoes === 'object')
+      this.interacoesMapa?.importar(m.interacoes as { consumidas: string[] });
     if (reiniciarFase) {
       // O movimento local costuma ser previsto pelo aparelho. Na passagem de fase,
       // a posição do anfitrião é a origem obrigatória da próxima previsão.

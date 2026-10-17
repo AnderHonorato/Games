@@ -28,6 +28,10 @@ export const SOM_POR_PODER = {
   coletorLixo: 'poderColetorLixo',
   breakpoint: 'poderBreakpoint',
   recursao: 'poderRecursao',
+  tremFantasma: 'poderTremFantasma',
+  dadosCaoticos: 'poderDadosCaoticos',
+  espelhoPrismatico: 'poderEspelhoPrismatico',
+  orquestraOrbital: 'poderOrquestraOrbital',
 } as const;
 export type IdPoderSonoro = keyof typeof SOM_POR_PODER;
 export type IdSomPoder = (typeof SOM_POR_PODER)[IdPoderSonoro];

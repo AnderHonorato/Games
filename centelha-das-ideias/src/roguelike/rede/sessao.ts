@@ -153,7 +153,11 @@ export class Sessao {
         }
         break;
       case 'acao':
-        if (this.emPartida && (m.tipo === 'ataque' || m.tipo === 'avanco'))
+        if (
+          this.emPartida &&
+          m.fase === p.identificadorFase &&
+          (m.tipo === 'ataque' || m.tipo === 'avanco' || m.tipo === 'interagir')
+        )
           p.executarAcaoRemota(indice, m.tipo);
         break;
       case 'escolha':
@@ -332,7 +336,8 @@ export class Sessao {
       if (this.papel === 'anfitriao') this.transmitir(this.partida.exportarNivel());
     },
     escolha: (i) => this.canais.get(0)?.enviar({ t: 'escolha', i }),
-    acao: (tipo) => this.canais.get(0)?.enviar({ t: 'acao', tipo }),
+    acao: (tipo) =>
+      this.canais.get(0)?.enviar({ t: 'acao', tipo, fase: this.partida.identificadorFase }),
     rerrolar: () => this.canais.get(0)?.enviar({ t: 'rerrolar' }),
     fim: () => {
       if (this.papel === 'anfitriao') this.transmitir(this.partida.exportarEstado());

@@ -294,6 +294,8 @@
 /* ------------------------------------------------------------------ HUD */
 
 .rg-hud {
+  z-index: 40;
+  pointer-events: none;
   position: absolute;
   inset: 0;
 }
@@ -590,6 +592,7 @@
 /* ------------------------------------------------------------------ modais */
 
 .rg-modal {
+  z-index: 60;
   position: absolute;
   inset: 0;
   display: grid;
@@ -959,6 +962,8 @@
 /* ------------------------------------------------------------------ toque */
 
 .rg-toque {
+  z-index: 10;
+  pointer-events: none;
   position: absolute;
   inset: 0;
 }
@@ -1229,7 +1234,7 @@
 .rg-sala {
   position: absolute;
   inset: 0;
-  z-index: 5;
+  z-index: 70;
   pointer-events: auto;
 }
 
@@ -1466,6 +1471,7 @@
 
 /* Jornada: painel compacto ao lado da apresentação 3D. */
 .rg-menu {
+  z-index: 50;
   align-items: stretch;
   padding: max(16px, var(--seguro-c)) max(18px, var(--seguro-d)) max(12px, var(--seguro-b))
     max(24px, var(--seguro-e));
@@ -1481,6 +1487,7 @@
   width: 53%;
   max-width: 660px;
   height: 100%;
+  min-height: 0;
   max-height: 100%;
   gap: 10px;
   padding: 0 16px 0 0;
@@ -1527,6 +1534,9 @@
   background: #c9ab7025;
   color: #ffe2a9;
   box-shadow: inset 0 -2px #e1bc79;
+}
+.rg-menu-conteudo > * {
+  flex-shrink: 0;
 }
 .rg-menu-conteudo {
   min-height: 0;
@@ -1973,4 +1983,81 @@
 }
 .rg-menu-base .rg-botao-junto {
   flex: 0 0 auto;
+}
+
+/* HUD atravessável: só os controles recebem ponteiros; o joystick permanece livre. */
+.rg-hud button,
+.rg-hud input {
+  pointer-events: auto;
+}
+.rg-modo-versao {
+  color: #c7d2c7;
+  font-size: 10px;
+  line-height: 1.4;
+}
+.rg-modo-hud {
+  position: absolute;
+  top: 62px;
+  left: max(16px, var(--seguro-e));
+  font-size: 9px;
+  text-shadow: 0 1px 3px #000;
+}
+.rg-ataque {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 5px;
+  border-color: var(--cor-ataque, #f5d6a2);
+  cursor: pointer;
+}
+.rg-ataque small {
+  max-width: 100%;
+  font-size: 9px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+.rg-usar {
+  position: absolute;
+  right: max(28px, var(--seguro-d));
+  bottom: 120px;
+  min-height: 44px;
+  padding: 8px 15px;
+  border: 1px solid #f5d6a2;
+  border-radius: 12px;
+  color: #fff1cf;
+  background: #1b2c32ed;
+  cursor: pointer;
+}
+.rg-interacao {
+  position: absolute;
+  left: 50%;
+  bottom: 100px;
+  width: min(310px, 50vw);
+  transform: translateX(-50%);
+  padding: 7px 12px;
+  border-radius: 8px;
+  color: #fff1cf;
+  background: #152127e8;
+  text-align: center;
+  font-size: 11px;
+}
+@media (orientation: portrait) and (max-width: 720px) {
+  .rg-menu-painel {
+    width: 100%;
+  }
+  .rg-cartas-personagem {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .rg-preview-legenda {
+    display: none;
+  }
+}
+
+.rg-pausa-nivel {
+  position: absolute;
+  top: max(25px, var(--seguro-c));
+  right: max(12px, var(--seguro-d));
+  z-index: 1;
 }

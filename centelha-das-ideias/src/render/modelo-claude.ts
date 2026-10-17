@@ -42,8 +42,29 @@ export interface EstadoAnimacao {
 const COR_CORPO = '#D97757';
 const COR_ESCURA = '#B65A3E';
 
+export type IdentidadeVisual =
+  'claude' | 'gpt' | 'gemini' | 'llama' | 'mistral' | 'deepseek' | 'aurora' | 'nox' | 'byte';
+
+// Cadências próprias do roguelike; o modelo sem identidade conserva a aventura.
+const CADENCIAS: Record<
+  IdentidadeVisual,
+  { passo: number; salto: number; balanco: number; pulso: number; amplitude: number }
+> = {
+  claude: { passo: 1, salto: 1, balanco: 0.035, pulso: 2.4, amplitude: 0.88 },
+  gpt: { passo: 1.16, salto: 0.52, balanco: 0.018, pulso: 3.7, amplitude: 0.72 },
+  gemini: { passo: 1.06, salto: 1.3, balanco: 0.08, pulso: 3.1, amplitude: 1.05 },
+  llama: { passo: 0.78, salto: 0.8, balanco: 0.06, pulso: 1.7, amplitude: 0.64 },
+  mistral: { passo: 1.36, salto: 0.65, balanco: 0.045, pulso: 4.8, amplitude: 1.25 },
+  deepseek: { passo: 0.66, salto: 0.4, balanco: 0.1, pulso: 1.25, amplitude: 0.55 },
+  aurora: { passo: 0.94, salto: 1.15, balanco: 0.09, pulso: 3.8, amplitude: 1.12 },
+  nox: { passo: 1.22, salto: 0.35, balanco: 0.025, pulso: 2.8, amplitude: 0.78 },
+  byte: { passo: 1.08, salto: 1.45, balanco: 0.055, pulso: 5.2, amplitude: 0.98 },
+};
+
 /** Aparência do personagem (o mesmo esqueleto animado serve para todos). */
 export interface Aparencia {
+  /** Ausente no modo aventura, que conserva a animação clássica. */
+  identidade?: IdentidadeVisual;
   corCorpo: string;
   corEscura: string;
   corCentelha?: string;
@@ -102,9 +123,18 @@ export class ModeloClaude {
   private capa: THREE.Object3D | null = null;
   private asas: THREE.Object3D[] = [];
   private aura: THREE.Group | null = null;
+  private readonly identidade?: IdentidadeVisual;
+  private aderecoIdentidade: THREE.Group | null = null;
 
   constructor(aparencia?: Aparencia) {
     const ap: Aparencia = aparencia ?? { corCorpo: COR_CORPO, corEscura: COR_ESCURA };
+    this.identidade = ap.identidade;
+    this.nucleo.name = 'pivo-nucleo';
+    this.corpo.name = 'pivo-corpo';
+    this.bracoE.name = 'pivo-braco-esquerdo';
+    this.bracoD.name = 'pivo-braco-direito';
+    this.peE.name = 'pivo-pe-esquerdo';
+    this.peD.name = 'pivo-pe-direito';
     const mat = (cor: string) => {
       const m = new THREE.MeshToonMaterial({
         color: cor,
@@ -136,7 +166,11 @@ export class ModeloClaude {
     this.nucleo.add(contorno);
 
     // rosto na frente (+z)
-    this.rosto = new Rosto({ separacao: 0.17, tamanho: 0.085 });
+    this.rosto = new Rosto({
+      separacao: this.identidade === 'byte' ? 0.19 : this.identidade === 'nox' ? 0.155 : 0.17,
+      tamanho:
+        this.identidade === 'aurora' ? 0.095 : this.identidade === 'deepseek' ? 0.075 : 0.085,
+    });
     this.rosto.grupo.position.set(0, ap.rostoY ?? 0.08, ap.rostoZ ?? 0.365);
     this.nucleo.add(this.rosto.grupo);
     ap.enfeite?.(this.nucleo, mat);
@@ -241,8 +275,15 @@ export class ModeloClaude {
   definirPoder(nivel: number): void {
     if (this.descartado) return;
     const novo = Number.isFinite(nivel) ? Math.max(1, Math.floor(nivel)) : 1;
-    const estagioAntes = this.nivelPoder >= 20 ? 2 : this.nivelPoder >= 10 ? 1 : 0;
-    const estagioDepois = novo >= 20 ? 2 : novo >= 10 ? 1 : 0;
+    const estagioAntes =
+      this.nivelPoder >= 20
+        ? 3
+        : this.nivelPoder >= 10
+          ? 2
+          : this.identidade && this.nivelPoder >= 5
+            ? 1
+            : 0;
+    const estagioDepois = novo >= 20 ? 3 : novo >= 10 ? 2 : this.identidade && novo >= 5 ? 1 : 0;
     this.nivelPoder = novo;
     if (estagioAntes !== estagioDepois) this.reconstruirCosmeticos();
   }
@@ -282,6 +323,7 @@ export class ModeloClaude {
     this.asas.length = 0;
     this.capa = null;
     this.aura = null;
+    this.aderecoIdentidade = null;
   }
 
   private reconstruirCosmeticos(): void {
@@ -304,6 +346,7 @@ export class ModeloClaude {
     this.asas.length = 0;
     this.capa = null;
     this.aura = null;
+    this.aderecoIdentidade = null;
     const p = this.personalizacao;
     const grupo = (pai: THREE.Object3D, nome: string) => {
       const g = new THREE.Group();
@@ -552,6 +595,348 @@ export class ModeloClaude {
         this.asas.push(asa);
       }
     }
+    if (this.identidade) {
+      const identidade = grupo(this.nucleo, `identidade-${this.identidade}`);
+      const adereco = new THREE.Group();
+      adereco.name = 'adereco-animado';
+      identidade.add(adereco);
+      this.aderecoIdentidade = adereco;
+      switch (this.identidade) {
+        case 'claude': {
+          for (const lado of [-1, 1]) {
+            const laco = malha(
+              identidade,
+              new THREE.ConeGeometry(0.1, 0.22, 3),
+              detalhe,
+              lado * 0.1,
+              -0.15,
+              0.43,
+              'laco-curioso'
+            );
+            laco.rotation.z = (lado * Math.PI) / 2;
+            laco.scale.z = 0.35;
+          }
+          const livro = caixa(
+            identidade,
+            -0.54,
+            -0.24,
+            -0.05,
+            0.15,
+            0.36,
+            0.28,
+            tecido,
+            'caderno-de-ideias'
+          );
+          livro.rotation.z = -0.15;
+          caixa(identidade, -0.54, -0.24, 0.1, 0.1, 0.29, 0.025, metal, 'paginas');
+          malha(
+            adereco,
+            new THREE.OctahedronGeometry(0.055),
+            detalhe,
+            0.2,
+            0.66,
+            0,
+            'ideia-curiosa'
+          );
+          break;
+        }
+        case 'gpt': {
+          for (const lado of [-1, 1]) {
+            const orbita = malha(
+              adereco,
+              new THREE.TorusGeometry(0.23, 0.04, 6, 20),
+              detalhe,
+              lado * 0.48,
+              0.17,
+              -0.05,
+              'orbita-preditiva'
+            );
+            orbita.rotation.y = lado * 0.5;
+            caixa(
+              identidade,
+              lado * 0.37,
+              -0.08,
+              0.42,
+              0.11,
+              0.23,
+              0.055,
+              metal,
+              'terminal-preditivo'
+            );
+          }
+          break;
+        }
+        case 'gemini': {
+          for (const lado of [-1, 1]) {
+            for (let i = 0; i < 3; i++) {
+              const raio = malha(
+                adereco,
+                new THREE.ConeGeometry(0.09, 0.42 - i * 0.06, 4),
+                i === 1 ? metal : detalhe,
+                lado * (0.37 + i * 0.1),
+                0.35 - i * 0.11,
+                -0.25,
+                'raio-estelar'
+              );
+              raio.rotation.z = -lado * (0.55 + i * 0.25);
+            }
+          }
+          break;
+        }
+        case 'llama': {
+          const focinho = malha(
+            identidade,
+            new THREE.SphereGeometry(0.18, 12, 8),
+            metal,
+            0,
+            -0.15,
+            0.39,
+            'focinho-felpudo'
+          );
+          focinho.scale.set(1.15, 0.55, 0.6);
+          malha(
+            identidade,
+            new THREE.SphereGeometry(0.035, 8, 6),
+            couro,
+            0,
+            -0.12,
+            0.5,
+            'nariz-llama'
+          );
+          malha(
+            adereco,
+            new THREE.SphereGeometry(0.09, 10, 8),
+            detalhe,
+            0,
+            -0.39,
+            0.47,
+            'sino-do-pastor'
+          );
+          for (const lado of [-1, 1])
+            malha(
+              identidade,
+              new THREE.SphereGeometry(0.16, 8, 6),
+              tecido,
+              lado * 0.48,
+              0.03,
+              -0.02,
+              'la-de-ombro'
+            );
+          break;
+        }
+        case 'mistral': {
+          for (let i = 0; i < 3; i++) {
+            const pena = malha(
+              adereco,
+              new THREE.ConeGeometry(0.11, 0.46 - i * 0.06, 5),
+              i === 1 ? metal : detalhe,
+              -0.15 + i * 0.13,
+              0.51 + i * 0.025,
+              -0.13,
+              'crista-de-vento'
+            );
+            pena.rotation.z = -0.75;
+            pena.rotation.x = -0.35;
+          }
+          const faixa = caixa(
+            identidade,
+            -0.58,
+            -0.08,
+            -0.33,
+            0.72,
+            0.15,
+            0.07,
+            detalhe,
+            'faixa-ao-vento'
+          );
+          faixa.rotation.z = -0.25;
+          break;
+        }
+        case 'deepseek': {
+          for (const lado of [-1, 1]) {
+            const nadadeira = malha(
+              adereco,
+              new THREE.ConeGeometry(0.19, 0.48, 3),
+              tecido,
+              lado * 0.57,
+              -0.05,
+              -0.11,
+              'nadadeira-profunda'
+            );
+            nadadeira.rotation.z = -lado * 1.05;
+            nadadeira.scale.z = 0.35;
+          }
+          const dorsal = malha(
+            identidade,
+            new THREE.ConeGeometry(0.16, 0.27, 3),
+            detalhe,
+            0,
+            0.48,
+            -0.29,
+            'barbatana-dorsal'
+          );
+          dorsal.scale.z = 0.6;
+          break;
+        }
+        case 'aurora': {
+          const vestido = malha(
+            identidade,
+            new THREE.CylinderGeometry(0.36, 0.64, 0.46, 12),
+            tecido,
+            0,
+            -0.4,
+            0,
+            'vestido-musical'
+          );
+          vestido.scale.z = 0.83;
+          const barra = malha(
+            identidade,
+            new THREE.TorusGeometry(0.62, 0.035, 5, 24),
+            detalhe,
+            0,
+            -0.62,
+            0,
+            'barra-do-vestido'
+          );
+          barra.rotation.x = Math.PI / 2;
+          barra.scale.y = 0.83;
+          const arco = malha(
+            identidade,
+            new THREE.TorusGeometry(0.46, 0.045, 6, 24, Math.PI),
+            detalhe,
+            0,
+            0.12,
+            0,
+            'arco-dos-fones'
+          );
+          arco.rotation.z = 0;
+          for (const lado of [-1, 1]) {
+            const fone = malha(
+              identidade,
+              new THREE.CylinderGeometry(0.14, 0.14, 0.13, 12),
+              tecido,
+              lado * 0.46,
+              0.12,
+              0,
+              'fone-musical'
+            );
+            fone.rotation.z = Math.PI / 2;
+            malha(
+              identidade,
+              new THREE.SphereGeometry(0.075, 10, 8),
+              detalhe,
+              lado * 0.54,
+              0.12,
+              0,
+              'luz-do-fone'
+            );
+          }
+          const halo = malha(
+            adereco,
+            new THREE.TorusGeometry(0.34, 0.026, 6, 28),
+            metal,
+            0,
+            0.85,
+            0,
+            'halo-musical'
+          );
+          halo.rotation.x = Math.PI / 2.4;
+          break;
+        }
+        case 'nox': {
+          for (const lado of [-1, 1]) {
+            const orelha = malha(
+              identidade,
+              new THREE.ConeGeometry(0.18, 0.4, 3),
+              tecido,
+              lado * 0.3,
+              0.56,
+              0,
+              'orelha-sombria'
+            );
+            orelha.rotation.z = -lado * 0.15;
+            orelha.scale.z = 0.5;
+            const interior = malha(
+              identidade,
+              new THREE.ConeGeometry(0.09, 0.24, 3),
+              detalhe,
+              lado * 0.3,
+              0.57,
+              0.085,
+              'interior-orelha'
+            );
+            interior.scale.z = 0.2;
+          }
+          const capa = new THREE.Group();
+          capa.position.set(0, 0.2, -0.31);
+          identidade.add(capa);
+          const pano = malha(
+            capa,
+            new THREE.CylinderGeometry(0.27, 0.64, 0.88, 8, 1, true, Math.PI / 2, Math.PI),
+            tecido,
+            0,
+            -0.32,
+            0,
+            'capa-do-crepusculo'
+          );
+          pano.scale.z = 0.65;
+          this.capa = capa;
+          malha(
+            adereco,
+            new THREE.OctahedronGeometry(0.075),
+            detalhe,
+            0,
+            -0.14,
+            0.44,
+            'broche-prismatico'
+          );
+          break;
+        }
+        case 'byte': {
+          caixa(identidade, 0.17, 0.58, -0.02, 0.055, 0.3, 0.055, metal, 'antena-digital');
+          malha(
+            adereco,
+            new THREE.SphereGeometry(0.095, 8, 6),
+            detalhe,
+            0.17,
+            0.76,
+            -0.02,
+            'sinal-digital'
+          );
+          for (const lado of [-1, 1]) {
+            caixa(identidade, lado * 0.49, 0.13, 0, 0.16, 0.34, 0.44, tecido, 'painel-lateral');
+            for (let i = 0; i < 3; i++)
+              caixa(
+                identidade,
+                lado * 0.49,
+                0.03 + i * 0.095,
+                0.235,
+                0.09,
+                0.04,
+                0.02,
+                detalhe,
+                'pixel-painel'
+              );
+            const luva = grupo(lado < 0 ? this.bracoE : this.bracoD, `luva-byte-${lado}`);
+            caixa(luva, 0, -0.27, 0.01, 0.25, 0.23, 0.24, tecido, 'luva-digital');
+            caixa(luva, 0, -0.25, 0.145, 0.12, 0.07, 0.025, detalhe, 'visor-da-luva');
+          }
+          break;
+        }
+      }
+      if (this.nivelPoder >= 5) {
+        const selo = malha(
+          identidade,
+          new THREE.OctahedronGeometry(0.085),
+          metal,
+          0.26,
+          -0.2,
+          0.45,
+          'insignia-evolucao'
+        );
+        selo.scale.z = 0.3;
+      }
+    }
     if (this.nivelPoder >= 20) {
       this.aura = grupo(this.nucleo, 'aura-evolucao');
       const anel = malha(
@@ -609,6 +994,7 @@ export class ModeloClaude {
     const t = this.tempo;
     const vel = e.velocidade;
     const andando = e.noChao && vel > 0.4;
+    const cadencia = this.identidade ? CADENCIAS[this.identidade] : undefined;
 
     // giro suave com inclinação nas curvas
     const antes = this.anguloVisual;
@@ -627,19 +1013,28 @@ export class ModeloClaude {
     this.esticar += this.esticarV * dt;
     const alvoAr = e.noChao ? 0 : limitar(e.vy * 0.012, -0.08, 0.14);
     const s = limitar(this.esticar + alvoAr, -0.35, 0.35);
-    let respira = Math.sin(t * 2.2) * 0.018;
+    let respira = Math.sin(t * (cadencia?.pulso ?? 2.2)) * 0.018;
     if (e.humor === 'sonolento') respira = Math.sin(t * 1.3) * 0.04;
     this.mola.scale.set(1 - s * 0.5 - respira * 0.5, 1 + s + respira, 1 - s * 0.5 - respira * 0.5);
 
     // ciclo de passos
-    const ritmo = andando ? 7 + vel * 1.6 : 0;
+    const ritmo = andando ? (7 + vel * 1.6) * (cadencia?.passo ?? 1) : 0;
     this.fase += ritmo * dt;
     const passo = Math.sin(this.fase);
-    const quique = andando ? Math.abs(Math.sin(this.fase)) * 0.07 * Math.min(1, vel / 4) : 0;
+    const quique = andando
+      ? Math.abs(Math.sin(this.fase)) * 0.07 * Math.min(1, vel / 4) * (cadencia?.salto ?? 1)
+      : 0;
     let corpoY = quique;
     let inclinaAlvo = limitar(vel * 0.035, 0, 0.26);
     let rolar = 0;
     let girarY = 0;
+    if (cadencia && e.noChao) {
+      corpoY += Math.sin(t * cadencia.pulso) * (andando ? 0.008 : 0.025 * cadencia.salto);
+      rolar += Math.sin(t * cadencia.pulso * 0.65) * cadencia.balanco;
+      if (this.identidade === 'nox') inclinaAlvo += 0.08;
+      if (this.identidade === 'deepseek') girarY += Math.sin(t * 1.5) * 0.12;
+      if (this.identidade === 'byte') rolar += Math.sin(t * 10) * 0.012;
+    }
 
     // linguagem corporal de cada emoção
     switch (e.humor) {
@@ -694,8 +1089,8 @@ export class ModeloClaude {
 
     // pés
     if (andando) {
-      this.peE.rotation.x = passo * 0.9;
-      this.peD.rotation.x = -passo * 0.9;
+      this.peE.rotation.x = passo * (cadencia?.amplitude ?? 0.9);
+      this.peD.rotation.x = -passo * (cadencia?.amplitude ?? 0.9);
       this.peE.position.y = 0.2 + Math.max(0, Math.sin(this.fase)) * 0.09;
       this.peD.position.y = 0.2 + Math.max(0, -Math.sin(this.fase)) * 0.09;
     } else if (!e.noChao) {
@@ -711,10 +1106,25 @@ export class ModeloClaude {
     }
 
     // braços: balanço, no ar para cima, golpe guiando a magia
-    let alvoEX = andando ? -passo * 0.9 : 0;
-    let alvoDX = andando ? passo * 0.9 : 0;
+    let alvoEX = andando ? -passo * (cadencia?.amplitude ?? 0.9) : 0;
+    let alvoDX = andando ? passo * (cadencia?.amplitude ?? 0.9) : 0;
     let alvoEZ = -0.15;
     let alvoDZ = 0.15;
+    if (cadencia && !andando && e.noChao) {
+      const gesto = Math.sin(t * cadencia.pulso) * cadencia.balanco;
+      alvoEX = gesto;
+      alvoDX = -gesto * 1.4;
+      alvoEZ -= cadencia.balanco;
+      alvoDZ += cadencia.balanco;
+      if (this.identidade === 'aurora') {
+        alvoEZ -= 0.27;
+        alvoDZ += 0.27;
+      }
+      if (this.identidade === 'nox') {
+        alvoEX -= 0.2;
+        alvoDX -= 0.2;
+      }
+    }
     if (!e.noChao) {
       alvoEZ = -1.5;
       alvoDZ = 1.5;
@@ -758,6 +1168,64 @@ export class ModeloClaude {
       // braço direito aponta e "rege" a arma
       alvoDX = -1.6 + Math.sin(e.golpe * Math.PI) * 0.3;
       alvoDZ = 0.3 - e.golpe * 0.6;
+      const arco = Math.sin(e.golpe * Math.PI);
+      switch (this.identidade) {
+        case 'claude': // Um gesto curioso de estalo, com o outro braço equilibrando.
+          alvoEX = -0.45 - arco * 0.3;
+          alvoDZ = 0.65 - arco * 1.05;
+          break;
+        case 'gpt': // Disparo preciso a partir de dois terminais.
+          alvoDX = -1.8;
+          alvoEX = -1.4;
+          alvoEZ = -0.15;
+          alvoDZ = 0.15;
+          break;
+        case 'gemini': // Abre as duas mãos em leque estelar.
+          alvoEX = -1.3 - arco * 0.4;
+          alvoDX = alvoEX;
+          alvoEZ = -1.1 - arco * 0.5;
+          alvoDZ = -alvoEZ;
+          break;
+        case 'llama': // Antecipa a cuspida com a cabeça e um pequeno recuo.
+          alvoEX = -0.6;
+          alvoDX = -0.6;
+          alvoEZ = -0.45;
+          alvoDZ = 0.45;
+          this.nucleo.rotation.x += -0.24 + arco * 0.5;
+          break;
+        case 'mistral': // Corte largo e torção de cintura.
+          alvoDX = -1.15 - arco * 0.8;
+          alvoDZ = 1.1 - e.golpe * 2.3;
+          alvoEX = 0.5;
+          this.corpo.rotation.y += arco * 0.65;
+          break;
+        case 'deepseek': // Empurra a maré com os dois braços.
+          alvoDX = -0.65 - arco * 1.25;
+          alvoEX = alvoDX;
+          alvoEZ = -0.7 + arco * 0.35;
+          alvoDZ = -alvoEZ;
+          break;
+        case 'aurora': // Rege um compasso com mãos alternadas.
+          alvoEX = -1.4 + Math.cos(e.golpe * Math.PI * 2) * 0.5;
+          alvoDX = -1.4 - Math.cos(e.golpe * Math.PI * 2) * 0.5;
+          alvoEZ = -0.85;
+          alvoDZ = 0.85;
+          break;
+        case 'nox': // Lança o reflexo a partir de uma postura baixa e lateral.
+          alvoEX = -1.1;
+          alvoEZ = 0.45;
+          alvoDX = -1.75 + arco * 0.35;
+          alvoDZ = -0.8 + e.golpe * 0.6;
+          this.corpo.position.y -= arco * 0.09;
+          break;
+        case 'byte': // Soco de luva com contrapeso mecânico.
+          alvoDX = -0.5 - arco * 1.8;
+          alvoDZ = 0.1;
+          alvoEX = -1.2 + arco * 0.5;
+          alvoEZ = -0.65;
+          this.corpo.rotation.z += arco * 0.12;
+          break;
+      }
     }
     if (e.defendendo) {
       alvoDX = -1.5;
@@ -792,6 +1260,11 @@ export class ModeloClaude {
     if (this.aura) {
       this.aura.rotation.y = t * 0.65;
       this.aura.scale.setScalar(1 + Math.sin(t * 3) * 0.055);
+    }
+    if (this.aderecoIdentidade && cadencia) {
+      this.aderecoIdentidade.rotation.y =
+        Math.sin(t * cadencia.pulso * 0.6) * cadencia.balanco * 1.8;
+      this.aderecoIdentidade.position.y = Math.sin(t * cadencia.pulso) * 0.018;
     }
 
     // centelha: cor e tamanho conforme a emoção

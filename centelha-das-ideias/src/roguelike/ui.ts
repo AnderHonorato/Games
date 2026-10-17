@@ -5,6 +5,7 @@
  */
 import { ELEMENTOS, HABILIDADES, PASSIVAS, habilidade, passiva } from './dados/habilidades';
 import { PERSONAGENS, type DefPersonagem, type IdPersonagem } from './dados/personagens';
+import { ataqueBasico } from './dados/ataques-basicos';
 import { CORES_JOGADOR } from './jogo/jogador';
 import type { Partida } from './jogo/partida';
 import { PainelSala } from './ui-sala';
@@ -20,6 +21,8 @@ import {
   type Atributos,
   type Oferta,
 } from './nucleo/progresso';
+
+const MODO_VERSAO = 'Roguelike · Sobrevivência — v0.3.0';
 
 const ROTULOS: Partial<Record<keyof Atributos, { nome: string; formato: 'pct' | 'num' | 'mult' }>> =
   {
@@ -91,6 +94,8 @@ export class InterfaceSobrevivencia {
   private estadoDesenhado = '';
   private abaMenu: 'heroi' | 'atelie' | 'mundos' = 'heroi';
   private ataqueBotao = el('button', 'rg-ataque');
+  private usarBotao = el('button', 'rg-usar', 'Usar · E');
+  private interacaoPrompt = el('div', 'rg-interacao');
   private armaHud = el('div', 'rg-arma-hud');
   private cinema = el('div', 'rg-cinema');
   private cinemaNome = el('h2');
@@ -180,7 +185,8 @@ export class InterfaceSobrevivencia {
       return;
     if (p.estado === 'menu') {
       const i = PERSONAGENS.findIndex((d) => d.id === this.selecao);
-      const colunas = window.innerWidth < 720 ? 2 : 3;
+      const grade = this.camadaMenu.querySelector('.rg-cartas-personagem');
+      const colunas = grade ? getComputedStyle(grade).gridTemplateColumns.split(' ').length : 3;
       let n = i;
       if (e.code === 'ArrowRight' || e.code === 'KeyD') n = (i + 1) % PERSONAGENS.length;
       else if (e.code === 'ArrowLeft' || e.code === 'KeyA')
@@ -193,7 +199,13 @@ export class InterfaceSobrevivencia {
         this.comecar();
         return;
       }
-      if (n !== i) this.selecionar(PERSONAGENS[n].id);
+      if (n !== i) {
+        e.preventDefault();
+        this.selecionar(PERSONAGENS[n].id);
+        this.camadaMenu
+          .querySelector('.rg-carta-personagem.selecionado')
+          ?.scrollIntoView({ block: 'nearest' });
+      }
     } else if (p.estado === 'fim') {
       if (e.code === 'Enter' || e.code === 'Space') {
         e.preventDefault();
@@ -250,6 +262,7 @@ export class InterfaceSobrevivencia {
     this.camadaMenu.hidden = est !== 'menu';
     this.hud.hidden = est === 'menu';
     this.toque.hidden = est !== 'jogando';
+    this.atualizarAtaque();
     this.modal.replaceChildren();
     this.modal.hidden = true;
     if (est === 'menu') this.desenharMenu();
@@ -300,6 +313,7 @@ export class InterfaceSobrevivencia {
     const topo = el('header', 'rg-menu-topo');
     topo.append(
       el('div', 'rg-menu-sobre', 'A CENTELHA DAS IDEIAS'),
+      el('div', 'rg-modo-versao', MODO_VERSAO),
       el('h1', 'rg-menu-titulo', 'Acenda sua jornada.'),
       el(
         'div',
@@ -366,10 +380,12 @@ export class InterfaceSobrevivencia {
       }
       conteudo.append(grade);
       const def = p.def;
+      const basico = ataqueBasico(def.id);
       const detalhe = el('div', 'rg-detalhe-compacto');
       detalhe.append(
         el('strong', undefined, `${def.nome} · ${def.titulo}`),
-        el('span', undefined, def.descricao)
+        el('span', undefined, def.descricao),
+        el('span', 'rg-basico-descricao', `${basico.icone} ${basico.nome} · ${basico.descricao}`)
       );
       conteudo.append(detalhe);
       const armas = el('div', 'rg-armas');
@@ -465,6 +481,16 @@ export class InterfaceSobrevivencia {
   private desenharNivel(): void {
     const p = this.partida;
     this.modal.hidden = false;
+    const pausa = el('button', 'rg-pausa rg-pausa-nivel', 'II');
+    pausa.type = 'button';
+    pausa.setAttribute('aria-label', 'Pausar melhorias');
+    pausa.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      p.pausar(true);
+    });
+    pausa.addEventListener('click', () => p.pausar(true));
+    this.modal.append(pausa);
     if (p.local.escolheu || p.local.caido) {
       const caixa = el('div', 'rg-caixa rg-caixa-espera');
       const faltam = p.jogadores.filter((jg) => !jg.escolheu).map((jg) => jg.def.nome);
@@ -586,7 +612,7 @@ export class InterfaceSobrevivencia {
     const p = this.partida;
     this.modal.hidden = false;
     const caixa = el('div', 'rg-caixa rg-caixa-pausa');
-    caixa.append(el('h2', undefined, 'Pausa'));
+    caixa.append(el('div', 'rg-modo-versao', MODO_VERSAO), el('h2', undefined, 'Pausa'));
     if (p.papel !== 'solo')
       caixa.append(
         el(
@@ -755,6 +781,11 @@ export class InterfaceSobrevivencia {
     const pausa = el('button', 'rg-pausa', 'II');
     pausa.type = 'button';
     pausa.setAttribute('aria-label', 'Pausar');
+    pausa.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.partida.pausar(true);
+    });
     pausa.addEventListener('click', () => this.partida.pausar(true));
     topo.append(vida, centro, pausa);
     this.chefe.append(this.chefeNome, el('div', 'rg-chefe-barra'));
@@ -807,6 +838,7 @@ export class InterfaceSobrevivencia {
       this.linhasEquipe.push({ raiz, nome, barra });
     }
     this.hud.append(
+      el('div', 'rg-modo-versao rg-modo-hud', MODO_VERSAO),
       this.armaHud,
       numeros,
       etiquetas,
@@ -905,7 +937,22 @@ export class InterfaceSobrevivencia {
     const soltarAtaque = () => this.partida.entrada.definirComandoVirtual('atacar', false);
     for (const ev of ['pointerup', 'pointercancel', 'pointerleave'])
       this.ataqueBotao.addEventListener(ev, soltarAtaque);
-    this.toque.append(this.dashBotao, this.ataqueBotao);
+    this.usarBotao.type = 'button';
+    this.usarBotao.hidden = this.interacaoPrompt.hidden = true;
+    this.usarBotao.addEventListener('click', () => this.partida.interagirMapa());
+    this.toque.append(this.dashBotao, this.ataqueBotao, this.usarBotao);
+    this.hud.append(this.interacaoPrompt);
+  }
+
+  private atualizarAtaque(): void {
+    const basico = ataqueBasico(this.partida.personagemId);
+    this.ataqueBotao.replaceChildren(
+      el('span', undefined, 'Ataque'),
+      el('small', undefined, basico.nome)
+    );
+    this.ataqueBotao.title = `${basico.nome} · ${basico.descricao} · J`;
+    this.ataqueBotao.style.setProperty('--cor-ataque', basico.cor);
+    this.ataqueBotao.dataset.ataque = basico.nome;
   }
 
   private definir(
@@ -947,7 +994,15 @@ export class InterfaceSobrevivencia {
       this.dialogo.style.top = `${Math.max(90, t.y)}px`;
     }
     const arma = ARMAS_INICIAIS.find((a) => a.id === p.local.arma);
-    this.armaHud.textContent = `${arma?.icone ?? '╱'} ${arma?.nome ?? 'Arma'} · ${p.local.recargaAtaque > 0 ? p.local.recargaAtaque.toFixed(1) + 's' : 'Pronta · J'}`;
+    const basico = ataqueBasico(p.personagemId);
+    this.armaHud.textContent = `${basico.icone} ${basico.nome} · ${p.local.recargaAtaque > 0 ? p.local.recargaAtaque.toFixed(1) + 's' : 'Pronto · J'} · ${arma?.nome ?? 'Arma'}`;
+    const interacao = p.interacaoAtual;
+    const podeUsar = !!interacao && this.estadoTela === 'jogando' && !cine;
+    this.usarBotao.hidden = this.interacaoPrompt.hidden = !podeUsar;
+    if (interacao && podeUsar) {
+      this.interacaoPrompt.textContent = `${interacao.nome} · ${interacao.descricao}`;
+      this.usarBotao.setAttribute('aria-label', `Usar ${interacao.nome}`);
+    }
     this.ataqueBotao.style.setProperty('--recarga', String(Math.min(1, p.local.recargaAtaque)));
     const at = p.atributos;
     this.definir(

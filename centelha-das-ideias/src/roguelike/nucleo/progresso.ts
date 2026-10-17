@@ -162,7 +162,7 @@ export interface Oferta {
 
 /**
  * Sorteia as opções do nível. Pesos: habilidade que você já tem = 5 (6,5 quando a próxima
- * escolha é uma evolução), passiva que você já tem = 3,5, nova = 1. Respeita 10 ativas e 5 passivas.
+ * escolha é uma evolução), ajustados ao tamanho do catálogo; passiva que você já tem = 3,5, nova = 1. Respeita 10 ativas e 5 passivas.
  */
 export function gerarOfertas(
   build: EstadoBuild,
@@ -177,7 +177,8 @@ export function gerarOfertas(
         const evolucao = slot.nivel + 1 === 5 || slot.nivel + 1 === 10;
         candidatos.push({
           o: { tipo: 'ativa', id: def.id, nivelAtual: slot.nivel, novo: false, evolucao },
-          peso: evolucao ? 6.5 : 5,
+          // Preserva a preferência pela build quando o catálogo recebe novos poderes.
+          peso: (evolucao ? 6.5 : 5) * (HABILIDADES.length / 28),
         });
       }
     } else if (build.ativas.length < MAX_ATIVAS) {

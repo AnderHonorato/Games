@@ -2,6 +2,18 @@
 
 Registro curto para retomar o trabalho após interrupções. Mais recente no topo.
 
+## Heróis em Ação — 17/10/2026
+
+- Roguelike 0.3: ataque básico pessoal de cada herói já habilitado ao iniciar; funciona com J e botão Ataque, independente de cartas, slots, XP ou sorteio.
+- Corrigido o botão Pausar: a camada do joystick interceptava o toque. Pausa por segundo dedo e nas cartas também corrigida, mantendo estado e liberando entrada.
+- Aurora, Nox e Byte: nove heróis com silhuetas, roupas, falas e animações próprias; modo Aventura preservado pelo opt-in de identidade.
+- Quatro poderes adicionais (32 no total): Trem Fantasma, Dados Caóticos, Espelho Prismático, Orquestra Orbital. Evoluções 5/10 mudam geometria e comportamento, com sons próprios.
+- Fontes curam 35%, totens protegem por 6 s e baús concedem uma nova rolagem; seis pontos seguros por mapa, uso único por fase, com sincronização autoritativa.
+- XP redesenhado com quatro silhuetas facetadas instanciadas, cores sólidas, flutuação e brilho controlado.
+- Tipos e build aprovados; 156 testes unitários aprovados. Teste de navegador confirmou nove básicos desde o início e pausa por toque, multitoque, cartas e cinemáticas, sem erros.
+- Navegador: três interações reais por botão e tecla E, uso único e menus em paisagem aprovados. Conferidos três novos heróis, quatro tipos de XP e quatro poderes nos níveis 1/5/10; zero erros de página.
+- Android: assembleDebug e lintDebug aprovados; versão 3/0.3.0 em paisagem. Teste físico em Android e WebRTC entre aparelhos permanecem necessários.
+
 ## Novos Mundos — 16/10/2026
 
 - Destino do projeto: `AnderHonorato/Games`, pasta `centelha-das-ideias`.

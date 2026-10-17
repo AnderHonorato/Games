@@ -8,6 +8,9 @@ import {
   DURACAO_TRANSICAO,
 } from '../../src/roguelike/nucleo/campanha';
 import { multVelocidade } from '../../src/roguelike/dados/inimigos';
+import { ATAQUES_BASICOS, ataqueBasico } from '../../src/roguelike/dados/ataques-basicos';
+import { PERSONAGENS } from '../../src/roguelike/dados/personagens';
+import { InteracoesMapa } from '../../src/roguelike/jogo/interacoes-mapa';
 import { ARMAS_INICIAIS } from '../../src/roguelike/dados/armas-iniciais';
 import { Partida } from '../../src/roguelike/jogo/partida';
 import { Jogador } from '../../src/roguelike/jogo/jogador';
@@ -67,7 +70,16 @@ function fixture(): Partida {
     entrada: { iniciarPasso() {}, finalizarPasso() {}, apertou: () => false, soltarTudo: vi.fn() },
     audio: { musica() {}, tocar() {} },
     vozes: { falar() {} },
-    fx: { subirNivel() {}, impacto() {}, erupcaoTerra() {}, chuvaCodigo() {}, limpar() {} },
+    fx: {
+      subirNivel() {},
+      impacto() {},
+      erupcaoTerra() {},
+      chuvaCodigo() {},
+      limpar() {},
+      nova() {},
+      explosao() {},
+      raio() {},
+    },
     brilhos: { explosao() {} },
     halos: { iniciar() {}, marcar() {} },
     loteOrbita: { iniciar() {} },
@@ -93,6 +105,81 @@ describe('combate manual', () => {
     const perto = { ...comum, x: 0.5 };
     expect(selecionarAlvoManual([comum, perto], 0, 0, 4)).toBe(perto);
     expect(selecionarAlvoManual([{ ...comum, vivo: false }], 0, 0, 4)).toBeNull();
+  });
+  it.each(PERSONAGENS.map((p) => p.id))(
+    'ataque pessoal de %s existe no primeiro instante sem carta ou slot',
+    (id) => {
+      const p = fixture();
+      p.tempo = 0;
+      p.local.personagemId = id;
+      p.local.habs = [];
+      p.local.build = { ativas: [], passivas: [] };
+      const dano = vi.fn();
+      interno(p).causarDano = dano;
+      interno(p).inimigos = [{ x: 1, z: 0, vida: 100, vidaMax: 100, raio: 0.4, vivo: true }];
+      expect(p.atacarManual()).toBe(true);
+      expect(dano).toHaveBeenCalled();
+      expect(p.local.recargaAtaque).toBeGreaterThan(0);
+      expect(p.local.habs).toEqual([]);
+      expect(p.local.build).toEqual({ ativas: [], passivas: [] });
+      expect(ataqueBasico(id).nome).toBeTruthy();
+      expect(p.atacarManual()).toBe(false);
+    }
+  );
+  it('nove heróis têm nove mecânicas e escolhas de arma preservam seu ataque pessoal', () => {
+    expect(new Set(Object.values(ATAQUES_BASICOS).map((a) => a.mecanica)).size).toBe(9);
+    const p = fixture();
+    for (const arma of ARMAS_INICIAIS) {
+      p.local.arma = arma.id;
+      p.local.recargaAtaque = 0;
+      expect(p.atacarManual()).toBe(true);
+      expect(ataqueBasico(p.local.personagemId).mecanica).toBe('corte');
+    }
+  });
+  it.each([
+    ['perseguir', false, 1],
+    ['perseguir', true, 0.35],
+    ['chefe', false, 0.08],
+  ] as const)(
+    'força negativa puxa com resistência de %s (elite=%s)',
+    (comportamento, elite, resistencia) => {
+      const p = fixture();
+      const inimigo = {
+        x: 3,
+        z: 0,
+        vivo: true,
+        vida: 1000,
+        vidaMax: 1000,
+        vx: 0,
+        vz: 0,
+        raio: 1,
+        elite,
+        def: { id: 'spam', comportamento, altura: 1, raio: 1 },
+      };
+      interno(p).causarDano(inimigo, 1, -1, 'gravidade', 1, 0, -12);
+      expect(inimigo.vx).toBeCloseTo(-12 * resistencia);
+      expect(inimigo.vz).toBe(0);
+    }
+  );
+  it('Nox puxa inimigos vizinhos para o alvo principal durante seu ataque real', () => {
+    const p = fixture();
+    p.local.personagemId = 'nox';
+    const principal = {
+      x: 3,
+      z: 0,
+      vivo: true,
+      vida: 1000,
+      vidaMax: 1000,
+      vx: 0,
+      vz: 0,
+      raio: 0.3,
+      def: { id: 'spam', comportamento: 'perseguir', altura: 1, raio: 0.3 },
+    };
+    const vizinho = { ...principal, x: 4, vidaMax: 500 };
+    interno(p).inimigos = [principal, vizinho];
+    expect(p.atacarManual()).toBe(true);
+    expect(vizinho.vx).toBeLessThan(0);
+    expect(principal.vx).toBe(0);
   });
   it('oferece três relações distintas entre força, alcance e recarga', () => {
     const [lamina, cajado, martelo] = ARMAS_INICIAIS;
@@ -205,6 +292,24 @@ describe('campanha e pausa de apresentação', () => {
       expect(p.tempo).toBe(12);
     }
   );
+  it('pausa as cartas, limpa entrada e restaura as ofertas exatas', () => {
+    const p = fixture();
+    p.estado = 'nivel';
+    p.local.ofertas = [{ tipo: 'cura', id: 'cura', nivelAtual: 0, novo: false, evolucao: false }];
+    p.banner = { texto: 'Cartas', sub: 'Escolha', cor: '#fff', vida: 4 };
+    const ofertas = p.local.ofertas;
+    p.pausar(true);
+    expect(p.estado).toBe('pausa');
+    expect(p.entrada.soltarTudo).toHaveBeenCalledOnce();
+    p.passo(20);
+    expect(p.tempo).toBe(12);
+    expect(p.banner?.vida).toBe(4);
+    expect(p.atacarManual()).toBe(false);
+    p.pausar(false);
+    expect(p.estado).toBe('nivel');
+    expect(p.local.ofertas).toBe(ofertas);
+    expect(p.entrada.soltarTudo).toHaveBeenCalledTimes(2);
+  });
   it('transição reseta build e nível e preserva XP permanente', () => {
     const p = fixture();
     p.conta.ganharXp(220);
@@ -409,5 +514,69 @@ describe('regressões da passagem de fase', () => {
     host.iniciar();
     expect(host.nivel).toBe(1);
     expect(host.local.modelo.definirPoder).toHaveBeenLastCalledWith(1);
+  });
+});
+
+describe('interações da arena com autoridade', () => {
+  function preparar() {
+    const p = fixture();
+    const interacoes = new InteracoesMapa(p.cena, 'jardim');
+    interno(p).interacoesMapa = interacoes;
+    return { p, interacoes };
+  }
+  it.each(['fonte', 'totem', 'cofre'] as const)(
+    '%s concede benefício uma vez e exige proximidade',
+    (tipo) => {
+      const { p, interacoes } = preparar();
+      const ponto = interacoes.listar().find((i) => i.tipo === tipo)!;
+      p.local.vida = 10;
+      const vidaMax = p.local.atributos.vidaMaxima;
+      expect(p.interagirMapa()).toBe(false);
+      p.local.x = ponto.x;
+      p.local.z = ponto.z;
+      expect(p.interacaoAtual?.id).toBe(ponto.id);
+      expect(p.interagirMapa()).toBe(true);
+      if (tipo === 'fonte') expect(p.local.vida).toBeCloseTo(10 + vidaMax * 0.35);
+      if (tipo === 'totem') expect(p.local.invencivel).toBe(6);
+      if (tipo === 'cofre') expect(p.local.rerrolagens).toBe(3);
+      expect(p.interagirMapa()).toBe(false);
+      expect(interacoes.snapshot().consumidas).toEqual([ponto.id]);
+      p.estado = 'pausa';
+      expect(p.interagirMapa()).toBe(false);
+      interacoes.descartar();
+    }
+  );
+  it('convidado pede interação sem consumir nem conceder benefícios', () => {
+    const { p, interacoes } = preparar();
+    const fonte = interacoes.listar().find((i) => i.tipo === 'fonte')!;
+    p.local.x = fonte.x;
+    p.local.z = fonte.z;
+    p.local.vida = 10;
+    p.papel = 'convidado';
+    const acao = vi.fn();
+    p.rede = { acao } as never;
+    expect(p.interagirMapa()).toBe(true);
+    expect(acao).toHaveBeenCalledWith('interagir');
+    expect(p.local.vida).toBe(10);
+    expect(interacoes.snapshot().consumidas).toEqual([]);
+    expect(p.interagirMapa(1)).toBe(false);
+    interacoes.descartar();
+  });
+  it('host valida distância remota e replica consumo e rerrolagem sem esperar o próximo nível', () => {
+    const { p: host, interacoes } = preparar();
+    const { p: guest, interacoes: interacoesGuest } = preparar();
+    host.papel = 'anfitriao';
+    guest.papel = 'convidado';
+    const cofre = interacoes.listar().find((i) => i.tipo === 'cofre')!;
+    expect(host.executarAcaoRemota(1, 'interagir')).toBe(false);
+    host.jogadores[1].x = cofre.x;
+    host.jogadores[1].z = cofre.z;
+    expect(host.executarAcaoRemota(1, 'interagir')).toBe(true);
+    expect(host.executarAcaoRemota(1, 'interagir')).toBe(false);
+    guest.importarEstado(host.exportarEstado());
+    expect(guest.jogadores[1].rerrolagens).toBe(3);
+    expect(interacoesGuest.snapshot()).toEqual(interacoes.snapshot());
+    interacoes.descartar();
+    interacoesGuest.descartar();
   });
 });

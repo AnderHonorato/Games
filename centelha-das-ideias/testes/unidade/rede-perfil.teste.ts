@@ -146,13 +146,19 @@ describe('perfis e comandos da sala', () => {
     await drenar();
     host.iniciarPartida();
     await drenar();
-    canalGuest.enviar({ t: 'acao', tipo: 'ataque', indice: 0 });
+    canalGuest.enviar({ t: 'acao', tipo: 'ataque', indice: 0, fase: ph.identificadorFase });
     canalGuest.enviar({ t: 'acao', tipo: 'destruir' });
     canalGuest.enviar({ t: 'eu', fase: pg.identificadorFase, j: [[0, 9, 9, 0, 0, 0, 0, 0]] });
     canalGuest.enviar({ t: 'eu', fase: pg.identificadorFase, j: [[1, 4, 5, 0, 0, 0, 0, 0]] });
     await drenar();
     expect(ph.executarAcaoRemota).toHaveBeenCalledExactlyOnceWith(1, 'ataque');
     expect(ph.importarPosicoes).toHaveBeenCalledExactlyOnceWith([[1, 4, 5, 0, 0, 0, 0, 0]]);
+    canalGuest.enviar({ t: 'acao', tipo: 'interagir', fase: 'fase-anterior' });
+    await drenar();
+    expect(ph.executarAcaoRemota).toHaveBeenCalledTimes(1);
+    canalGuest.enviar({ t: 'acao', tipo: 'interagir', fase: ph.identificadorFase });
+    await drenar();
+    expect(ph.executarAcaoRemota).toHaveBeenLastCalledWith(1, 'interagir');
   });
 
   it('rejeita eu e pos antigos durante a troca de fase até o convidado receber o estado novo', async () => {

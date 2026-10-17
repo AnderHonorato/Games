@@ -28,6 +28,338 @@ const estrela = (r: number, pontas: number, y: number, fase = 0): number[] =>
     return [Math.cos(u * TAU + fase) * rr, y, Math.sin(u * TAU + fase) * rr];
   });
 
+const deslocar = (p: number[], x: number, y = 0, z = 0): number[] =>
+  p.map((v, i) => v + [x, y, z][i % 3]);
+const arcoVertical = (x: number, z: number, h: number): number[] =>
+  caminho(25, (u) => [
+    x + Math.sin(u * Math.PI) * 0.65,
+    0.2 + Math.sin(u * Math.PI) * h,
+    z + (u - 0.5) * 1.5,
+  ]);
+/** Camadas diferentes para cada marco, em vez de apenas multiplicar a malha anterior. */
+function camadasEvolucao(id: string, final: boolean): number[][] {
+  const f = final;
+  switch (id) {
+    case 'centelhaOrbital':
+      return f
+        ? [anel(2.4, 1.3), anel(1.5, 2), estrela(1.2, 8, 2.5)]
+        : [anel(2.3, 0.35, 41, Math.PI / 6), anel(1.3, 1.5)];
+    case 'raioCadeia':
+      return f
+        ? [
+            estrela(1.1, 7, 1.1),
+            deslocar(estrela(0.7, 5, 1.7), 2.6),
+            linha([0.5, 1, 0], [1.3, 2.8, 0], [2.6, 1.7, 0]),
+          ]
+        : [
+            linha([1.1, 0.4, -0.5], [1.5, 2, -1], [2.5, 1, -1.9]),
+            linha([2, 1.1, -0.1], [2.9, 2.5, 0.9]),
+          ];
+    case 'bolaFogo':
+      return f
+        ? [
+            caminho(37, (u) => [
+              -1 + u * 4,
+              1 + Math.sin(u * Math.PI) * 1.7,
+              Math.sin(u * TAU) * 0.6,
+            ]),
+            estrela(1.5, 9, 0.15),
+            arcoVertical(1, 0, 3.2),
+          ]
+        : [
+            caminho(37, (u) => [u * 2.7, 0.25, Math.sin(u * TAU * 2) * 0.6]),
+            deslocar(estrela(0.8, 6, 0.2), 1.6),
+          ];
+    case 'lancaGelo':
+      return f
+        ? [-1, 0, 1].map((j) =>
+            linha([0.3, 0.7, 0], [2.7, 1.1, j * 1.2], [2.2, 1.65, j * 1.5], [3.4, 1, j * 1.6])
+          )
+        : [linha([1.3, 0.8, 0], [1.6, 1.6, -0.7], [2, 0.8, 0], [1.6, 1.6, 0.7])];
+    case 'novaGlacial':
+      return f
+        ? [anel(2.6, 0.45, 49), estrela(2.5, 12, 0.3), anel(1.8, 1.6, 37)]
+        : [estrela(2.4, 6, 0.65), anel(1.3, 1.2, 25)];
+    case 'chuvaMeteoros':
+      return f
+        ? [
+            caminho(33, (u) => [-2 + u * 4, 4.8 * (1 - u), -1.6 + u * 2]),
+            estrela(2.5, 10, 0.12),
+            anel(2.2, 0.3),
+          ]
+        : [linha([-2, 0.2, -1], [0, 0.05, 0], [2, 0.2, 1]), estrela(1.6, 7, 0.1)];
+    case 'laminaVento':
+      return f
+        ? [
+            caminho(49, (u) => [
+              Math.cos(u * TAU * 2) * 2.5,
+              0.2 + u * 3,
+              Math.sin(u * TAU * 2) * 2.5,
+            ]),
+            estrela(2.8, 7, 0.2),
+          ]
+        : [caminho(45, (u) => [Math.cos(u * TAU) * 2, 0.3 + u * 1.2, Math.sin(u * TAU) * 2])];
+    case 'chicoteLuz':
+      return f
+        ? [
+            linha([-3, 1, 0], [0, 1, 0], [3.8, 1, 0]),
+            linha([0, 1, -3], [0, 1, 3]),
+            estrela(0.8, 8, 1.2),
+          ]
+        : [
+            caminho(37, (u) => [
+              -u * 3.4,
+              0.8 + Math.sin(u * TAU * 3) * 0.2,
+              -Math.sin(u * Math.PI) * 0.8,
+            ]),
+          ];
+    case 'auraSagrada':
+      return f
+        ? [arcoVertical(-1.4, 0, 3.2), arcoVertical(1.4, 0, 3.2), estrela(1.8, 8, 2.8)]
+        : [estrela(2, 8, 0.15), anel(1.2, 2.4)];
+    case 'tornado':
+      return f
+        ? [
+            anel(0.9, 1.5),
+            caminho(49, (u) => [
+              Math.cos(u * TAU * 3) * 2.2,
+              0.3 + u * 3.5,
+              Math.sin(u * TAU * 3) * 2.2,
+            ]),
+          ]
+        : [
+            caminho(41, (u) => [
+              Math.cos(-u * TAU * 2) * 1.8,
+              3.2 - u * 2.7,
+              Math.sin(-u * TAU * 2) * 1.8,
+            ]),
+          ];
+    case 'misseis':
+      return f
+        ? [
+            caminho(53, (u) => [
+              Math.cos(u * TAU * 2) * u * 2.5,
+              0.7 + u * 2,
+              Math.sin(u * TAU * 2) * u * 2.5,
+            ]),
+            estrela(2, 8, 0.6),
+          ]
+        : [
+            linha([1.5, 1, 0], [2.7, 1.5, -1.2], [3.5, 0.8, -1.7]),
+            linha([1.5, 1, 0], [2.7, 1.5, 1.2], [3.5, 0.8, 1.7]),
+          ];
+    case 'espinhosTerra':
+      return f
+        ? [
+            estrela(2.8, 9, 0.15),
+            linha([-2.5, 0.1, 0], [-1.2, 2.4, 0], [0, 0.2, 0], [1.2, 2.8, 0], [2.5, 0.1, 0]),
+          ]
+        : [
+            linha(
+              [-3, 0.1, 0],
+              [-1.7, 0.4, -0.5],
+              [-0.7, 0.1, 0.5],
+              [0.5, 0.4, -0.3],
+              [2.8, 0.1, 0]
+            ),
+          ];
+    case 'laserGiratorio':
+      return f
+        ? [anel(2.4, 1.5), estrela(3, 8, 0.9), linha([0, 0.4, 0], [0, 3.4, 0])]
+        : [linha([0, 0.9, 0], [2.5, 1.4, 1.6]), linha([0, 0.9, 0], [2.5, 0.5, -1.6])];
+    case 'discoDados':
+      return f
+        ? [anel(1.7, 1.5), linha([-2, 1, 0], [-1, 2.3, 0], [0, 2.6, 0], [1, 2.3, 0], [2, 1, 0])]
+        : [estrela(1.2, 8, 0.75), linha([0.4, 0.7, 0.4], [1.6, 1.8, 1], [2.8, 0.7, 0.6])];
+    case 'nuvemToxica':
+      return f
+        ? [
+            caminho(49, (u) => [
+              Math.cos(u * TAU * 2) * u * 2.8,
+              0.3 + u,
+              Math.sin(u * TAU * 2) * u * 2.8,
+            ]),
+            estrela(2.5, 5, 0.15),
+          ]
+        : [anel(2.3, 0.15), arcoVertical(0.8, -0.6, 1.7)];
+    case 'relampagoCeleste':
+      return f
+        ? [-1.6, 0, 1.6].map((x) =>
+            linha([x - 0.2, 4.5, 0], [x + 0.3, 2.7, -0.5], [x - 0.3, 1.8, 0.3], [x, 0.2, 0])
+          )
+        : [estrela(1.8, 9, 0.15), linha([0.2, 0.2, 0], [1.3, 1, 1], [2.1, 0.2, 1.5])];
+    case 'escudoCristal':
+      return f
+        ? [arcoVertical(-1.6, 0, 3), arcoVertical(1.6, 0, 3), anel(1.6, 2.7, 7)]
+        : [linha([-1.8, 0.7, 0], [-2.8, 1.4, -0.8], [-2.4, 1.2, 0], [-3, 1.3, 0.5])];
+    case 'buracoNegro':
+      return f
+        ? [estrela(2.9, 11, 0.3), anel(2, 1.4), linha([0, -0.2, 0], [0, 3, 0])]
+        : [
+            anel(2.8, 0.35),
+            caminho(37, (u) => [
+              Math.cos(u * TAU) * 1.7,
+              1 + Math.sin(u * TAU) * 1.2,
+              Math.sin(u * TAU) * 0.4,
+            ]),
+          ];
+    case 'serraCircular':
+      return f
+        ? [
+            deslocar(estrela(1.3, 12, 0.8), 2),
+            deslocar(estrela(1.3, 12, 0.8), -2),
+            linha([-2, 0.8, 0], [2, 0.8, 0]),
+          ]
+        : [estrela(1.8, 12, 1.15), anel(0.6, 1.15, 19)];
+    case 'pulsoSonico':
+      return f
+        ? [estrela(2.7, 10, 0.5), anel(2.2, 1.8), anel(1.2, 2.4)]
+        : [caminho(41, (u) => [-2.5 + u * 5, 0.7 + Math.sin(u * TAU * 4) * 0.5, 0])];
+    case 'droneDados':
+      return f
+        ? [
+            deslocar(anel(0.5, 1.8, 17), -1.8),
+            deslocar(anel(0.5, 1.8, 17), 1.8),
+            linha([-1.8, 1.8, 0], [0, 2.5, 0], [1.8, 1.8, 0]),
+          ]
+        : [
+            linha([0.55, 1.2, 0], [1.3, 1.5, -0.5], [2.1, 0.8, -1]),
+            linha([0.55, 1.2, 0], [1.3, 1.5, 0.5], [2.1, 0.8, 1]),
+          ];
+    case 'estrelasGemeas':
+      return f
+        ? [
+            caminho(57, (u) => [
+              Math.cos(u * TAU * 2) * u * 2.8,
+              0.8 + u,
+              Math.sin(u * TAU * 2) * u * 2.8,
+            ]),
+            estrela(2.3, 10, 0.25),
+          ]
+        : [estrela(0.7, 4, 1.8), linha([-1.2, 0.7, 0], [0, 1.8, 0], [1.2, 0.7, 0])];
+    case 'cuspeToxico':
+      return f
+        ? [-1, 0, 1].map((j) =>
+            caminho(29, (u) => [u * 3, 0.25 + Math.sin(u * Math.PI) * 2, j * u * 1.6])
+          )
+        : [linha([2.2, 0.1, -0.7], [3.2, 0.1, -0.7], [2.7, 1.5, 0], [2.2, 0.1, -0.7])];
+    case 'ondaProfunda':
+      return f
+        ? [
+            caminho(53, (u) => [
+              Math.sin(u * Math.PI) * 0.7,
+              0.25 + Math.sin(u * Math.PI) * 3.2,
+              (u - 0.5) * 6,
+            ]),
+            caminho(41, (u) => [
+              1.4 + Math.sin(u * TAU) * 0.6,
+              0.4 + Math.cos(u * TAU) * 0.5,
+              (u - 0.5) * 5,
+            ]),
+          ]
+        : [
+            anel(2, 0.3),
+            caminho(41, (u) => [
+              Math.sin(u * TAU) * 2,
+              0.6 + Math.cos(u * TAU) * 0.5,
+              Math.cos(u * TAU) * 2,
+            ]),
+          ];
+    case 'firewall':
+      return f
+        ? [
+            anel(2.7, 0.3, 13),
+            anel(2.7, 2.5, 13),
+            linha([-2.7, 0.3, 0], [-2.7, 2.5, 0], [2.7, 2.5, 0], [2.7, 0.3, 0]),
+          ]
+        : [
+            caminho(37, (u) => [
+              Math.cos(u * TAU) * 2,
+              0.3 + Math.sin(u * TAU * 6) * 0.35,
+              Math.sin(u * TAU) * 2,
+            ]),
+          ];
+    case 'coletorLixo':
+      return f
+        ? [estrela(2.7, 6, 0.2), linha([-1, 0.3, 0], [0, 2.8, 0], [1, 0.3, 0], [-1, 0.3, 0])]
+        : [
+            caminho(41, (u) => [
+              Math.cos(u * TAU * 2) * (2.6 - u * 2.5),
+              0.15,
+              Math.sin(u * TAU * 2) * (2.6 - u * 2.5),
+            ]),
+          ];
+    case 'breakpoint':
+      return f
+        ? [-2, 0, 2].map((x) =>
+            linha(
+              [x - 0.4, 0.3, -0.8],
+              [x - 0.8, 1, -0.8],
+              [x - 0.4, 2.2, -0.8],
+              [x + 0.4, 2.2, 0.8],
+              [x + 0.8, 1, 0.8],
+              [x + 0.4, 0.3, 0.8]
+            )
+          )
+        : [
+            linha([-1.5, 2.3, 0], [-1.5, 2.7, 0], [1.5, 2.7, 0], [1.5, 2.3, 0]),
+            estrela(0.65, 6, 0.1),
+          ];
+    case 'recursao':
+      return f
+        ? [-1, 0, 1].map((j) =>
+            linha([1.2, 1, 0], [2, 1.6, j * 0.7], [3, 2.2, j * 1.4], [3.6, 2.7, j * 1.7])
+          )
+        : [
+            linha([2.4, 2, -1.2], [3.2, 2.5, -1.7], [3.7, 2.1, -2]),
+            linha([2.4, 2, 1.2], [3.2, 2.5, 1.7], [3.7, 2.1, 2]),
+          ];
+    case 'tremFantasma':
+      return f
+        ? [-1.8, 1.8].map((z) =>
+            linha(
+              [-3, 0.15, z - 0.45],
+              [2, 0.15, z - 0.45],
+              [2, 0.15, z + 0.45],
+              [-3, 0.15, z + 0.45]
+            )
+          )
+        : [
+            linha(
+              [-3, 0.12, -0.8],
+              [-2, 0.7, 0.8],
+              [-1, 0.12, -0.8],
+              [0, 0.7, 0.8],
+              [1, 0.12, -0.8]
+            ),
+          ];
+    case 'dadosCaoticos':
+      return f
+        ? [estrela(2.7, 6, 0.3), estrela(2.2, 6, 1.6, Math.PI / 6)]
+        : [deslocar(estrela(1.1, 4, 1.5), 1.9), linha([0.8, 1, 0], [1.8, 2, 0], [2.8, 1, 0])];
+    case 'espelhoPrismatico':
+      return f
+        ? [arcoVertical(0, -1.7, 3.8), arcoVertical(0, 1.7, 3.8), estrela(2, 6, 2.5)]
+        : [linha([2.9, 0.65, 0], [4, 1, -1.4]), linha([2.9, 0.65, 0], [4, 1, 1.4])];
+    case 'orquestraOrbital':
+      return f
+        ? [
+            anel(2.7, 1.5),
+            estrela(2.4, 8, 2.3),
+            caminho(49, (u) => [(u - 0.5) * 5, 2.4 + Math.sin(u * TAU * 4) * 0.4, 0]),
+          ]
+        : [
+            caminho(41, (u) => [
+              Math.cos(u * TAU) * 2.3,
+              0.4 + Math.sin(u * TAU * 8) * 0.3,
+              Math.sin(u * TAU) * 2.3,
+            ]),
+          ];
+    default:
+      return [];
+  }
+}
+
 /** Geometria determinística que também permite testar cobertura e custo sem WebGL. */
 export function desenharAssinatura(id: string, nivel = 1): AssinaturaPoder | null {
   const n = Number.isFinite(nivel) ? Math.max(1, Math.min(10, Math.floor(nivel))) : 1;
@@ -376,10 +708,92 @@ export function desenharAssinatura(id: string, nivel = 1): AssinaturaPoder | nul
       }
       break;
     }
+    case 'tremFantasma':
+      for (let j = 0; j < 3; j++) {
+        const x = -j * 1.35;
+        trilhas.push(
+          linha(
+            [x - 0.55, 0.3, -0.5],
+            [x + 0.55, 0.3, -0.5],
+            [x + 0.55, 1.4, -0.5],
+            [x - 0.55, 1.4, -0.5],
+            [x - 0.55, 0.3, -0.5],
+            [x - 0.55, 0.3, 0.5],
+            [x + 0.55, 0.3, 0.5],
+            [x + 0.55, 1.4, 0.5],
+            [x - 0.55, 1.4, 0.5],
+            [x - 0.55, 1.4, -0.5]
+          )
+        );
+      }
+      trilhas.push(linha([0.1, 1.4, 0], [0.1, 2.25, 0], [0.5, 2.25, 0], [0.5, 1.4, 0]));
+      for (const z of [-0.65, 0.65]) trilhas.push(linha([-3.4, 0.12, z], [1.8, 0.12, z]));
+      break;
+    case 'dadosCaoticos':
+      trilhas.push(
+        linha(
+          [-0.8, 0.3, -0.8],
+          [0.8, 0.3, -0.8],
+          [0.8, 1.9, -0.8],
+          [-0.8, 1.9, -0.8],
+          [-0.8, 0.3, -0.8],
+          [-0.8, 0.3, 0.8],
+          [0.8, 0.3, 0.8],
+          [0.8, 1.9, 0.8],
+          [-0.8, 1.9, 0.8],
+          [-0.8, 0.3, 0.8]
+        )
+      );
+      trilhas.push(linha([-0.8, 1.9, -0.8], [-0.8, 1.9, 0.8], [0.8, 1.9, 0.8], [0.8, 1.9, -0.8]));
+      for (const x of [-0.35, 0.35])
+        for (const z of [-0.4, 0, 0.4])
+          trilhas.push(linha([x - 0.08, 1.92, z], [x + 0.08, 1.92, z]));
+      break;
+    case 'espelhoPrismatico':
+      for (const lado of [-1, 1]) {
+        trilhas.push(
+          linha(
+            [-0.5, 0.3, lado * 1.9],
+            [0, 2.5, lado * 1.9],
+            [0.5, 0.3, lado * 1.9],
+            [-0.5, 0.3, lado * 1.9]
+          )
+        );
+        trilhas.push(linha([0, 1.2, lado * 1.9], [1.1, 1.6, lado * 0.9], [2.9, 0.65, 0]));
+      }
+      break;
+    case 'orquestraOrbital':
+      for (let j = 0; j < 4; j++) {
+        const a = (j * TAU) / 4,
+          x = Math.cos(a) * 1.8,
+          z = Math.sin(a) * 1.8;
+        trilhas.push(
+          linha(
+            [x - 0.3, 0.55, z],
+            [x, 0.5, z],
+            [x + 0.2, 0.75, z],
+            [x - 0.1, 0.85, z],
+            [x - 0.3, 0.55, z],
+            [x + 0.2, 0.75, z],
+            [x + 0.2, 2, z],
+            [x + 0.8, 1.8, z],
+            [x + 0.8, 0.65, z]
+          )
+        );
+      }
+      trilhas.push(anel(1.8, 0.2));
+      break;
     default:
       return null;
   }
-  const escala = n === 10 ? 1.8 : 1 + (n - 1) * 0.025;
+  // Cada marco acrescenta uma construção própria (ramificações, via, torre, ondas),
+  // conservando o orçamento por manifestação mesmo quando a forma base já usa 12 fitas.
+  if (n >= 5) {
+    const novas = camadasEvolucao(id, n >= 10);
+    trilhas.splice(Math.max(0, 12 - novas.length));
+    trilhas.push(...novas);
+  }
+  const escala = n === 10 ? 1.55 : 1 + (n - 1) * 0.025;
   return {
     trilhas: trilhas.map((pontos) => pontos.map((v) => v * escala)),
     escala,

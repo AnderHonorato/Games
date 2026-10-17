@@ -7,7 +7,8 @@ import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeom
 import type { Aparencia } from '../../render/modelo-claude';
 import type { Atributos } from '../nucleo/progresso';
 
-export type IdPersonagem = 'claude' | 'gpt' | 'gemini' | 'llama' | 'mistral' | 'deepseek';
+export type IdPersonagem =
+  'claude' | 'gpt' | 'gemini' | 'llama' | 'mistral' | 'deepseek' | 'aurora' | 'nox' | 'byte';
 
 export interface Voz {
   /** Tom (0..2) e velocidade (0.5..2) da síntese de voz. */
@@ -48,7 +49,12 @@ export const PERSONAGENS: DefPersonagem[] = [
     cor: '#D97757',
     habilidadeInicial: 'centelhaOrbital',
     atributos: { sorte: 0.08, regeneracao: 0.15 },
-    aparencia: { corCorpo: '#D97757', corEscura: '#B65A3E', corCentelha: '#ffd27a' },
+    aparencia: {
+      identidade: 'claude',
+      corCorpo: '#D97757',
+      corEscura: '#B65A3E',
+      corCentelha: '#ffd27a',
+    },
     voz: { tom: 1.15, ritmo: 1.05, bipe: 'claude' },
     falas: {
       inicio: [
@@ -83,6 +89,7 @@ export const PERSONAGENS: DefPersonagem[] = [
     habilidadeInicial: 'raioCadeia',
     atributos: { recarga: 0.9, velocidadeProjetil: 1.1 },
     aparencia: {
+      identidade: 'gpt',
       corCorpo: '#19c39c',
       corEscura: '#0e7d63',
       corCentelha: '#bfffee',
@@ -128,6 +135,7 @@ export const PERSONAGENS: DefPersonagem[] = [
     habilidadeInicial: 'estrelasGemeas',
     atributos: { quantidade: 1, vidaMaxima: 90 },
     aparencia: {
+      identidade: 'gemini',
       corCorpo: '#7b8cff',
       corEscura: '#5143c9',
       corCentelha: '#e2c9ff',
@@ -180,6 +188,7 @@ export const PERSONAGENS: DefPersonagem[] = [
     habilidadeInicial: 'cuspeToxico',
     atributos: { vidaMaxima: 140, regeneracao: 0.5, velocidade: 0.95 },
     aparencia: {
+      identidade: 'llama',
       corCorpo: '#efe2c8',
       corEscura: '#b9a27f',
       corCentelha: '#bfff8a',
@@ -227,6 +236,7 @@ export const PERSONAGENS: DefPersonagem[] = [
     habilidadeInicial: 'laminaVento',
     atributos: { velocidade: 1.25, vidaMaxima: 85, area: 1.05 },
     aparencia: {
+      identidade: 'mistral',
       corCorpo: '#ff9a3d',
       corEscura: '#d9541e',
       corCentelha: '#fff2a8',
@@ -264,6 +274,7 @@ export const PERSONAGENS: DefPersonagem[] = [
     habilidadeInicial: 'ondaProfunda',
     atributos: { area: 1.2, dano: 1.1, velocidade: 0.92 },
     aparencia: {
+      identidade: 'deepseek',
       corCorpo: '#4d6bfe',
       corEscura: '#2b3fb8',
       corCentelha: '#9ff0ff',
@@ -294,6 +305,115 @@ export const PERSONAGENS: DefPersonagem[] = [
       vitoria: ['Águas calmas. Obrigado por navegar comigo.'],
       morte: ['Não se preocupe comigo. Na próxima eu mergulho com você de novo.'],
       evolucao: ['Do fundo do oceano!', 'Profundidade máxima! Você está vendo essa aura?'],
+    },
+  },
+  {
+    id: 'aurora',
+    nome: 'Aurora',
+    titulo: 'A Maestrina do Amanhecer',
+    descricao:
+      'Musical e acolhedora. Sua Orquestra Orbital pulsa ao redor do vestido; mais duração e coleta, mas menos vida.',
+    cor: '#f087c8',
+    habilidadeInicial: 'orquestraOrbital',
+    atributos: { duracao: 1.2, ima: 0.6, vidaMaxima: 90 },
+    aparencia: {
+      identidade: 'aurora',
+      corCorpo: '#f087c8',
+      corEscura: '#984e96',
+      corCentelha: '#ffe5a5',
+      corpo: () => new RoundedBoxGeometry(0.76, 0.94, 0.66, 4, 0.25),
+      rostoZ: 0.35,
+    },
+    voz: { tom: 1.3, ritmo: 1.02, bipe: 'aurora' },
+    falas: {
+      inicio: [
+        'Você marca o compasso e eu encontro a melodia!',
+        'Coloca os fones. Nossa aventura vai começar.',
+      ],
+      nivel: [
+        'Ouviu essa nota nova? Escolhe nosso próximo acorde!',
+        'Cada ideia deixa a música mais bonita.',
+      ],
+      dano: ['Ai, perdi o compasso! Me guia para um lugar seguro?', 'Essa nota saiu desafinada!'],
+      chefe: ['Que presença forte! Fica comigo e acompanha meu ritmo.'],
+      vitoria: ['Essa foi nossa melhor apresentação. Obrigada por tocar comigo!'],
+      morte: ['A música fez uma pausa. Na próxima você rege comigo de novo?'],
+      evolucao: [
+        'Meu vestido ganhou luz! Você está ouvindo nossa evolução?',
+        'Agora a orquestra está completa!',
+      ],
+    },
+  },
+  {
+    id: 'nox',
+    nome: 'Nox',
+    titulo: 'O Guardião do Crepúsculo',
+    descricao:
+      'Silencioso e ágil. O Espelho Prismático protege sua rota; mais velocidade e armadura, com recargas mais lentas.',
+    cor: '#aa8de3',
+    habilidadeInicial: 'espelhoPrismatico',
+    atributos: { velocidade: 1.12, armadura: 1, recarga: 1.1 },
+    aparencia: {
+      identidade: 'nox',
+      corCorpo: '#aa8de3',
+      corEscura: '#443c70',
+      corCentelha: '#b7f6ed',
+      corpo: () => {
+        const g = new THREE.SphereGeometry(0.48, 16, 12);
+        g.scale(0.92, 1.08, 0.86);
+        return g;
+      },
+      rostoZ: 0.4,
+    },
+    voz: { tom: 0.78, ritmo: 0.96, bipe: 'nox' },
+    falas: {
+      inicio: [
+        'Você cuida do caminho. Eu vigio as sombras.',
+        'Pronto? Até a noite tem suas cores.',
+      ],
+      nivel: ['Uma nova faceta. Qual delas você quer revelar?', 'Seu olhar alcança longe.'],
+      dano: ['Me viram! Vamos mudar de rota?', 'A sombra também sente.'],
+      chefe: ['Essa sombra é grande. Ainda assim, estamos juntos.'],
+      vitoria: ['Amanheceu. Você me trouxe até aqui.'],
+      morte: ['Não apague nossa luz. Quero tentar outra vez com você.'],
+      evolucao: ['Minha capa ganhou estrelas. Você reparou?', 'Um reflexo ainda mais forte!'],
+    },
+  },
+  {
+    id: 'byte',
+    nome: 'Byte',
+    titulo: 'O Inventor Improvável',
+    descricao:
+      'Digital e brincalhão. Os Dados Caóticos surpreendem os inimigos; mais sorte e projéteis velozes, mas menos vida.',
+    cor: '#6dd8ef',
+    habilidadeInicial: 'dadosCaoticos',
+    atributos: { sorte: 0.12, velocidadeProjetil: 1.18, vidaMaxima: 85 },
+    aparencia: {
+      identidade: 'byte',
+      corCorpo: '#6dd8ef',
+      corEscura: '#306883',
+      corCentelha: '#e0ff8b',
+      corpo: () => new RoundedBoxGeometry(0.9, 0.86, 0.7, 3, 0.11),
+      rostoZ: 0.36,
+    },
+    voz: { tom: 1.12, ritmo: 1.22, bipe: 'byte' },
+    falas: {
+      inicio: [
+        'Você no controle, eu na gambiarra. Vai dar certo!',
+        'Antena ligada! Vamos inventar uma saída?',
+      ],
+      nivel: [
+        'Atualização disponível! Você escolhe a peça.',
+        'Olha só: mais ideias no meu painel!',
+      ],
+      dano: ['Curto-circuito! Me tira dessa tomada?', 'Ai! Isso não veio no manual.'],
+      chefe: ['Chefão detectado! Aposto que você tem um plano melhor que o meu.'],
+      vitoria: ['Funcionou! Salva essa invenção e dá um toque aqui!'],
+      morte: ['Preciso reiniciar. Você me acompanha na próxima versão?'],
+      evolucao: [
+        'Minhas luvas ganharam potência! Você viu esse brilho?',
+        'Versão turbinada, graças a você!',
+      ],
     },
   },
 ];

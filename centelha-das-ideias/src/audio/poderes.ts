@@ -1,4 +1,4 @@
-/** Timbres e ritmos próprios das 28 habilidades. Toda automação usa o relógio WebAudio. */
+/** Timbres e ritmos próprios das 32 habilidades. Toda automação usa o relógio WebAudio. */
 import { SOM_POR_PODER, somDoPoder, type IdPoderSonoro, type IdSomPoder } from './catalogo-poderes';
 import type { ApiAudio } from './contrato';
 import type { DefinicaoSom, Receita } from './sons';
@@ -304,6 +304,41 @@ const RECEITAS: Record<IdPoderSonoro, Emissao> = {
         );
       }
     sino(k, s, t + 0.35, 1760 * q, 0.18, 0.06);
+  },
+  tremFantasma(k, s, t, q) {
+    // Apito espectral e rodados com aceleração: ritmo ferroviário reconhecível.
+    curva(k, s, t, 370 * q, 520 * q, 0.55, 0.13, 'oco');
+    nota(k, s, t + 0.04, 740 * q, 0.48, 0.07, 'suave');
+    for (let j = 0; j < 5; j++) {
+      const d = 0.08 + j * 0.075;
+      ar(k, s, t + d, 0.04, 260, 950, 0.09, 'marrom');
+      metal(k, s, t + d, 110 * q, 1.21, 0.055, 0.1);
+    }
+  },
+  dadosCaoticos(k, s, t, q) {
+    // Seis colisões secas de dado, espaçamento crescente, uma resolução brilhante.
+    for (let j = 0; j < 6; j++) {
+      const d = j * j * 0.013;
+      metal(k, s, t + d, (390 + j * 93) * q, 3.31, 0.035 + j * 0.008, 0.1 - j * 0.008);
+    }
+    sino(k, s, t + 0.42, 1560 * q, 0.24, 0.14);
+  },
+  espelhoPrismatico(k, s, t, q) {
+    // Duas entradas laterais que se fundem num acorde cristalino.
+    [0, 0.085].forEach((d, j) => {
+      metal(k, s, t + d, (j ? 1174 : 830) * q, 2.83, 0.36, 0.1);
+      curva(k, s, t + d, 1660 * q, 2489 * q, 0.17, 0.045, 'triangle');
+    });
+    [1244, 1568, 1865].forEach((f, j) => sino(k, s, t + 0.2 + j * 0.022, f * q, 0.5, 0.065));
+  },
+  orquestraOrbital(k, s, t, q) {
+    // Compasso 4/4, notas nos contratempos, acorde de encerramento.
+    [0, 4, 7, 12].forEach((n, j) => {
+      const d = j * 0.12;
+      nota(k, s, t + d, 220 * q, 0.075, 0.1, 'suave');
+      sino(k, s, t + d + 0.06, 440 * 2 ** (n / 12) * q, 0.16, 0.09);
+    });
+    [440, 554.37, 659.25].forEach((f) => nota(k, s, t + 0.52, f * q, 0.28, 0.065, 'triangle'));
   },
 };
 

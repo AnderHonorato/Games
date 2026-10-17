@@ -39,9 +39,9 @@ function numerosFinitos(valor: unknown): void {
   else if (valor && typeof valor === 'object') Object.values(valor).forEach(numerosFinitos);
 }
 
-describe('assinaturas próprias das 28 habilidades', () => {
+describe('assinaturas próprias das 32 habilidades', () => {
   it('cobre exatamente o catálogo e produz geometrias distintas, finitas e limitadas', () => {
-    expect(HABILIDADES).toHaveLength(28);
+    expect(HABILIDADES).toHaveLength(32);
     const identidades = new Set<string>();
     for (const h of HABILIDADES) {
       for (const nivel of [1, 5, 9, 10]) {
@@ -58,20 +58,23 @@ describe('assinaturas próprias das 28 habilidades', () => {
         if (nivel === 1) identidades.add(JSON.stringify(a.trilhas));
       }
     }
-    expect(identidades.size).toBe(28);
+    expect(identidades.size).toBe(HABILIDADES.length);
     expect(desenharAssinatura('desconhecido')).toBeNull();
   });
 
-  it('a evolução final amplia a silhueta e espessura e prolonga sua leitura', () => {
+  it('evoluções mudam camadas e topologia além de escala, com orçamento limitado', () => {
     for (const h of HABILIDADES) {
       const normal = desenharAssinatura(h.id, 1)!;
       const suprema = desenharAssinatura(h.id, 10)!;
-      expect(suprema.escala).toBe(1.8);
+      expect(suprema.escala).toBeGreaterThan(normal.escala);
+      const meio = desenharAssinatura(h.id, 5)!;
+      const semEscala = (a: typeof normal) =>
+        a.trilhas.map((p) => p.map((v) => Math.round((v / a.escala) * 1e5) / 1e5));
+      expect(semEscala(meio), h.id).not.toEqual(semEscala(normal));
+      expect(semEscala(suprema), h.id).not.toEqual(semEscala(meio));
+      expect(suprema.trilhas.length).toBeLessThanOrEqual(12);
       expect(suprema.espessura).toBe(normal.espessura * 2);
       expect(suprema.duracao).toBeGreaterThan(normal.duracao);
-      suprema.trilhas.forEach((p, i) =>
-        p.forEach((v, j) => expect(v).toBeCloseTo(normal.trilhas[i][j] * 1.8))
-      );
     }
   });
 
@@ -95,9 +98,9 @@ describe('assinaturas próprias das 28 habilidades', () => {
 });
 
 describe('catálogo sonoro de poderes', () => {
-  it('registra 28 receitas alcançáveis sem colisão no contrato de áudio', () => {
+  it('registra 32 receitas alcançáveis sem colisão no contrato de áudio', () => {
     expect(Object.keys(SOM_POR_PODER).sort()).toEqual(HABILIDADES.map((h) => h.id).sort());
-    expect(new Set(SONS_PODERES).size).toBe(28);
+    expect(new Set(SONS_PODERES).size).toBe(HABILIDADES.length);
     expect(new Set(SONS).size).toBe(SONS.length);
     for (const id of SONS_PODERES) expect(DEFINICOES_SONS[id]).toBe(DEFINICOES_SONS_PODERES[id]);
   });
@@ -136,7 +139,7 @@ describe('catálogo sonoro de poderes', () => {
       expect(meta.n).toBeLessThanOrEqual(2);
       expect(meta.i).toBeGreaterThanOrEqual(0.12);
     }
-    expect(estruturas.size).toBe(28);
+    expect(estruturas.size).toBe(HABILIDADES.length);
   });
 
   it('toca no disparo, usa posição, reforça o nível 10 e ignora ids desconhecidos', () => {

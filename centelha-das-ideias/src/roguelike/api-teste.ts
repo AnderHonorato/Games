@@ -2,12 +2,14 @@
  * API de teste do modo Sobrevivência (window.__sobrevivencia), usada pelas sondas
  * automatizadas com navegador. Não altera o jogo se ninguém chamar.
  */
+import { pontosInteracoesMapa } from './jogo/interacoes-mapa';
+import { ataqueBasico } from './dados/ataques-basicos';
 import type { Personalizacao } from '../render/personalizacao';
 import type { IdMapa } from './dados/mapas';
 import type { ArmaInicial } from './nucleo/conta';
 import { parDeCanais, type Canal } from './rede/canal';
 import type { IdPersonagem } from './dados/personagens';
-import type { Partida } from './jogo/partida';
+import type { Partida, Cristal } from './jogo/partida';
 import type { InterfaceSobrevivencia } from './ui';
 
 export function instalarApiSobrevivencia(p: Partida, ui?: InterfaceSobrevivencia): void {
@@ -15,6 +17,12 @@ export function instalarApiSobrevivencia(p: Partida, ui?: InterfaceSobrevivencia
   const api = {
     estado: () => ({
       estado: p.estado,
+      pausaLocal: p.pausaLocal,
+      movimento: p.entrada.movimento(),
+      ataqueBasico: { ...ataqueBasico(p.personagemId) },
+      interacaoAtual: p.interacaoAtual,
+      invencivel: p.local.invencivel,
+      rerrolagens: p.local.rerrolagens,
       personagem: p.personagemId,
       nome: p.conta.dados.nome,
       xpConta: p.conta.dados.xp,
@@ -61,6 +69,33 @@ export function instalarApiSobrevivencia(p: Partida, ui?: InterfaceSobrevivencia
       ui?.atualizar();
     },
     atacar: () => p.atacarManual(),
+    interagir: () => p.interagirMapa(),
+    cristaisTeste: () => {
+      const internos = p as unknown as { cristais: Cristal[] };
+      internos.cristais = [0, 1, 2, 3].map((t) => ({
+        x: p.local.x - 4 + t * 2.7,
+        z: p.local.z - 5,
+        t,
+        atraido: false,
+        fase: t,
+      }));
+    },
+    pontosInteracoes: () => pontosInteracoesMapa(p.mapaId, p.arena.obstaculos),
+    vidaTeste: (vida: number) => {
+      p.vida = Math.max(1, Math.min(p.atributos.vidaMaxima, vida));
+    },
+    cinematicaTeste: () => {
+      p.cinematica = {
+        tipo: 'mini',
+        nome: 'Sentinela de teste',
+        fala: 'Sua centelha chegou longe.',
+        tempo: 0,
+        duracao: 3,
+      };
+      p.estado = 'cinematica';
+      p.aoMudar();
+      ui?.atualizar();
+    },
     avanco: () => p.avancarEspecial(),
     avancar: (segundos: number) => {
       const total = Math.min(1200, Math.max(0, Number.isFinite(segundos) ? segundos : 0));

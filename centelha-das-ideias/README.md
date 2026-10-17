@@ -3,7 +3,7 @@
 Jogo 3D (Three.js) com dois modos:
 
 - **Sobrevivência (padrão)** — roguelike: escolha uma mente (Claude, GPT, Gemini, Llama, Mistral
-  ou DeepSeek), sobreviva a hordas crescentes do Ruído, colete cristais de experiência e monte sua
+  ou DeepSeek, Aurora, Nox e Byte), sobreviva a hordas crescentes do Ruído, colete cristais de experiência e monte sua
   build com até 10 habilidades ativas e 5 passivas, cada uma evoluindo até o nível 10.
 - **Aventura clássica** — o Claude explora ilhas flutuantes onde as ideias viraram lugares
   (abra com `?modo=aventura` ou pelo link no menu).
@@ -22,7 +22,7 @@ O APK abre em **tela deitada**, nos dois sentidos. No navegador, gire o celular 
 **Tela cheia horizontal** quando disponível; a trava de orientação depende do navegador.
 Menus, cartas e controles foram verificados em paisagem a 844×390 e 640×360.
 
-### Sobrevivência — Novos Mundos (0.2)
+### Roguelike — Heróis em Ação (0.3)
 
 O menu apresenta o herói em 3D e permite definir nome, arma, roupas, acessórios e cores.
 O XP permanente da conta libera **Jardim (0)**, **Forja (200)** e **Abismo (600)**.
@@ -35,14 +35,17 @@ Esse perfil fica salvo no dispositivo; o nível e as habilidades são temporári
 | Ataque da arma inicial                    | J              | Botão Ataque                       |
 | Escolher carta ao subir de nível          | 1–4 ou clique  | Tocar na carta                     |
 | Sortear as cartas de novo (2 por partida) | R              | Botão                              |
+| Interagir com fonte/totem/baú             | E              | Usar (ao se aproximar)             |
 | Pausa (volume, vozes)                     | Esc ou P       | II                                 |
 
-Escolha lâmina, cajado ou martelo antes de começar. O ataque manual prioriza o inimigo
+Cada personagem inicia com seu ataque básico manual fixo habilitado no botão **Ataque** e em **J**.
+Esse básico não depende de cartas, XP ou sorteio e não ocupa slots das habilidades.
+Escolha lâmina, cajado ou martelo antes de começar para modificar seus atributos. O ataque manual prioriza o inimigo
 mais forte no alcance e usa a distância para desempatar. Cada herói tem um avanço próprio;
 o Llama salta e aceita um segundo comando para esmagar o chão.
 As habilidades disparam sozinhas, cada uma com recarga e velocidade próprias.
 
-- **28 habilidades ativas** em 13 elementos (fogo, gelo, raio, luz, vento, terra, veneno,
+- **32 habilidades ativas** em 13 elementos (fogo, gelo, raio, luz, vento, terra, veneno,
   gravidade, cristal, som, arcano, água e código): órbitas, projéteis, cadeias, ondas, chicotes,
   auras, chuvas, tornados, buracos negros, lasers giratórios, ricochetes, bumerangues, poças e drones.
   Quatro são de programação: **Firewall** (anel de fogo que os inimigos não atravessam),
