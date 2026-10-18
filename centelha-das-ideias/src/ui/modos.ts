@@ -1,11 +1,10 @@
 /** A troca de modo só navega ao ativar o link; perfil e demais parâmetros persistem. */
-export type ModoJogo = 'aventura' | 'sobrevivencia';
-export const VERSAO_JOGO = 'v0.4.0';
+export type ModoJogo = 'aventura' | 'sobrevivencia' | 'moba';
+export const VERSAO_JOGO = 'v0.5.0';
 
 export function modoDaUrl(): ModoJogo {
-  return new URLSearchParams(window.location.search).get('modo') === 'aventura'
-    ? 'aventura'
-    : 'sobrevivencia';
+  const modo = new URLSearchParams(window.location.search).get('modo');
+  return modo === 'aventura' || modo === 'moba' ? modo : 'sobrevivencia';
 }
 
 export function seletorModos(atual: ModoJogo): HTMLElement {
@@ -15,6 +14,7 @@ export function seletorModos(atual: ModoJogo): HTMLElement {
   for (const [modo, nome, descricao] of [
     ['aventura', 'Aventura', 'História, exploração, missões e enigmas.'],
     ['sobrevivencia', 'Sobrevivência', '11 heróis, hordas e melhorias a cada nível.'],
+    ['moba', 'MOBA', '25 heróis, três rotas e batalha 5×5 contra bots.'],
   ] as const) {
     const item = document.createElement(modo === atual ? 'span' : 'a');
     item.className = 'seletor-modo';

@@ -112,7 +112,7 @@ describe('progressão aplicada ao combate', () => {
     expect(p.y).toBeCloseTo(1 + personagem('fenix').voo!);
   });
 
-  it('o voo passa acima de obstáculos baixos e respeita a borda durante o avanço', () => {
+  it('o voo passa acima de obstáculos baixos e avança além da antiga borda', () => {
     const { core } = fixture('aeria');
     const solo = { x: 0.4, z: 0 },
       voo = { ...solo };
@@ -122,7 +122,8 @@ describe('progressão aplicada ao combate', () => {
     expect(voo.x).toBe(0.4);
     const jogador = { x: RAIO_ARENA - 1, z: 0, dashX: 1, dashZ: 0, def: personagem('aeria') };
     core.deslocarBlink(jogador, 20);
-    expect(Math.hypot(jogador.x, jogador.z)).toBeLessThanOrEqual(RAIO_ARENA);
+    expect(jogador.x).toBeCloseTo(RAIO_ARENA - 1 + 20);
+    expect(jogador.z).toBeCloseTo(0);
   });
 
   it.each(['novaGlacial', 'pulsoSonico', 'ondaProfunda'])(

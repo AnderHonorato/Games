@@ -6,6 +6,8 @@ import {
   novoCiclo,
   bonusMega,
   DURACAO_TRANSICAO,
+  TEMPO_MINICHEFE,
+  TEMPO_MEGACHEFE,
 } from '../../src/roguelike/nucleo/campanha';
 import { multVelocidade } from '../../src/roguelike/dados/inimigos';
 import { ATAQUES_BASICOS, ataqueBasico } from '../../src/roguelike/dados/ataques-basicos';
@@ -254,13 +256,13 @@ describe('avanços de personalidade', () => {
 });
 
 describe('campanha e pausa de apresentação', () => {
-  it('agenda mini aos 75s e mega aos 180s uma vez por mapa', () => {
+  it('agenda mini aos cinco minutos e mega aos doze minutos uma vez por mapa', () => {
     const ciclo = novoCiclo();
-    expect(marcoCampanha(74.99, ciclo)).toBeNull();
-    expect(marcoCampanha(75, ciclo)).toBe('mini');
+    expect(marcoCampanha(TEMPO_MINICHEFE - 0.01, ciclo)).toBeNull();
+    expect(marcoCampanha(TEMPO_MINICHEFE, ciclo)).toBe('mini');
     ciclo.mini = true;
-    expect(marcoCampanha(179.99, ciclo)).toBeNull();
-    expect(marcoCampanha(180, ciclo)).toBe('mega');
+    expect(marcoCampanha(TEMPO_MEGACHEFE - 0.01, ciclo)).toBeNull();
+    expect(marcoCampanha(TEMPO_MEGACHEFE, ciclo)).toBe('mega');
     ciclo.mega = true;
     expect(marcoCampanha(999, ciclo)).toBeNull();
     expect([bonusMega('jardim'), bonusMega('forja'), bonusMega('abismo')]).toEqual([200, 400, 600]);

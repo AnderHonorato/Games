@@ -1,4 +1,4 @@
-/** Timbres e ritmos próprios das 44 habilidades. Toda automação usa o relógio WebAudio. */
+/** Timbres e ritmos próprios das 50 habilidades. Toda automação usa o relógio WebAudio. */
 import { SOM_POR_PODER, somDoPoder, type IdPoderSonoro, type IdSomPoder } from './catalogo-poderes';
 import type { ApiAudio } from './contrato';
 import type { DefinicaoSom, Receita } from './sons';
@@ -428,6 +428,40 @@ const RECEITAS: Record<IdPoderSonoro, Emissao> = {
       metal(k, s, t + j * 0.086 + 0.06, (1000 + j * 210) * q, 3.91, 0.15, 0.085);
     }
     sino(k, s, t + 0.46, 530 * q, 0.26, 0.06);
+  },
+  fitaAurora(k, s, t, q) {
+    ar(k, s, t, 0.31, 700, 4200, 0.1, 'rosa');
+    [660, 880, 1100, 880].forEach((f, j) => sino(k, s, t + j * 0.085, f * q, 0.19, 0.07));
+  },
+  cometaCaramelo(k, s, t, q) {
+    [0, 0.1, 0.24, 0.41].forEach((d, j) => {
+      curva(k, s, t + d, (340 + j * 170) * q, (680 + j * 140) * q, 0.065, 0.1, 'oco');
+      metal(k, s, t + d + 0.03, (900 + j * 230) * q, 1.17, 0.09, 0.055);
+    });
+  },
+  chuvaPetalas(k, s, t, q) {
+    [1175, 988, 784, 659, 587].forEach((f, j) => {
+      sino(k, s, t + j * 0.073, f * q, 0.22, 0.065);
+      ar(k, s, t + j * 0.073, 0.06, 2100, 800, 0.035, 'rosa');
+    });
+  },
+  coelhoLunar(k, s, t, q) {
+    [0, 0.18, 0.38].forEach((d, j) =>
+      curva(k, s, t + d, (220 + j * 110) * q, (880 + j * 220) * q, 0.1, 0.09, 'suave')
+    );
+    sino(k, s, t + 0.5, 1760 * q, 0.28, 0.08);
+  },
+  jardimLunar(k, s, t, q) {
+    nota(k, s, t, 146.8 * q, 0.62, 0.12, 'suave');
+    [293.6, 440.5, 587.3].forEach((f, j) => sino(k, s, t + 0.11 + j * 0.16, f * q, 0.36, 0.07));
+    ar(k, s, t, 0.58, 1800, 320, 0.065, 'marrom');
+  },
+  abracoEstelar(k, s, t, q) {
+    [0, 0.24].forEach((d) => {
+      [523.25, 659.25, 783.99].forEach((f) => nota(k, s, t + d, f * q, 0.23, 0.065, 'triangle'));
+      curva(k, s, t + d, 130 * q, 260 * q, 0.18, 0.1);
+    });
+    sino(k, s, t + 0.5, 1046.5 * q, 0.32, 0.075);
   },
 };
 

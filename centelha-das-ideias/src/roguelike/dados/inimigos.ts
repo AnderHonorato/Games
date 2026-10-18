@@ -24,7 +24,13 @@ export type IdInimigo =
   | 'bloco'
   | 'ransomware'
   | 'morcegoRunico'
-  | 'arraiaCeleste';
+  | 'arraiaCeleste'
+  | 'aveMigratoria'
+  | 'arvoreAncia'
+  | 'golemForja'
+  | 'polvoAbissal'
+  | 'corujaAurora'
+  | 'caranguejoCoral';
 
 export interface DefInimigo {
   id: IdInimigo;
@@ -58,6 +64,7 @@ export interface DefInimigo {
     | 'vazar'
     | 'mirar'
     | 'pilha';
+  arquetipoChefe?: 'raizes' | 'forja' | 'vortice' | 'neve' | 'coral';
   altura: number;
   /** Aviso mostrado na primeira vez que aparece na partida. */
   descricao?: string;
@@ -377,29 +384,138 @@ export const INIMIGOS: Record<IdInimigo, DefInimigo> = {
     altura: 2.3,
     descricao: 'Uma silhueta larga e azul que desliza acima dos inimigos terrestres.',
   },
+  arvoreAncia: {
+    id: 'arvoreAncia',
+    nome: 'Anciã das Raízes',
+    vida: 2200,
+    velocidade: 1.25,
+    dano: 23,
+    raio: 2,
+    cristal: 3,
+    cor: '#8dc978',
+    aparece: 99999,
+    peso: 0,
+    voz: 'chefe',
+    grito: ['Protegerei este lugar!'],
+    comportamento: 'chefe',
+    arquetipoChefe: 'raizes',
+    altura: 4.1,
+  },
+  golemForja: {
+    id: 'golemForja',
+    nome: 'Golem da Forja',
+    vida: 2800,
+    velocidade: 1.7,
+    dano: 23,
+    raio: 2,
+    cristal: 3,
+    cor: '#eeae77',
+    aparece: 99999,
+    peso: 0,
+    voz: 'chefe',
+    grito: ['Protegerei este lugar!'],
+    comportamento: 'chefe',
+    arquetipoChefe: 'forja',
+    altura: 3.8,
+  },
+  polvoAbissal: {
+    id: 'polvoAbissal',
+    nome: 'Oráculo do Vórtice',
+    vida: 2600,
+    velocidade: 1.6,
+    dano: 23,
+    raio: 2,
+    cristal: 3,
+    cor: '#bda5ef',
+    aparece: 99999,
+    peso: 0,
+    voz: 'chefe',
+    grito: ['Protegerei este lugar!'],
+    comportamento: 'chefe',
+    arquetipoChefe: 'vortice',
+    altura: 3.4,
+  },
+  corujaAurora: {
+    id: 'corujaAurora',
+    nome: 'Coruja da Aurora',
+    vida: 2400,
+    velocidade: 2.3,
+    dano: 23,
+    raio: 2,
+    cristal: 3,
+    cor: '#c4eafa',
+    aparece: 99999,
+    peso: 0,
+    voz: 'chefe',
+    grito: ['Protegerei este lugar!'],
+    comportamento: 'chefe',
+    arquetipoChefe: 'neve',
+    altura: 3.9,
+  },
+  caranguejoCoral: {
+    id: 'caranguejoCoral',
+    nome: 'Guardião de Coral',
+    vida: 3000,
+    velocidade: 1.8,
+    dano: 23,
+    raio: 2,
+    cristal: 3,
+    cor: '#f7a6aa',
+    aparece: 99999,
+    peso: 0,
+    voz: 'chefe',
+    grito: ['Protegerei este lugar!'],
+    comportamento: 'chefe',
+    arquetipoChefe: 'coral',
+    altura: 3.1,
+  },
+  aveMigratoria: {
+    id: 'aveMigratoria',
+    nome: 'Ave de Passagem',
+    vida: 13,
+    velocidade: 8.4,
+    dano: 7,
+    raio: 0.46,
+    cristal: 0,
+    cor: '#f5d9aa',
+    aparece: 99999,
+    peso: 0,
+    voz: 'zumbido',
+    grito: ['fiu!'],
+    comportamento: 'voador',
+    altura: 1.9,
+  },
 };
 
 /** Inimigos por segundo no tempo t (s). */
+export function tempoBase(t: number): number {
+  return Math.max(0, t) / 2.25;
+}
+
 export function taxaSurgimento(t: number): number {
+  t = tempoBase(t);
   return 0.75 + t / 42 + Math.pow(t / 150, 2) * 2.4;
 }
 
 /** Multiplicador de vida no tempo t. */
 export function multVida(t: number): number {
+  t = tempoBase(t);
   return 1 + t / 160 + Math.pow(t / 360, 2);
 }
 
 export function multDano(t: number): number {
+  t = tempoBase(t);
   return 1 + t / 360;
 }
 
-export const INTERVALO_CHEFE = 180;
-export const INTERVALO_HORDA = 60;
+export const INTERVALO_CHEFE = 720;
+export const INTERVALO_HORDA = 120;
 export const MAX_INIMIGOS = MAX_POPULACAO;
 
 export const VALOR_CRISTAL = [1, 4, 15, 60];
 
 /** Começo legível, aproximação contínua à velocidade plena conforme a pressão cresce. */
 export function multVelocidade(t: number): number {
+  t = tempoBase(t);
   return 0.5 + 0.7 * (1 - Math.exp(-Math.max(0, t) / 180));
 }

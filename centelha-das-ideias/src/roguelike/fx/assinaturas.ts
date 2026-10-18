@@ -37,6 +37,16 @@ const arcoVertical = (x: number, z: number, h: number): number[] =>
     0.2 + Math.sin(u * Math.PI) * h,
     z + (u - 0.5) * 1.5,
   ]);
+const coracao = (r: number, y: number): number[] =>
+  caminho(49, (u) => {
+    const a = u * TAU;
+    return [
+      Math.sin(a) ** 3 * r,
+      y,
+      (-(13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a)) / 16) * r,
+    ];
+  });
+
 /** Camadas diferentes para cada marco, em vez de apenas multiplicar a malha anterior. */
 function camadasEvolucao(id: string, final: boolean): number[][] {
   const f = final;
@@ -356,6 +366,53 @@ function camadasEvolucao(id: string, final: boolean): number[][] {
               Math.sin(u * TAU) * 2.3,
             ]),
           ];
+    case 'fitaAurora':
+      return f
+        ? [coracao(3.1, 1.4), estrela(1.1, 6, 2.4), linha([-3, 0.4, 0], [3, 2, 0])]
+        : [
+            caminho(41, (u) => [
+              -u * 3.3,
+              0.8 + Math.sin(u * TAU) * 0.5,
+              Math.sin(u * Math.PI) * 1.2,
+            ]),
+          ];
+    case 'cometaCaramelo':
+      return f
+        ? [
+            deslocar(estrela(0.8, 5, 1.5), 2.3, 0, 1.4),
+            deslocar(estrela(0.9, 7, 0.5), -2, 0, -1.1),
+            coracao(1.8, 0.3),
+          ]
+        : [
+            linha([-1, 0.5, -1.5], [1.4, 1.8, 1.2], [3.1, 0.6, -1.1]),
+            deslocar(estrela(0.7, 5, 1), 1.4),
+          ];
+    case 'chuvaPetalas':
+      return f
+        ? [estrela(2.5, 10, 0.2), anel(1.9, 1), arcoVertical(-1.4, 0.3, 3.1)]
+        : [deslocar(estrela(1, 5, 0.2), 1.5, 0, -1.3), linha([-1.5, 3.5, 0], [-1.1, 0.2, 0.3])];
+    case 'coelhoLunar':
+      return f
+        ? [coracao(2.2, 0.4), deslocar(estrela(1, 6, 1.6), 2.8), anel(2.8, 0.15)]
+        : [
+            linha([0.8, 0.3, 0], [1.6, 1.8, -1], [2.6, 0.3, -1.8]),
+            linha([0.8, 0.3, 0], [1.6, 1.8, 1], [2.6, 0.3, 1.8]),
+          ];
+    case 'jardimLunar':
+      return f
+        ? [estrela(2.7, 7, 0.25), coracao(2, 1.7), linha([0, 0.1, 0], [0, 3.5, 0])]
+        : [
+            anel(2.2, 0.2, 31),
+            caminho(41, (u) => [
+              Math.cos(u * TAU * 2) * (1 - u) * 2,
+              0.3 + u,
+              Math.sin(u * TAU * 2) * (1 - u) * 2,
+            ]),
+          ];
+    case 'abracoEstelar':
+      return f
+        ? [coracao(3, 0.3), coracao(2, 1.5), estrela(2.6, 9, 0.2)]
+        : [coracao(2.4, 1.1), anel(1.4, 0.3, 25)];
     default:
       return [];
   }
@@ -783,6 +840,74 @@ export function desenharAssinatura(id: string, nivel = 1): AssinaturaPoder | nul
         );
       }
       trilhas.push(anel(1.8, 0.2));
+      break;
+    case 'fitaAurora':
+      trilhas.push(
+        caminho(49, (u) => [
+          Math.sin(u * TAU) * 1.8,
+          0.8 + Math.sin(u * TAU * 2) * 0.4,
+          Math.sin(u * TAU * 2) * 1.2,
+        ]),
+        linha([-1.7, 0.8, 0], [-2.4, 0.3, -0.5]),
+        linha([1.7, 0.8, 0], [2.4, 0.3, 0.5])
+      );
+      break;
+    case 'cometaCaramelo':
+      trilhas.push(
+        estrela(0.9, 5, 1),
+        linha([-3, 0.8, -1], [-1.7, 1.3, 0.6], [-0.7, 0.9, -0.3], [0, 1, 0]),
+        caminho(25, (u) => [-2.7 + u * 2.5, 1.1, 0.4 + Math.sin(u * Math.PI) * 0.5])
+      );
+      break;
+    case 'chuvaPetalas':
+      for (let j = 0; j < 3; j++) {
+        const x = (j - 1) * 1.6,
+          z = j % 2 ? 0.8 : -0.5;
+        trilhas.push(
+          caminho(31, (u) => [
+            x + Math.cos(u * TAU) * (0.5 + Math.cos(u * TAU * 5) * 0.18),
+            0.25,
+            z + Math.sin(u * TAU) * (0.5 + Math.cos(u * TAU * 5) * 0.18),
+          ]),
+          linha([x - 0.3, 3.3 - j * 0.4, z], [x, 0.4, z])
+        );
+      }
+      break;
+    case 'coelhoLunar':
+      trilhas.push(
+        anel(0.72, 0.45, 25),
+        deslocar(
+          caminho(25, (u) => [Math.cos(u * TAU) * 0.18, 1.2 + Math.sin(u * TAU) * 0.65, 0]),
+          -0.3
+        ),
+        deslocar(
+          caminho(25, (u) => [Math.cos(u * TAU) * 0.18, 1.2 + Math.sin(u * TAU) * 0.65, 0]),
+          0.3
+        ),
+        caminho(25, (u) => [-2.8 + u * 2.1, 0.2 + Math.sin(u * Math.PI) * 1.1, 0])
+      );
+      break;
+    case 'jardimLunar':
+      trilhas.push(
+        caminho(49, (u) => [
+          Math.cos(u * TAU) * (1.35 + Math.cos(u * TAU * 6) * 0.55),
+          0.25 + Math.sin(u * TAU * 6) * 0.15,
+          Math.sin(u * TAU) * (1.35 + Math.cos(u * TAU * 6) * 0.55),
+        ]),
+        anel(0.5, 1.5, 25),
+        linha([0, 0.2, 0], [0, 1.5, 0])
+      );
+      break;
+    case 'abracoEstelar':
+      trilhas.push(coracao(1.5, 0.65));
+      for (const lado of [-1, 1])
+        trilhas.push(
+          caminho(25, (u) => [
+            lado * (0.5 + Math.sin(u * Math.PI) * 1.8),
+            0.4 + u * 0.9,
+            -1.1 + u * 2.2,
+          ])
+        );
       break;
     default: {
       const novas = trilhasArtefato(id, n);

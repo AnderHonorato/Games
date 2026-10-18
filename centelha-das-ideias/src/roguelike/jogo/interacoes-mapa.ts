@@ -15,6 +15,7 @@ export interface InteracaoMapa {
 }
 export interface EstadoInteracoesMapa {
   consumidas: string[];
+  dinamica?: boolean;
 }
 
 const TIPOS: TipoInteracaoMapa[] = ['fonte', 'totem', 'cofre'];
@@ -23,7 +24,7 @@ const DEFINICOES = {
   totem: { nome: 'Totem de proteção', descricao: 'Escudo por 6 segundos', cor: '#6bbff4' },
   cofre: {
     nome: 'Baú das possibilidades',
-    descricao: '+1 nova rolagem de melhorias',
+    descricao: '+1 rolagem e chance de poder ou bênção em um espaço livre',
     cor: '#f0bf67',
   },
 };
@@ -76,6 +77,47 @@ export class InteracoesMapa {
   private objetos: ObjetoInterativo[] = [];
   private tempo = 0;
   private descartada = false;
+  private dinamica = false;
+  /** Histórico exato limitado: após 32768 usos, os recursos mais remotos podem renovar. */
+  private consumidas = new Set<string>();
+  private foiUsada(id: string): boolean {
+    return this.consumidas.has(id);
+  }
+  private memorizar(id: string): void {
+    this.consumidas.add(id);
+    if (this.consumidas.size > 32768)
+      this.consumidas.delete(this.consumidas.values().next().value!);
+  }
+  sincronizar(pontos: readonly { id: string; tipo: string; x: number; z: number }[]): void {
+    if (this.descartada) return;
+    this.dinamica = true;
+    const validos = pontos
+      .filter((p) => p.tipo === 'fonte' || p.tipo === 'totem' || p.tipo === 'cofre')
+      .slice(0, 196);
+    const ids = new Set(validos.map((p) => p.id));
+    for (const o of this.objetos) if (!ids.has(o.info.id)) this.removerObjeto(o);
+    this.objetos = this.objetos.filter((o) => ids.has(o.info.id));
+    const existentes = new Set(this.objetos.map((o) => o.info.id));
+    for (const p of validos)
+      if (!existentes.has(p.id)) {
+        const tipo = p.tipo as TipoInteracaoMapa;
+        const o = this.criar({ ...p, tipo, ...DEFINICOES[tipo] });
+        o.consumida = this.foiUsada(p.id);
+        this.objetos.push(o);
+      }
+  }
+  private removerObjeto(o: ObjetoInterativo): void {
+    const materiais = new Set<THREE.Material>();
+    o.grupo.traverse((obj) => {
+      if (obj instanceof THREE.Mesh) {
+        obj.geometry.dispose();
+        for (const m of Array.isArray(obj.material) ? obj.material : [obj.material])
+          materiais.add(m);
+      }
+    });
+    for (const m of materiais) m.dispose();
+    o.grupo.removeFromParent();
+  }
 
   constructor(cena: THREE.Scene, mapa: IdMapa, obstaculos: readonly Obstaculo[] = []) {
     this.grupo.name = 'interacoes-mapa';
@@ -222,6 +264,7 @@ export class InteracoesMapa {
     const objeto = this.objetos.find((o) => o.info.id === id);
     if (!objeto || objeto.consumida) return false;
     objeto.consumida = true;
+    this.memorizar(id);
     objeto.uso = 1;
     this.atualizar(0);
     return true;
@@ -247,14 +290,28 @@ export class InteracoesMapa {
   }
 
   snapshot(): EstadoInteracoesMapa {
-    return { consumidas: this.objetos.filter((o) => o.consumida).map((o) => o.info.id) };
+    return {
+      consumidas: [...this.consumidas],
+      ...(this.dinamica ? { dinamica: true } : {}),
+    };
   }
 
   importar(estado: EstadoInteracoesMapa): void {
     if (this.descartada) return;
-    const ids = new Set(Array.isArray(estado?.consumidas) ? estado.consumidas : []);
+    if (estado.dinamica === true) this.dinamica = true;
+    const ids = new Set(
+      (Array.isArray(estado?.consumidas) ? estado.consumidas : [])
+        .filter(
+          (id) =>
+            typeof id === 'string' &&
+            id.length <= 160 &&
+            (this.dinamica || this.objetos.some((o) => o.info.id === id))
+        )
+        .slice(-32768)
+    );
+    this.consumidas = ids;
     for (const o of this.objetos) {
-      o.consumida = ids.has(o.info.id);
+      o.consumida = this.foiUsada(o.info.id);
       o.uso = 0;
     }
     this.atualizar(0);

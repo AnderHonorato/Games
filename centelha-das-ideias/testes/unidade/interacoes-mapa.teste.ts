@@ -93,7 +93,7 @@ describe('energia de experiência mágica', () => {
       expect([...geo.attributes.color.array].every((v) => v >= 0 && v <= 1)).toBe(true);
       expect(mat.isMeshBasicMaterial).toBe(true);
       expect(mat.vertexColors).toBe(true);
-      expect(mat.blending).toBe(THREE.AdditiveBlending);
+      expect(mat.blending).toBe(THREE.NormalBlending);
       expect(mat.transparent).toBe(true);
       expect(mat.depthWrite).toBe(false);
       expect(mat.toneMapped).toBe(false);
@@ -117,7 +117,7 @@ describe('energia de experiência mágica', () => {
             .every(Number.isFinite)
         ).toBe(true);
         expect(visual.y).toBeGreaterThan(0.5);
-        expect(visual.y).toBeLessThan(1.3);
+        expect(visual.y).toBeLessThan(1.7);
         expect(visual.haloIntensidade).toBeGreaterThan(0.12);
         expect(visual.haloIntensidade).toBeLessThan(0.35);
         expect(visual.escalaY).toBeLessThan(0.8);

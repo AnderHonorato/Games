@@ -81,7 +81,7 @@ try {
   await page.waitForFunction(() => window.__sobrevivencia?.estado);
   await page.locator('.rg-carta-personagem').first().waitFor();
   assert.equal(await page.locator('.rg-carta-personagem').count(), 11);
-  assert.match(await page.locator('.rg-menu .rg-modo-versao').textContent(), /Roguelike.*v0\.4\.0/);
+  assert.match(await page.locator('.rg-menu .rg-modo-versao').textContent(), /Roguelike.*v0\.5\.0/);
   await page.setViewportSize({ width: 640, height: 360 });
   const menu = await page
     .locator('.rg-menu-conteudo')

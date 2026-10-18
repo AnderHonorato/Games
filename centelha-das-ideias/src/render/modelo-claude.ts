@@ -138,6 +138,8 @@ export class ModeloClaude {
   private aura: THREE.Group | null = null;
   private readonly identidade?: IdentidadeVisual;
   private aderecoIdentidade: THREE.Group | null = null;
+  private matBochechas: THREE.MeshBasicMaterial | null = null;
+  private enfeitesFlexiveis: { objeto: THREE.Object3D; lado: number; base: number }[] = [];
 
   constructor(aparencia?: Aparencia) {
     const ap: Aparencia = aparencia ?? { corCorpo: COR_CORPO, corEscura: COR_ESCURA };
@@ -186,6 +188,37 @@ export class ModeloClaude {
     });
     this.rosto.grupo.position.set(0, ap.rostoY ?? 0.08, ap.rostoZ ?? 0.365);
     this.nucleo.add(this.rosto.grupo);
+    if (this.identidade) {
+      // Reaproveita os olhos existentes: pupilas mais cheias e reflexos maiores sem novas malhas.
+      for (const iris of this.rosto.grupo.getObjectsByProperty('name', 'iris')) {
+        iris.scale.multiplyScalar(1.08);
+        for (const reflexo of iris.parent!.children.slice(2)) reflexo.scale.multiplyScalar(1.2);
+      }
+      this.rosto.grupo
+        .getObjectsByProperty('name', 'pupila')
+        .forEach((p) => p.scale.multiplyScalar(1.12));
+      // Dois volumes macios compartilham uma chamada de desenho, geometria e material.
+      this.matBochechas = new THREE.MeshBasicMaterial({
+        color: '#ff9eae',
+        transparent: true,
+        opacity: 0.42,
+        depthWrite: false,
+      });
+      const bochechas = new THREE.InstancedMesh(
+        new THREE.SphereGeometry(1, 10, 7),
+        this.matBochechas,
+        2
+      );
+      bochechas.name = 'bochechas-fofas';
+      const transform = new THREE.Object3D();
+      for (let i = 0; i < 2; i++) {
+        transform.position.set((i ? 1 : -1) * 0.265, -0.085, 0.01);
+        transform.scale.set(0.065, 0.032, 0.013);
+        transform.updateMatrix();
+        bochechas.setMatrixAt(i, transform.matrix);
+      }
+      this.rosto.grupo.add(bochechas);
+    }
     ap.enfeite?.(this.nucleo, mat);
 
     // bracinhos
@@ -317,6 +350,7 @@ export class ModeloClaude {
     const geometrias = new Set<THREE.BufferGeometry>();
     const materiais = new Set<THREE.Material>();
     const coletar = (obj: THREE.Object3D) => {
+      if (obj instanceof THREE.InstancedMesh) obj.dispose();
       if (obj instanceof THREE.Mesh) geometrias.add(obj.geometry);
       if (obj instanceof THREE.Mesh || obj instanceof THREE.Sprite) {
         if (Array.isArray(obj.material)) for (const m of obj.material) materiais.add(m);
@@ -335,9 +369,11 @@ export class ModeloClaude {
     this.cosmeticos.length = 0;
     this.asas.length = 0;
     this.asasVoo.length = 0;
+    this.enfeitesFlexiveis.length = 0;
     this.capa = null;
     this.aura = null;
     this.aderecoIdentidade = null;
+    this.matBochechas = null;
   }
 
   private reconstruirCosmeticos(): void {
@@ -359,6 +395,7 @@ export class ModeloClaude {
     this.materiaisCosmeticos.length = 0;
     this.asas.length = 0;
     this.asasVoo.length = 0;
+    this.enfeitesFlexiveis.length = 0;
     this.capa = null;
     this.aura = null;
     this.aderecoIdentidade = null;
@@ -467,7 +504,68 @@ export class ModeloClaude {
       for (const lado of [-1, 1])
         caixa(roupa, lado * 0.47, 0.05, 0, 0.26, 0.19, 0.42, metal, 'ombreira');
     }
-    if (p.roupa !== 'aventureiro') {
+    if (p.roupa === 'pirata') {
+      for (const lado of [-1, 1]) {
+        caixa(roupa, lado * 0.22, -0.2, 0.43, 0.065, 0.23, 0.035, metal, 'botao-pirata');
+        caixa(
+          roupa,
+          lado * 0.38,
+          -0.04,
+          0.38,
+          0.12,
+          0.32,
+          0.055,
+          couro,
+          'lapela-pirata'
+        ).rotation.z = lado * 0.18;
+      }
+      caixa(roupa, 0.39, -0.4, 0.1, 0.14, 0.3, 0.14, detalhe, 'bainha-pirata').rotation.z = -0.25;
+    }
+    if (p.roupa === 'astronauta') {
+      caixa(roupa, 0, -0.18, 0.43, 0.44, 0.24, 0.11, metal, 'painel-astronauta');
+      for (let i = 0; i < 3; i++)
+        caixa(
+          roupa,
+          -0.12 + i * 0.12,
+          -0.15,
+          0.5,
+          0.065,
+          0.055,
+          0.035,
+          i === 1 ? tecido : detalhe,
+          'luz-painel'
+        );
+      caixa(roupa, 0, -0.04, -0.47, 0.53, 0.55, 0.22, metal, 'tanque-espacial');
+      for (const lado of [-1, 1])
+        caixa(roupa, lado * 0.49, 0.05, 0, 0.23, 0.18, 0.35, metal, 'ombreira-espacial');
+    }
+    if (p.roupa === 'floral') {
+      const saia = malha(
+        roupa,
+        new THREE.CylinderGeometry(0.42, 0.64, 0.35, 10),
+        tecido,
+        0,
+        -0.44,
+        0,
+        'saia-floral'
+      );
+      saia.scale.z = 0.8;
+      for (let i = 0; i < 5; i++) {
+        const a = (i * Math.PI * 2) / 5;
+        const petala = malha(
+          roupa,
+          new THREE.SphereGeometry(0.065, 8, 6),
+          detalhe,
+          Math.cos(a) * 0.08,
+          -0.18 + Math.sin(a) * 0.08,
+          0.435,
+          'flor-do-traje'
+        );
+        petala.scale.z = 0.25;
+      }
+      malha(roupa, new THREE.SphereGeometry(0.045, 8, 6), metal, 0, -0.18, 0.45, 'miolo-floral');
+    }
+    if (p.roupa === 'mago' || p.roupa === 'guardiao' || p.roupa === 'pirata') {
       const capa = new THREE.Group();
       capa.position.set(0, 0.22, -0.37);
       roupa.add(capa);
@@ -526,8 +624,73 @@ export class ModeloClaude {
       for (const lado of [-1, 1])
         caixa(cabeca, lado * 0.31, -0.06, 0.3, 0.025, 0.22, 0.025, detalhe, 'cordao');
     }
+    if (p.cabeca === 'orelhas') {
+      for (const lado of [-1, 1]) {
+        const orelha = malha(
+          cabeca,
+          new THREE.CapsuleGeometry(0.09, 0.32, 4, 8),
+          tecido,
+          lado * 0.23,
+          0.65,
+          0,
+          'orelha-de-coelho'
+        );
+        orelha.rotation.z = -lado * 0.22;
+        const interior = malha(
+          cabeca,
+          new THREE.CapsuleGeometry(0.045, 0.25, 3, 7),
+          detalhe,
+          lado * 0.23,
+          0.66,
+          0.072,
+          'interior-coelho'
+        );
+        interior.rotation.z = -lado * 0.22;
+        interior.scale.z = 0.3;
+        this.enfeitesFlexiveis.push(
+          { objeto: orelha, lado, base: -lado * 0.22 },
+          { objeto: interior, lado, base: -lado * 0.22 }
+        );
+      }
+    } else if (p.cabeca === 'chapeu') {
+      const aba = malha(
+        cabeca,
+        new THREE.CylinderGeometry(0.62, 0.62, 0.055, 20),
+        detalhe,
+        0,
+        0.39,
+        0,
+        'aba-chapeu-sol'
+      );
+      aba.scale.z = 0.82;
+      malha(
+        cabeca,
+        new THREE.CylinderGeometry(0.29, 0.38, 0.25, 14),
+        tecido,
+        0,
+        0.54,
+        0,
+        'copa-chapeu-sol'
+      );
+      malha(
+        cabeca,
+        new THREE.CylinderGeometry(0.365, 0.38, 0.065, 14),
+        couro,
+        0,
+        0.45,
+        0,
+        'fita-chapeu-sol'
+      );
+    }
     if (p.cabeca === 'coroa' || this.nivelPoder >= 10) {
-      const altura = p.cabeca === 'bone' || p.cabeca === 'capuz' ? 0.67 : 0.49;
+      const altura =
+        p.cabeca === 'orelhas'
+          ? 1
+          : p.cabeca === 'chapeu'
+            ? 0.76
+            : p.cabeca === 'bone' || p.cabeca === 'capuz'
+              ? 0.67
+              : 0.49;
       malha(
         cabeca,
         new THREE.CylinderGeometry(0.3, 0.32, 0.09, 10, 1, true),
@@ -551,7 +714,27 @@ export class ModeloClaude {
       malha(cabeca, new THREE.OctahedronGeometry(0.075), metal, 0, altura + 0.01, 0.32, 'joia');
     }
     const acessorio = grupo(this.nucleo, `acessorio-${p.acessorio}`);
-    if (p.acessorio === 'oculos') {
+    if (p.acessorio === 'mochila') {
+      caixa(acessorio, 0, -0.04, -0.5, 0.52, 0.58, 0.28, tecido, 'mochila');
+      caixa(acessorio, 0, -0.2, -0.66, 0.38, 0.22, 0.08, detalhe, 'bolso-mochila');
+      for (const lado of [-1, 1])
+        caixa(acessorio, lado * 0.3, -0.03, -0.05, 0.07, 0.49, 0.76, couro, 'alca-mochila');
+    } else if (p.acessorio === 'laco') {
+      for (const lado of [-1, 1]) {
+        const fita = malha(
+          acessorio,
+          new THREE.ConeGeometry(0.14, 0.22, 3),
+          detalhe,
+          lado * 0.13,
+          -0.15,
+          0.46,
+          'laco-de-fita'
+        );
+        fita.rotation.z = (lado * Math.PI) / 2;
+        fita.scale.z = 0.35;
+      }
+      malha(acessorio, new THREE.SphereGeometry(0.065, 8, 6), tecido, 0, -0.15, 0.48, 'no-do-laco');
+    } else if (p.acessorio === 'oculos') {
       const y = this.rosto.grupo.position.y;
       const z = this.rosto.grupo.position.z + 0.065;
       for (const lado of [-1, 1])
@@ -1174,6 +1357,15 @@ export class ModeloClaude {
     this.falaRestante = Math.max(0, this.falaRestante - dt);
     const falando = e.falando || this.falaRestante > 0;
     const t = this.tempo;
+    if (this.matBochechas) {
+      const carinho = e.humor === 'carinho' || e.humor === 'envergonhado' || e.humor === 'feliz';
+      this.matBochechas.opacity = aproximar(
+        this.matBochechas.opacity,
+        carinho ? 0.72 : 0.32,
+        6,
+        dt
+      );
+    }
     const vel = e.velocidade;
     const voador = this.identidade === 'aeria' || this.identidade === 'fenix';
     const andando = !voador && e.noChao && vel > 0.4;
@@ -1219,6 +1411,9 @@ export class ModeloClaude {
       if (this.identidade === 'nox') inclinaAlvo += 0.08;
       if (this.identidade === 'deepseek') girarY += Math.sin(t * 1.5) * 0.12;
       if (this.identidade === 'byte') rolar += Math.sin(t * 10) * 0.012;
+      // Pequeno peso lateral nos passos e inclinação curiosa quando espera.
+      if (andando) rolar += Math.sin(this.fase) * 0.035 * cadencia.salto;
+      else if (e.humor === 'neutro') rolar += Math.sin(t * 0.75) * 0.025;
     }
 
     // linguagem corporal de cada emoção
@@ -1452,6 +1647,11 @@ export class ModeloClaude {
     if (this.rosto.humor !== humor) this.rosto.definirHumor(humor);
     this.rosto.falando = falando;
     this.rosto.atualizar(dt);
+    for (const { objeto, lado, base } of this.enfeitesFlexiveis) {
+      objeto.rotation.z =
+        base + lado * Math.sin(t * 4 - lado * 0.6) * 0.035 + passo * Math.min(vel, 5) * 0.015;
+      objeto.rotation.x = Math.sin(t * 3) * 0.025 + Math.min(vel, 5) * 0.025;
+    }
     if (this.capa) this.capa.rotation.x = -0.12 + Math.sin(t * 5) * 0.08 - vel * 0.035;
     for (let i = 0; i < this.asas.length; i++) {
       this.asas[i].rotation.y = (i === 0 ? -1 : 1) * (0.25 + Math.sin(t * 6) * 0.22);

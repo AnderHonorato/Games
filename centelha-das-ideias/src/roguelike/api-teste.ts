@@ -45,6 +45,12 @@ export function instalarApiSobrevivencia(p: Partida, ui?: InterfaceSobrevivencia
       build: JSON.parse(JSON.stringify(p.build)),
       ofertas: p.ofertas.map((o) => ({ ...o })),
       chefe: p.chefeAtual ? { vida: p.chefeAtual.vida, vidaMax: p.chefeAtual.vidaMax } : null,
+      mundo: p.arena.estadoMundo(),
+      recursos: {
+        geometrias: p.renderizador.info.memory.geometries,
+        texturas: p.renderizador.info.memory.textures,
+        drawCalls: p.renderizador.info.render.calls,
+      },
       ...p.contagem(),
     }),
     personagem: (id: IdPersonagem) => {

@@ -185,7 +185,7 @@ try {
   await page.evaluate(() => window.__sobrevivencia.escolher(0));
   await esperarEstado(page, 'jogando');
   assert.ok((await estado(page)).nivel > 1);
-  await page.evaluate(() => window.__sobrevivencia.tempo(75));
+  await page.evaluate(() => window.__sobrevivencia.tempo(300));
   await simular(page, 0.1);
   await cinema(page, 'mini');
   await page.evaluate(() => window.__sobrevivencia.pausar(true));
@@ -206,7 +206,7 @@ try {
   await page.evaluate(() => window.__sobrevivencia.joystick(0, 0));
   await terminarCinema(page);
   await page.evaluate(() => window.__sobrevivencia.derrotarChefes());
-  await page.evaluate(() => window.__sobrevivencia.tempo(180));
+  await page.evaluate(() => window.__sobrevivencia.tempo(720));
   await simular(page, 0.1);
   await cinema(page, 'mega');
   await registrarTela(page, '04-megachefe');
@@ -274,7 +274,7 @@ try {
   );
   await page.evaluate(() => window.__sobrevivencia.invencivel());
   await guest.evaluate(() => window.__sobrevivencia.invencivel());
-  await page.evaluate(() => window.__sobrevivencia.tempo(75));
+  await page.evaluate(() => window.__sobrevivencia.tempo(300));
   await simular(page, 0.1);
   await cinema(page, 'mini');
   await cinema(guest, 'mini');
@@ -295,7 +295,7 @@ try {
   await page.waitForFunction(() =>
     window.__sobrevivencia.mpJogadores().some((j) => j.nome === 'Noa' && j.x > 79)
   );
-  await page.evaluate(() => window.__sobrevivencia.tempo(180));
+  await page.evaluate(() => window.__sobrevivencia.tempo(720));
   await simular(page, 0.1);
   // Cristais do minichefe podem abrir outras ofertas entre dois comandos reais
   // do navegador. Concluir cada oferta mantém o teste na progressão pública.

@@ -43,7 +43,7 @@ describe('conta permanente e arenas', () => {
     expect(c.selecionarMapa('abismo')).toBe(true);
     expect(c.dados.xp).toBe(600);
     expect(c.selecionarMapa('__proto__')).toBe(false);
-    expect(MAPAS.map((m) => m.xpNecessario)).toEqual([0, 200, 600]);
+    expect(MAPAS.map((m) => m.xpNecessario)).toEqual([0, 200, 600, 1200, 2000]);
     expect(mapa('invalido').id).toBe('jardim');
     expect(mapaDesbloqueado('abismo', Infinity)).toBe(false);
   });
@@ -114,7 +114,7 @@ describe.each(MAPAS)('arena $id', ({ id }) => {
     for (const o of a.obstaculos) {
       expect(a.obstaculosPerto(o.x, o.z)).toContain(o);
       expect(a.obstaculosPerto(o.x + o.r - 0.001, o.z)).toContain(o);
-      expect(Math.hypot(o.x, o.z)).toBeGreaterThan(9);
+      expect(o.altura).toBeGreaterThan(0);
     }
     const raio = new THREE.Raycaster();
     for (const [x, z] of [
@@ -124,6 +124,7 @@ describe.each(MAPAS)('arena $id', ({ id }) => {
       [-80, 10],
       [0, RAIO_ARENA - 1],
     ]) {
+      a.atualizar(0.016, 10, x, z, 0.5);
       raio.set(new THREE.Vector3(x, 0.1, z), new THREE.Vector3(0, -1, 0));
       expect(raio.intersectObject(a.grupo, true).length).toBeGreaterThan(0);
     }
@@ -157,6 +158,8 @@ describe.each(MAPAS)('arena $id', ({ id }) => {
       if (o instanceof THREE.Mesh) malhas++;
       if (o instanceof THREE.InstancedMesh) instancias++;
     });
+    expect(a.infinito).toBe(true);
+    expect(a.regioesAtivas()).toHaveLength(9);
     expect(instancias).toBeGreaterThan(4);
     expect(malhas).toBeLessThan(20);
     a.descartar();

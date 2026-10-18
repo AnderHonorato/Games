@@ -1,9 +1,9 @@
 # Android — Claude · A Centelha das Ideias
 
-O APK inclui o jogo completo, com Sobrevivência e Aventura. Abre a Sobrevivência;
+O APK inclui o jogo completo, com Sobrevivência, Aventura e MOBA contra bots. Abre a Sobrevivência;
 o link **Aventura clássica** continua funcionando com `?modo=aventura` na mesma
 origem local. Não abre o Claude nem baixa o jogo de um site. Depois de instalado,
-os dois modos solo funcionam sem conexão.
+os três modos solo funcionam sem conexão.
 
 ## Requisitos de compilação
 

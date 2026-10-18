@@ -44,6 +44,12 @@ export const SOM_POR_PODER = {
   bolhasEstase: 'poderBolhasEstase',
   enxameVespas: 'poderEnxameVespas',
   tempestadeEspadas: 'poderTempestadeEspadas',
+  fitaAurora: 'poderFitaAurora',
+  cometaCaramelo: 'poderCometaCaramelo',
+  chuvaPetalas: 'poderChuvaPetalas',
+  coelhoLunar: 'poderCoelhoLunar',
+  jardimLunar: 'poderJardimLunar',
+  abracoEstelar: 'poderAbracoEstelar',
 } as const;
 export type IdPoderSonoro = keyof typeof SOM_POR_PODER;
 export type IdSomPoder = (typeof SOM_POR_PODER)[IdPoderSonoro];

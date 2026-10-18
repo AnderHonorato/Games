@@ -1,7 +1,7 @@
 {
   "name": "centelha-das-ideias",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Claude — A Centelha das Ideias: aventura 3D de ação, exploração e enigmas.",
   "type": "module",
   "scripts": {

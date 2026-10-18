@@ -1,5 +1,5 @@
-export const TEMPO_MINICHEFE = 75;
-export const TEMPO_MEGACHEFE = 180;
+export const TEMPO_MINICHEFE = 300;
+export const TEMPO_MEGACHEFE = 720;
 export const DURACAO_TRANSICAO = 4.5;
 export interface Cinematica {
   tipo: 'mini' | 'mega' | 'transicao';
@@ -23,5 +23,13 @@ export function marcoCampanha(tempo: number, ciclo: CicloCampanha): 'mini' | 'me
   return null;
 }
 export function bonusMega(id: string): number {
-  return id === 'abismo' ? 600 : id === 'forja' ? 400 : 200;
+  return id === 'coral'
+    ? 1000
+    : id === 'aurora'
+      ? 800
+      : id === 'abismo'
+        ? 600
+        : id === 'forja'
+          ? 400
+          : 200;
 }

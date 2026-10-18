@@ -18,7 +18,7 @@ describe('motes mágicos de experiência', () => {
       const cor = geo.getAttribute('color');
       expect(pos.count % 3).toBe(0);
       expect(pos.count).toBeGreaterThan(30);
-      expect(pos.count).toBeLessThanOrEqual(600);
+      expect(pos.count).toBeLessThanOrEqual(1200);
       expect(cor.count).toBe(pos.count);
       for (const valor of pos.array) expect(Number.isFinite(valor)).toBe(true);
       for (const valor of cor.array) {
@@ -27,6 +27,8 @@ describe('motes mágicos de experiência', () => {
         expect(valor).toBeLessThan(1);
       }
       expect(geo.boundingSphere!.radius).toBeLessThan(1.6);
+      expect(Math.min(...Array.from(cor.array))).toBeLessThan(0.03);
+      expect(Math.max(...Array.from(cor.array))).toBeGreaterThan(0.9);
       expect(geo.boundingBox!.max.y).toBeGreaterThan(0.5);
       expect(geo.boundingBox!.min.y).toBeLessThan(-0.5);
       silhuetas.add(JSON.stringify(Array.from(pos.array)));
@@ -43,9 +45,11 @@ describe('motes mágicos de experiência', () => {
       expect(material.toneMapped).toBe(false);
       expect(material.transparent).toBe(true);
       expect(material.depthWrite).toBe(false);
-      expect(material.blending).toBe(THREE.AdditiveBlending);
+      expect(material.blending).toBe(THREE.NormalBlending);
       expect(material.opacity).toBeGreaterThan(0.5);
       expect(material.opacity).toBeLessThan(1);
+      const core = new THREE.Color(CORES_CRISTAIS_XP[tipo]);
+      expect(Math.max(core.r, core.b)).toBeGreaterThan(core.g);
       expect(visualCristalXp(tipo, 0, 0).cor).toBe(CORES_CRISTAIS_XP[tipo]);
       material.dispose();
     }

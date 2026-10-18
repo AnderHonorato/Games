@@ -1,8 +1,8 @@
 /** Dados cosméticos persistíveis; nunca contêm objetos Three.js. */
 export interface Personalizacao {
-  roupa: 'aventureiro' | 'mago' | 'guardiao';
-  cabeca: 'nenhum' | 'bone' | 'capuz' | 'coroa';
-  acessorio: 'nenhum' | 'oculos' | 'cachecol' | 'asas';
+  roupa: 'aventureiro' | 'mago' | 'guardiao' | 'pirata' | 'astronauta' | 'floral';
+  cabeca: 'nenhum' | 'bone' | 'capuz' | 'coroa' | 'orelhas' | 'chapeu';
+  acessorio: 'nenhum' | 'oculos' | 'cachecol' | 'asas' | 'mochila' | 'laco';
   corCorpo: string;
   corRoupa: string;
   corBracos: string;
@@ -45,14 +45,31 @@ export function normalizarPersonalizacao(value: unknown, corBase?: string): Pers
   for (const chave of Object.keys(p)) {
     if (Object.hasOwn(origem, chave)) v[chave] = origem[chave];
   }
-  if (v.roupa === 'aventureiro' || v.roupa === 'mago' || v.roupa === 'guardiao') p.roupa = v.roupa;
-  if (v.cabeca === 'nenhum' || v.cabeca === 'bone' || v.cabeca === 'capuz' || v.cabeca === 'coroa')
+  if (
+    v.roupa === 'aventureiro' ||
+    v.roupa === 'mago' ||
+    v.roupa === 'guardiao' ||
+    v.roupa === 'pirata' ||
+    v.roupa === 'astronauta' ||
+    v.roupa === 'floral'
+  )
+    p.roupa = v.roupa;
+  if (
+    v.cabeca === 'nenhum' ||
+    v.cabeca === 'bone' ||
+    v.cabeca === 'capuz' ||
+    v.cabeca === 'coroa' ||
+    v.cabeca === 'orelhas' ||
+    v.cabeca === 'chapeu'
+  )
     p.cabeca = v.cabeca;
   if (
     v.acessorio === 'nenhum' ||
     v.acessorio === 'oculos' ||
     v.acessorio === 'cachecol' ||
-    v.acessorio === 'asas'
+    v.acessorio === 'asas' ||
+    v.acessorio === 'mochila' ||
+    v.acessorio === 'laco'
   )
     p.acessorio = v.acessorio;
   for (const chave of [

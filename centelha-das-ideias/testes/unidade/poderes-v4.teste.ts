@@ -62,8 +62,8 @@ const grade = (): AlvoEspecial[] =>
 describe('expansão de 12 armas automáticas com evoluções reais', () => {
   it('acrescenta 12 às 32 existentes, com IDs e marcos próprios', () => {
     expect(NOVOS_PODERES_IDS).toHaveLength(12);
-    expect(HABILIDADES).toHaveLength(44);
-    expect(new Set(HABILIDADES.map((h) => h.id)).size).toBe(44);
+    expect(HABILIDADES).toHaveLength(50);
+    expect(new Set(HABILIDADES.map((h) => h.id)).size).toBe(50);
     expect(HABILIDADES.slice(0, 32).some((h) => NOVOS_PODERES_IDS.some((id) => id === h.id))).toBe(
       false
     );

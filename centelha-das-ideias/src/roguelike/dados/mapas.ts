@@ -1,5 +1,5 @@
 /** Arenas e os marcos permanentes da conta. */
-export type IdMapa = 'jardim' | 'forja' | 'abismo';
+export type IdMapa = 'jardim' | 'forja' | 'abismo' | 'aurora' | 'coral';
 
 export interface DefMapa {
   id: IdMapa;
@@ -42,10 +42,32 @@ export const MAPAS: DefMapa[] = [
     descricao: 'Ilhas de basalto, passarelas e monólitos envoltos em névoa.',
     xpNecessario: 600,
     cor: '#b39aff',
-    proximo: null,
+    proximo: 'aurora',
     chefeNome: 'Soberano dos Ecos',
     chefeFala: 'Até a luz mais forte encontra sua sombra.',
     entradaFala: 'Nas profundezas, uma centelha pode iluminar novos caminhos.',
+  },
+  {
+    id: 'aurora',
+    nome: 'Aurora das Memórias',
+    descricao: 'Neve luminosa, pinheiros gelados e auroras sobre lagos congelados.',
+    xpNecessario: 1200,
+    cor: '#9eeaff',
+    proximo: 'coral',
+    chefeNome: 'Sentinela da Aurora',
+    chefeFala: 'Até o inverno guarda uma nova ideia.',
+    entradaFala: 'Siga a aurora e descubra o que o gelo protege.',
+  },
+  {
+    id: 'coral',
+    nome: 'Oceano das Possibilidades',
+    descricao: 'Areia clara sob águas rasas, corais vivos e ruínas de pérola.',
+    xpNecessario: 2000,
+    cor: '#ff91cf',
+    proximo: null,
+    chefeNome: 'Oráculo das Marés',
+    chefeFala: 'Toda possibilidade encontra seu oceano!',
+    entradaFala: 'O horizonte continua além de cada nova maré.',
   },
 ];
 

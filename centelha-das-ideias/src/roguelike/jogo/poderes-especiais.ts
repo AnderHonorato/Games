@@ -1,5 +1,11 @@
 /** Ataques especiais: toda a sequência pertence ao relógio pausável da partida. */
-import { NOVOS_PODERES_IDS, type Elemento, type Valores } from '../dados/habilidades';
+import {
+  NOVOS_PODERES_IDS,
+  PODERES_FOFOS_IDS,
+  type Elemento,
+  type Valores,
+} from '../dados/habilidades';
+import { manifestarPoder } from '../fx/assinaturas';
 import type { SistemaFx } from '../fx/indice';
 import {
   desenharArtefato,
@@ -61,7 +67,11 @@ export function distanciaSegmento(
 export function lancarPoderEspecial<T extends AlvoEspecial>(
   ctx: ContextoPoderEspecial<T>
 ): boolean {
-  if (NOVOS_PODERES_IDS.some((id) => id === ctx.id)) return lancarNovoPoder(ctx);
+  if (
+    NOVOS_PODERES_IDS.some((id) => id === ctx.id) ||
+    PODERES_FOFOS_IDS.some((id) => id === ctx.id)
+  )
+    return lancarNovoPoder(ctx);
   const { id, valores: v, x, z, angulo: ang, fx } = ctx;
   if (!['tremFantasma', 'dadosCaoticos', 'espelhoPrismatico', 'orquestraOrbital'].includes(id))
     return false;
@@ -288,6 +298,7 @@ export const IDS_PODERES_ESPECIAIS: readonly string[] = [
   'espelhoPrismatico',
   'orquestraOrbital',
   ...NOVOS_PODERES_IDS,
+  ...PODERES_FOFOS_IDS,
 ];
 /** Tetos por ativação, inclusive com passivas extremas e inimigos sobrepostos. */
 export const LIMITE_TAREFAS_PODER = 48;
@@ -377,12 +388,139 @@ function lancarNovoPoder<T extends AlvoEspecial>(ctx: ContextoPoderEspecial<T>):
       if (Math.abs(Math.hypot(a.x - px, a.z - pz) - r) <= 0.5 + (a.raio || 0))
         acertar(a, f, el, px, pz, forca);
   };
-  const objeto = (px: number, pz: number, cor: string, escala = 0.65, a = dir, tempo = 0.35) =>
-    desenharArtefato(fx, id, px, pz, a, escala, cor, ctx.nivel, tempo);
+  const objeto = (px: number, pz: number, cor: string, escala = 0.65, a = dir, tempo = 0.35) => {
+    if (PODERES_FOFOS_IDS.some((novo) => novo === id))
+      manifestarPoder(fx, id, px, pz, Math.min(5, ctx.nivel), a);
+    else desenharArtefato(fx, id, px, pz, a, escala, cor, ctx.nivel, tempo);
+  };
   const ponto = (px: number, pz: number, a: number, r: number): [number, number] => [
     px + Math.cos(a) * r,
     pz + Math.sin(a) * r,
   ];
+
+  if (id === 'fitaAurora') {
+    const lacos = Math.min(6, qtd + (v.evo10 ? 3 : v.evo5 ? 1 : 0));
+    for (let laco = 0; laco < lacos; laco++) {
+      const vistos = new Set<T>();
+      for (let passo = 0; passo < 6; passo++)
+        depois(0.08 + passo * 0.07, () => {
+          const a = dir + (laco * TAU) / lacos - 0.65 + passo * 0.26;
+          const [px, pz] = ponto(x, z, a, area);
+          segmento(x, z, px, pz, 0.65, 1, 'luz', '#ffb8ed', 3, vistos);
+        });
+    }
+    return true;
+  }
+  if (id === 'cometaCaramelo') {
+    for (let i = 0; i < Math.min(4, qtd); i++) {
+      let px = x,
+        pz = z;
+      const visitados = new Set<T>();
+      const saltos = v.evo10 ? 8 : v.evo5 ? 5 : 3;
+      for (let salto = 0; salto < saltos; salto++)
+        depois(0.12 + i * 0.055 + salto * 0.15, () => {
+          const presa = vivos()
+            .filter((a) => !visitados.has(a) && Math.hypot(a.x - px, a.z - pz) <= alcance)
+            .sort((a, b) => Math.hypot(a.x - px, a.z - pz) - Math.hypot(b.x - px, b.z - pz))[0];
+          if (!presa) return;
+          const tx = presa.x,
+            tz = presa.z;
+          segmento(px, pz, tx, tz, Math.min(0.9, area), 1, 'arcano', '#ffc985', 2);
+          visitados.add(presa);
+          px = tx;
+          pz = tz;
+          if (v.evo5) disco(px, pz, Math.min(2, area * 1.5), 0.35, 'arcano', 3);
+          if (salto === 0) objeto(px, pz, '#ff91c7', 0.3);
+        });
+    }
+    return true;
+  }
+  if (id === 'chuvaPetalas') {
+    const candidatos = proximos();
+    for (let i = 0; i < Math.min(8, qtd); i++) {
+      const alvoFlor = candidatos[i % Math.max(1, candidatos.length)];
+      const a = ctx.rnd() * TAU,
+        r = ctx.rnd() * Math.min(2, area);
+      const px = (alvoFlor?.x ?? cx) + Math.cos(a) * r;
+      const pz = (alvoFlor?.z ?? cz) + Math.sin(a) * r;
+      ondaMusical(fx, px, pz, area, '#b2f7a5');
+      depois(0.4 + i * 0.06, () => {
+        objeto(px, pz, '#ff9ac6', 0.4);
+        disco(px, pz, area, 1, 'veneno', 2);
+      });
+      if (v.evo5)
+        for (let pulso = 0; pulso < 2; pulso++)
+          depois(0.9 + i * 0.06 + pulso * 0.4, () => {
+            ondaMusical(fx, px, pz, area * 0.8, '#b2f7a5');
+            disco(px, pz, area * 0.8, 0.3, 'veneno', 0);
+          });
+      if (v.evo10)
+        depois(1.8 + i * 0.06, () => {
+          coroa(px, pz, area * 1.5, 0.7, 'veneno', '#ff9ac6', 4);
+          disco(px, pz, area, 0.8, 'veneno', 4);
+        });
+    }
+    return true;
+  }
+  if (id === 'coelhoLunar') {
+    for (let i = 0; i < Math.min(5, qtd); i++) {
+      const a = dir + (i - (Math.min(5, qtd) - 1) / 2) * 0.22;
+      const vistos = new Set<T>();
+      for (let passo = 0; passo < 6; passo++)
+        depois(0.1 + passo * 0.1, () => {
+          const [ax, az] = ponto(x, z, a, (passo * alcance) / 6);
+          const [bx, bz] = ponto(x, z, a, ((passo + 1) * alcance) / 6);
+          segmento(ax, az, bx, bz, Math.min(1.2, area), 1, 'luz', '#f3e8ff', 3, vistos);
+          if (passo === 1 || passo === 4) objeto(bx, bz, '#a8d4ff', 0.25, a);
+          if (v.evo5 && passo === 3)
+            for (const lado of [-1, 1]) {
+              const [ex, ez] = ponto(bx, bz, a + lado * 0.8, Math.max(2, area * 2));
+              segmento(bx, bz, ex, ez, 0.45, 0.45, 'luz', '#a8d4ff');
+            }
+          if (v.evo10 && passo === 5) disco(bx, bz, area * 2.5, 1.1, 'luz', 6);
+        });
+    }
+    return true;
+  }
+  if (id === 'jardimLunar') {
+    const tempoJardim = Math.max(0.6, Math.min(8, v.duracao));
+    for (let i = 0; i < Math.min(3, qtd); i++) {
+      const [px, pz] = i ? ponto(cx, cz, dir + (i * TAU) / 3, area * 1.5) : [cx, cz];
+      objeto(px, pz, '#c6a6ff', 0.65, dir, tempoJardim);
+      for (let pulso = 0; pulso < 5; pulso++)
+        depois(0.2 + (pulso * tempoJardim) / 5, () => {
+          ondaMusical(fx, px, pz, area, '#c6a6ff');
+          disco(px, pz, area, 0.55, 'gravidade', -5);
+          if (v.evo5 && pulso % 2 === 1) disco(px, pz, area * 0.75, 0.25, 'codigo', -2);
+        });
+      if (v.evo10)
+        depois(tempoJardim + 0.2, () => {
+          objeto(px, pz, '#eaffb5', 0.85);
+          disco(px, pz, area * 1.5, 1.5, 'gravidade', 9);
+        });
+    }
+    return true;
+  }
+  if (id === 'abracoEstelar') {
+    const ondas = Math.min(5, qtd + (v.evo10 ? 2 : v.evo5 ? 1 : 0));
+    for (let onda = 0; onda < ondas; onda++) {
+      const vistos = new Set<T>();
+      for (let passo = 1; passo <= 6; passo++)
+        depois(onda * 0.38 + passo * 0.07, () => {
+          const r = (area * passo) / 6;
+          ondaMusical(fx, x, z, r, onda % 2 ? '#fff0ad' : '#ffb4ce');
+          for (const a of vivos())
+            if (
+              !vistos.has(a) &&
+              Math.abs(Math.hypot(a.x - x, a.z - z) - r) <= area / 6 + (a.raio || 0)
+            ) {
+              vistos.add(a);
+              acertar(a, 1, 'som', x, z, v.evo10 ? 12 : 6);
+            }
+        });
+    }
+    return true;
+  }
 
   if (id === 'serpenteEletrica') {
     const n = Math.min(10, 6 + qtd),

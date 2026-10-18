@@ -173,6 +173,84 @@ export function criarAparenciaInimigo(id: IdInimigo): THREE.BufferGeometry {
   const c = new Criatura();
   const lados = [-1, 1];
   switch (id) {
+    case 'aveMigratoria':
+      c.corpo('#f5d9aa', 0, 1.45, 0, 0.27, 0.23, 0.48);
+      c.corpo('#fff0d1', 0, 1.53, 0.36, 0.23, 0.21, 0.22);
+      for (const l of lados) c.asa('#b687c9', l, 1.48, 0.85, 0.8);
+      c.chifre('#eea65b', 0, 1.5, 0.67, 0.12, 0.3, Math.PI / 2);
+      c.placa('#d2a5dd', 0, 1.4, -0.58, 0.22, 0.08, 0.4);
+      break;
+    case 'arvoreAncia':
+      c.haste('#a48063', 0, 1.55, 0, 0.75, 2.9);
+      c.placa('#d7bb8c', 0, 2, 0.54, 0.52, 0.56, 0.2);
+      for (const l of lados) {
+        c.haste('#b79570', l * 1.03, 2.05, 0, 0.2, 1.9, 0, -l * 0.85);
+        c.corpo('#a4d58c', l * 0.85, 3.05, 0, 0.88, 0.76, 0.8);
+        c.haste('#b79570', l * 0.72, 0.25, 0.55, 0.2, 1.5, 0.9, l * 0.7);
+      }
+      c.corpo('#c3e89c', 0, 3.5, 0, 1.08, 0.78, 0.85);
+      c.chifre('#ffe2a5', 0, 4.02, 0, 0.16, 0.55);
+      c.boca(1.83, 0.79, 0.25);
+      break;
+    case 'golemForja':
+      c.placa('#c48e77', 0, 1.46, 0, 0.95, 1.03, 0.68);
+      c.placa('#ffcb8d', 0, 1.56, 0.59, 0.58, 0.57, 0.14);
+      c.corpo('#ffe7b6', 0, 2.55, 0, 0.57, 0.53, 0.58);
+      for (const l of lados) {
+        c.placa('#eba481', l * 1.03, 2.05, 0, 0.5, 0.46, 0.53);
+        c.placa('#a57978', l * 1.08, 1.2, 0, 0.35, 0.61, 0.37);
+        c.placa('#b28b87', l * 0.5, 0.3, 0, 0.4, 0.34, 0.5);
+        c.chifre('#ffe8ae', l * 0.4, 3.12, 0, 0.18, 0.78);
+      }
+      c.boca(2.35, 0.61, 0.25);
+      break;
+    case 'polvoAbissal':
+      c.corpo('#a68bce', 0, 2.25, 0, 0.9, 1.02, 0.77);
+      c.corpo('#ead4f0', 0, 2.2, 0.58, 0.67, 0.53, 0.2);
+      for (let k = 0; k < 8; k++) {
+        const a = (k * Math.PI) / 4;
+        c.haste(
+          k % 2 ? '#a7cde2' : '#c8a9e7',
+          Math.cos(a) * 0.92,
+          0.8,
+          Math.sin(a) * 0.92,
+          0.19,
+          1.75,
+          0,
+          Math.cos(a) * 0.65
+        );
+        c.corpo('#f3d1e4', Math.cos(a) * 1.4, 0.17, Math.sin(a) * 1.4, 0.28, 0.16, 0.28);
+      }
+      c.anel('#ffdfad', 0, 3.06, 0, 0.68, 0.09, Math.PI / 2);
+      c.boca(2.03, 0.82, 0.24);
+      break;
+    case 'corujaAurora':
+      c.corpo('#bad8e7', 0, 1.75, 0, 0.8, 1.04, 0.7);
+      c.corpo('#edf5e9', 0, 1.61, 0.5, 0.61, 0.7, 0.25);
+      c.corpo('#d9e7ee', 0, 2.65, 0, 0.75, 0.64, 0.62);
+      for (const l of lados) {
+        c.asa('#99bedb', l, 2, 1.8, 1.6);
+        c.corpo('#fff3d8', l * 0.32, 2.65, 0.52, 0.3, 0.35, 0.12);
+        c.chifre('#c5a8e3', l * 0.47, 3.18, 0, 0.24, 0.68, 0, -l * 0.3);
+        c.corpo('#dfb47f', l * 0.35, 0.32, 0.22, 0.24, 0.17, 0.4);
+      }
+      c.chifre('#e4b273', 0, 2.38, 0.75, 0.18, 0.4, Math.PI / 2);
+      break;
+    case 'caranguejoCoral':
+      c.corpo('#efaaa7', 0, 1.15, 0, 1.2, 0.65, 0.88);
+      c.placa('#ffd4b3', 0, 1.52, 0, 1.08, 0.35, 0.78);
+      for (const l of lados) {
+        for (let k = 0; k < 3; k++)
+          c.haste('#cc8faa', l * 1.2, 0.44, -0.5 + k * 0.5, 0.12, 1.5, 0, l * 0.9);
+        c.haste('#e7adba', l * 0.48, 1.6, 0.5, 0.1, 0.58);
+        c.corpo('#ffe8c5', l * 0.48, 1.84, 0.55, 0.2, 0.22, 0.19);
+        c.placa('#e6979b', l * 1.58, 1.25, 0.65, 0.59, 0.53, 0.56);
+        c.chifre('#ffe1b9', l * 1.7, 1.7, 0.85, 0.22, 0.75, 0, l * 0.35);
+        c.haste('#db8ca8', l * 0.55, 2.07, -0.25, 0.13, 0.95, 0, l * 0.35);
+        c.chifre('#ffe4c4', l * 0.55, 2.61, -0.25, 0.17, 0.38);
+      }
+      c.boca(1.08, 0.84, 0.24);
+      break;
     case 'chiado':
       c.corpo('#b797e5', 0, 0.5, 0, 0.45, 0.43, 0.39);
       c.corpo('#f4c3d6', 0, 0.35, 0.31, 0.3, 0.22, 0.13);

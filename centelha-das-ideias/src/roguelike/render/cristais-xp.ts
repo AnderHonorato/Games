@@ -1,7 +1,7 @@
 /** Motes de energia: estrelas, fitas orbitais e runas, sem suporte físico. */
 import * as THREE from 'three';
 
-export const CORES_CRISTAIS_XP = ['#59e7b7', '#49c9ff', '#b28aff', '#ffc766'] as const;
+export const CORES_CRISTAIS_XP = ['#fa69ed', '#58bcff', '#d69aff', '#ffbb72'] as const;
 const TAMANHOS = [0.34, 0.43, 0.53, 0.66];
 const VOLTA = Math.PI * 2;
 type Ponto = readonly [number, number, number];
@@ -46,9 +46,9 @@ function desenhoEnergia() {
         centro,
         ponto(a, k % 2 ? raio * 0.18 : raio),
         ponto(b, k % 2 ? raio : raio * 0.18),
-        0.66,
-        0.16,
-        0.16
+        0.98,
+        0.68,
+        0.68
       );
     }
   };
@@ -70,7 +70,7 @@ function desenhoEnergia() {
       const a = inicio + (comprimento * k) / segmentos;
       const b = inicio + (comprimento * (k + 1)) / segmentos;
       const espessura = largura * (0.18 + 0.82 * Math.sin((Math.PI * (k + 0.5)) / segmentos));
-      const brilho = 0.14 + (0.29 * k) / segmentos;
+      const brilho = 0.65 + (0.3 * k) / segmentos;
       const p = ponto(a, raio - espessura);
       const q = ponto(a, raio + espessura);
       const r = ponto(b, raio + espessura);
@@ -79,10 +79,14 @@ function desenhoEnergia() {
       triangulo(p, r, s, brilho * 0.55, brilho, brilho * 0.55);
     }
   };
-  const geometria = () => {
+  const geometria = (contorno = false) => {
+    // Primeira camada escura um pouco maior, seguida do coração saturado.
+    // NormalBlending conserva a silhueta até sobre neve ou grama iluminada.
+    const borda = contorno ? pos.map((v) => v * 1.15) : [];
+    const corBorda = contorno ? cores.map(() => 0.025) : [];
     const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    geo.setAttribute('color', new THREE.Float32BufferAttribute(cores, 3));
+    geo.setAttribute('position', new THREE.Float32BufferAttribute([...borda, ...pos], 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute([...corBorda, ...cores], 3));
     geo.computeBoundingBox();
     geo.computeBoundingSphere();
     return geo;
@@ -120,7 +124,7 @@ export function geometriaCristalXp(tipo: number): THREE.BufferGeometry {
       d.estrela(0.15, 4, a, 0, [Math.cos(a) * 1.08, Math.sin(a) * 0.9, 0]);
     }
   }
-  return d.geometria();
+  return d.geometria(true);
 }
 
 /** Luz própria saturada; não depende do sol e não cria PointLights. */
@@ -129,8 +133,8 @@ export function materialCristalXp(_tipo: number): THREE.MeshBasicMaterial {
     color: '#ffffff',
     vertexColors: true,
     transparent: true,
-    opacity: 0.8,
-    blending: THREE.AdditiveBlending,
+    opacity: 0.98,
+    blending: THREE.NormalBlending,
     depthWrite: false,
     side: THREE.DoubleSide,
     toneMapped: false,
@@ -147,7 +151,8 @@ export function geometriaFaiscaXp(): THREE.BufferGeometry {
 
 export function materialFaiscaXp(): THREE.MeshBasicMaterial {
   const mat = materialCristalXp(0);
-  mat.opacity = 0.7;
+  mat.opacity = 0.78;
+  mat.blending = THREE.AdditiveBlending;
   return mat;
 }
 
@@ -185,7 +190,7 @@ export function visualCristalXp(
   v.escalaX = tamanho * (1 + onda * 0.025);
   v.escalaY = tamanho * (1 + onda * 0.08);
   v.escalaZ = tamanho;
-  v.y = 0.83 + t * 0.1 + onda * 0.11;
+  v.y = 1.15 + t * 0.1 + onda * 0.11;
   v.rotacao = (agora * (0.72 - t * 0.07) + deslocamento) % VOLTA;
   v.cor = CORES_CRISTAIS_XP[t];
   v.halo = tamanho * (3.2 + onda * 0.16);

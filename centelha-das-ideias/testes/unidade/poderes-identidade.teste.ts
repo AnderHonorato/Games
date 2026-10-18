@@ -39,9 +39,9 @@ function numerosFinitos(valor: unknown): void {
   else if (valor && typeof valor === 'object') Object.values(valor).forEach(numerosFinitos);
 }
 
-describe('assinaturas próprias das 44 habilidades', () => {
+describe('assinaturas próprias das 50 habilidades', () => {
   it('cobre exatamente o catálogo e produz geometrias distintas, finitas e limitadas', () => {
-    expect(HABILIDADES).toHaveLength(44);
+    expect(HABILIDADES).toHaveLength(50);
     const identidades = new Set<string>();
     for (const h of HABILIDADES) {
       for (const nivel of [1, 5, 9, 10]) {
@@ -98,7 +98,7 @@ describe('assinaturas próprias das 44 habilidades', () => {
 });
 
 describe('catálogo sonoro de poderes', () => {
-  it('registra 44 receitas alcançáveis sem colisão no contrato de áudio', () => {
+  it('registra 50 receitas alcançáveis sem colisão no contrato de áudio', () => {
     expect(Object.keys(SOM_POR_PODER).sort()).toEqual(HABILIDADES.map((h) => h.id).sort());
     expect(new Set(SONS_PODERES).size).toBe(HABILIDADES.length);
     expect(new Set(SONS).size).toBe(SONS.length);

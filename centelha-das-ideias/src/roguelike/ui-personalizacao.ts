@@ -1,14 +1,8 @@
 /** Controles do ateliê: atualizam somente o campo alterado, preservando foco. */
 import type { Personalizacao } from '../render/personalizacao';
 import type { Partida } from './jogo/partida';
-import type { ArmaInicial } from './nucleo/conta';
 
-export const ARMAS_INICIAIS: { id: ArmaInicial; nome: string; icone: string; descricao: string }[] =
-  [
-    { id: 'lamina', nome: 'Lâmina', icone: '╱', descricao: 'Ágil e precisa' },
-    { id: 'cajado', nome: 'Cajado', icone: '✦', descricao: 'Magia à distância' },
-    { id: 'martelo', nome: 'Martelo', icone: '◆', descricao: 'Impacto poderoso' },
-  ];
+export { ARMAS_INICIAIS } from './dados/armas-iniciais';
 
 export function criarAtelie(p: Partida, mudou: () => void): HTMLElement {
   const raiz = document.createElement('div');
@@ -22,6 +16,9 @@ export function criarAtelie(p: Partida, mudou: () => void): HTMLElement {
         ['aventureiro', 'Aventureiro'],
         ['mago', 'Mago'],
         ['guardiao', 'Guardião'],
+        ['pirata', 'Pirata'],
+        ['astronauta', 'Astronauta'],
+        ['floral', 'Floral'],
       ],
     ],
     [
@@ -32,6 +29,8 @@ export function criarAtelie(p: Partida, mudou: () => void): HTMLElement {
         ['bone', 'Boné'],
         ['capuz', 'Capuz'],
         ['coroa', 'Coroa'],
+        ['orelhas', 'Orelhas de coelho'],
+        ['chapeu', 'Chapéu de sol'],
       ],
     ],
     [
@@ -42,6 +41,8 @@ export function criarAtelie(p: Partida, mudou: () => void): HTMLElement {
         ['oculos', 'Óculos'],
         ['cachecol', 'Cachecol'],
         ['asas', 'Asas'],
+        ['mochila', 'Mochila'],
+        ['laco', 'Laço'],
       ],
     ],
   ] as const;

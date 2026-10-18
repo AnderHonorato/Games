@@ -45,6 +45,12 @@ export function geometriaInimigo(id: IdInimigo): THREE.BufferGeometry {
 
 /** Altura dos olhos de cada inimigo (unidade). */
 export const OLHOS: Record<IdInimigo, { y: number; z: number; sep: number; tam: number }> = {
+  aveMigratoria: { y: 1.55, z: 0.45, sep: 0.14, tam: 0.065 },
+  arvoreAncia: { y: 2.15, z: 0.73, sep: 0.28, tam: 0.14 },
+  golemForja: { y: 2.6, z: 0.65, sep: 0.25, tam: 0.13 },
+  polvoAbissal: { y: 2.4, z: 0.71, sep: 0.3, tam: 0.14 },
+  corujaAurora: { y: 2.63, z: 0.6, sep: 0.3, tam: 0.18 },
+  caranguejoCoral: { y: 1.8, z: 0.65, sep: 0.48, tam: 0.12 },
   chiado: { y: 0.61, z: 0.37, sep: 0.16, tam: 0.075 },
   spam: { y: 0.48, z: 0.37, sep: 0.13, tam: 0.065 },
   zumbido: { y: 1.29, z: 0.54, sep: 0.13, tam: 0.075 },

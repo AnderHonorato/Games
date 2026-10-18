@@ -1,9 +1,11 @@
 /**
  * Ponto de entrada: por padrão abre o modo Sobrevivência (roguelike); com
- * ?modo=aventura abre a aventura 3D clássica. Os dois usam laço com passo fixo de 60 Hz.
+ * ?modo=aventura abre a aventura clássica; ?modo=moba abre o MOBA 5×5 contra bots.
  */
 import './estilos/base.css';
 import './roguelike/estilos.css';
+import './moba/estilos.css';
+import { iniciarMoba } from './moba/iniciar';
 import { instalarApiTeste } from './depuracao/api-teste';
 import { JogoCentelha } from './jogo/jogo';
 import { instalarCicloDeVida } from './motor/ciclo-de-vida';
@@ -142,6 +144,10 @@ async function iniciar(): Promise<void> {
     await document.fonts?.load('600 16px Fredoka');
   } catch {
     /* segue com a fonte do sistema */
+  }
+  if (modoDaUrl() === 'moba') {
+    iniciarMoba(canvas, raizUi);
+    return;
   }
   if (modoDaUrl() === 'sobrevivencia') {
     iniciarSobrevivencia(canvas, raizUi);

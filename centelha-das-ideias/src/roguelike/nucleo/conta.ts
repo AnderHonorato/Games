@@ -1,4 +1,5 @@
 /** Perfil local: XP de conta é separado do nível temporário da partida. */
+import { armaInicialValida, type IdArmaInicial } from '../dados/armas-iniciais';
 import { PERSONAGENS, type IdPersonagem } from '../dados/personagens';
 import { MAPAS, mapaDesbloqueado, type IdMapa } from '../dados/mapas';
 import {
@@ -8,7 +9,7 @@ import {
 } from '../../render/personalizacao';
 
 export const CONTA_CHAVE = 'centelha-conta-v1';
-export type ArmaInicial = 'lamina' | 'cajado' | 'martelo';
+export type ArmaInicial = IdArmaInicial;
 export interface DadosConta {
   versao: 1;
   nome: string;
@@ -74,8 +75,7 @@ export class Conta {
       if (typeof mapa === 'string' && mapaDesbloqueado(mapa, this.dados.xp))
         this.dados.mapa = mapa as IdMapa;
       const arma = proprio(salva, 'armaInicial');
-      if (arma === 'lamina' || arma === 'cajado' || arma === 'martelo')
-        this.dados.armaInicial = arma;
+      if (armaInicialValida(arma)) this.dados.armaInicial = arma;
       const visuais = proprio(salva, 'visuais');
       if (objeto(visuais))
         for (const p of PERSONAGENS) {
@@ -113,7 +113,7 @@ export class Conta {
     return true;
   }
   definirArma(arma: ArmaInicial): void {
-    if (arma !== 'lamina' && arma !== 'cajado' && arma !== 'martelo') return;
+    if (!armaInicialValida(arma)) return;
     this.dados.armaInicial = arma;
     this.salvar();
   }
