@@ -1,3 +1,5 @@
+import { custoCompra, recomendadosPorClasse, type TipoEfeitoItemMoba } from './itens';
+import { ajustarDestino, moitaEm, moverNoTerreno } from './terreno';
 import { HEROIS_MOBA, ITENS_MOBA, heroiMoba, itemMoba } from './dados';
 import {
   BASES_MOBA,
@@ -9,6 +11,10 @@ import {
 } from './rotas';
 import type {
   DefSkillMoba,
+  DificuldadeMoba,
+  FeiticoMoba,
+  OpcoesMoba,
+  ObjetivosMoba,
   EfeitoMoba,
   EstruturaMoba,
   EventoMoba,
@@ -51,6 +57,22 @@ export class SimulacaoMoba {
   sentinelas: SentinelaMoba[] = [];
   eventos: EventoMoba[] = [];
   vencedor: TimeMoba | null = null;
+  dificuldade: DificuldadeMoba = 'normal';
+  private feiticos: Record<FeiticoMoba, number> = { lampejo: 0, cura: 0 };
+  private revelados = new Map<number, number>();
+  private selecaoRota: RotaMoba = 0;
+  private estadosItens = new Map<
+    number,
+    {
+      furiaAte: number;
+      stacks: number;
+      escudoProximo: number;
+      ecoProximo: number;
+      feridaAte: number;
+      ferida: number;
+    }
+  >();
+  private lentidaoItens = new Map<number, { ate: number; valor: number }>();
   private sequencia = 1;
   private localId = 0;
   private onda = 0;
@@ -76,7 +98,11 @@ export class SimulacaoMoba {
   get local(): HeroiMoba {
     return this.herois.find((h) => h.id === this.localId)!;
   }
-  iniciar(idHeroi: string, time: TimeMoba = 0): void {
+  iniciar(idHeroi: string, time: TimeMoba = 0, opcoes: OpcoesMoba = {}): void {
+    this.dificuldade = ['iniciante', 'normal', 'desafio'].includes(opcoes.dificuldade ?? '')
+      ? opcoes.dificuldade!
+      : 'normal';
+    this.selecaoRota = [0, 1, 2].includes(opcoes.rota ?? -1) ? opcoes.rota! : 0;
     this.preparar(idHeroi, time);
     this.estado = 'jogando';
     this.evento('A batalha começou. Ondas a cada 30 segundos.');
@@ -96,6 +122,10 @@ export class SimulacaoMoba {
     this.proximaOnda = 5;
     this.proximaIA = 0;
     this.wardRecarga = 0;
+    this.feiticos = { lampejo: 0, cura: 0 };
+    this.revelados.clear();
+    this.estadosItens.clear();
+    this.lentidaoItens.clear();
     this.buffAte = [0, 0];
     this.bossNasceu = false;
     this.zonas = [];
@@ -109,11 +139,28 @@ export class SimulacaoMoba {
     this.escudoAte.clear();
     this.golpes.clear();
     const escolhido = heroiMoba(idHeroi);
-    const disponiveis = [escolhido, ...HEROIS_MOBA.filter((h) => h.id !== escolhido.id)];
+    const usados = new Set([escolhido.id]);
+    const formacao = [escolhido];
+    const inicio = HEROIS_MOBA.indexOf(escolhido);
+    const catalogo = [...HEROIS_MOBA.slice(inicio + 1), ...HEROIS_MOBA.slice(0, inicio + 1)];
+    for (const equipe of [0, 1]) {
+      const classes = equipe === 0 ? [escolhido.classe] : [];
+      for (let i = equipe === 0 ? 1 : 0; i < 5; i++) {
+        const d =
+          catalogo.find((d) => !usados.has(d.id) && !classes.includes(d.classe)) ??
+          catalogo.find((d) => !usados.has(d.id))!;
+        formacao.push(d);
+        usados.add(d.id);
+        classes.push(d.classe);
+      }
+    }
+    const vagas: RotaMoba[] = [0, 0, 1, 2, 2];
+    vagas.splice(vagas.indexOf(this.selecaoRota), 1);
     for (let i = 0; i < 10; i++) {
       const equipe = (i < 5 ? time : 1 - time) as TimeMoba;
-      const rota = ([0, 0, 1, 2, 2] as RotaMoba[])[i % 5];
-      const h = this.criarHeroi(disponiveis[i].id, equipe, rota, i % 5);
+      const rota =
+        i === 0 ? this.selecaoRota : i < 5 ? vagas[i - 1] : ([0, 0, 1, 2, 2] as RotaMoba[])[i % 5];
+      const h = this.criarHeroi(formacao[i].id, equipe, rota, i % 5);
       this.atualizarAtributos(h, false);
       this.herois.push(h);
       if (i === 0) this.localId = h.id;
@@ -131,8 +178,8 @@ export class SimulacaoMoba {
             time: equipe,
             tipo,
             ...pos,
-            vida: tipo === 'torre' ? 4200 : 3200,
-            vidaMax: tipo === 'torre' ? 4200 : 3200,
+            vida: tipo === 'torre' ? 4700 : 3600,
+            vidaMax: tipo === 'torre' ? 4700 : 3600,
             rota,
             ordem,
             raio: tipo === 'torre' ? 2 : 2.5,
@@ -146,8 +193,8 @@ export class SimulacaoMoba {
         time: equipe,
         tipo: 'nucleo',
         ...base,
-        vida: 6500,
-        vidaMax: 6500,
+        vida: 7200,
+        vidaMax: 7200,
         rota: 1,
         ordem: 3,
         raio: 3,
@@ -159,14 +206,24 @@ export class SimulacaoMoba {
   private id(): number {
     return this.sequencia++;
   }
+  /** Cinco posições em leque, dentro da fonte e fora do cristal do núcleo. */
+  private pontoFonte(time: TimeMoba, indice: number): Ponto {
+    const base = BASES_MOBA[time],
+      angulo = (time === 0 ? -Math.PI / 4 : (3 * Math.PI) / 4) + (indice - 2) * 0.38;
+    return { x: base.x + Math.cos(angulo) * 6.8, z: base.z + Math.sin(angulo) * 6.8 };
+  }
+  private voltarFonte(h: HeroiMoba): void {
+    const indice = this.herois.filter((a) => a.time === h.time).indexOf(h);
+    Object.assign(h, this.pontoFonte(h.time, Math.max(0, indice)));
+  }
   private criarHeroi(defId: string, time: TimeMoba, rota: RotaMoba, indice: number): HeroiMoba {
     const d = heroiMoba(defId),
-      b = BASES_MOBA[time];
+      b = this.pontoFonte(time, indice);
     return {
       id: this.id(),
       tipo: 'heroi',
       time,
-      x: b.x + (indice - 2) * 1.3,
+      x: b.x,
       z: b.z,
       vida: d.vida,
       vidaMax: d.vida,
@@ -224,7 +281,7 @@ export class SimulacaoMoba {
   moverPara(x: number, z: number): void {
     if (this.estado !== 'jogando' || !this.local.vivo || !Number.isFinite(x) || !Number.isFinite(z))
       return;
-    this.destino = { x: clamp(x, -86, 86), z: clamp(z, -86, 86) };
+    this.destino = ajustarDestino(x, z, this.local.raio);
     this.direcao = { x: 0, z: 0 };
     this.local.recall = 0;
     this.local.alvo = null;
@@ -280,19 +337,23 @@ export class SimulacaoMoba {
     return true;
   }
   private comprarPara(h: HeroiMoba, id: string): boolean {
-    const item = ITENS_MOBA.find((i) => i.id === id);
+    const compra = custoCompra(h.inventario, id);
     if (
       this.estado !== 'jogando' ||
-      !item ||
-      h.inventario.length >= 6 ||
-      h.ouro < item.custo ||
+      !compra ||
+      compra.inventarioRestante.length >= 6 ||
+      h.ouro < compra.custo ||
       dist(h, BASES_MOBA[h.time]) > 13 ||
       !h.vivo
     )
       return false;
-    h.ouro -= item.custo;
-    h.inventario.push(id);
+    h.ouro -= compra.custo;
+    h.inventario = [...compra.inventarioRestante, id];
+    const vida = h.vida,
+      mana = h.mana;
     this.atualizarAtributos(h, true);
+    h.vida = Math.min(h.vidaMax, Math.max(vida, h.vida));
+    h.mana = Math.min(h.manaMax, Math.max(mana, h.mana));
     return true;
   }
   retornarBase(): boolean {
@@ -340,14 +401,87 @@ export class SimulacaoMoba {
     else if (!on && this.estado === 'pausa') this.estado = 'jogando';
   }
   visivel(time: TimeMoba, x: number, z: number): boolean {
-    const p = { x, z };
-    if (dist(p, BASES_MOBA[time]) < 20) return true;
+    const p = { x, z },
+      moita = moitaEm(x, z);
+    const sentinela = this.sentinelas.some((w) => w.time === time && dist(w, p) < 26);
+    if (moita && !sentinela) {
+      const dentro = [...this.herois, ...this.unidades].some(
+        (u) => u.time === time && u.vivo && moitaEm(u.x, u.z)?.id === moita.id
+      );
+      const revelado = [...this.herois, ...this.unidades].some(
+        (u) =>
+          u.time !== time &&
+          u.vivo &&
+          dist(u, p) < 0.2 &&
+          (this.revelados.get(u.id) ?? 0) > this.tempo
+      );
+      if (!dentro && !revelado) return false;
+    }
     return (
+      dist(p, BASES_MOBA[time]) < 20 ||
+      sentinela ||
       this.herois.some((h) => h.time === time && h.vivo && dist(h, p) < 24) ||
       this.unidades.some((u) => u.time === time && u.vivo && dist(u, p) < 13) ||
-      this.estruturas.some((e) => e.time === time && e.vida > 0 && dist(e, p) < 18) ||
-      this.sentinelas.some((w) => w.time === time && dist(w, p) < 26)
+      this.estruturas.some((e) => e.time === time && e.vida > 0 && dist(e, p) < 18)
     );
+  }
+  recargaFeitico(tipo: FeiticoMoba): number {
+    return this.feiticos[tipo] ?? 0;
+  }
+  usarFeitico(tipo: FeiticoMoba, x?: number, z?: number): boolean {
+    const h = this.local;
+    if (
+      this.estado !== 'jogando' ||
+      !h.vivo ||
+      h.controle > 0 ||
+      (tipo !== 'cura' && tipo !== 'lampejo') ||
+      this.feiticos[tipo] > 0 ||
+      (x !== undefined && !Number.isFinite(x)) ||
+      (z !== undefined && !Number.isFinite(z))
+    )
+      return false;
+    if (tipo === 'cura') {
+      if (h.vida >= h.vidaMax) return false;
+      this.curar(h, h.vidaMax * 0.28);
+      h.lento = 0;
+      this.lentidaoItens.delete(h.id);
+      this.feiticos.cura = 90;
+      this.fx('cura', h.x, h.z, 6, '#78ffbc', 1);
+    } else {
+      const alvo = { x: x ?? h.x + 10, z: z ?? h.z - 10 },
+        inicio = { x: h.x, z: h.z };
+      if (dist(h, alvo) < 0.1) return false;
+      const p = moverNoTerreno(h, alvo, h.raio, 12, false);
+      Object.assign(h, p);
+      this.feiticos.lampejo = 110;
+      this.fx('salto', h.x, h.z, 3, '#b9ecff', 0.65, inicio.x, inicio.z);
+      this.destino = null;
+      this.direcao = { x: 0, z: 0 };
+    }
+    h.recall = 0;
+    this.revelados.set(h.id, this.tempo + 3);
+    return true;
+  }
+  objetivos(): ObjetivosMoba {
+    const chefe = this.unidades.find((u) => u.tipo === 'chefe');
+    return {
+      guardiao: {
+        vivo: !!chefe?.vivo,
+        vida: chefe?.vida ?? 0,
+        vidaMax: chefe?.vidaMax ?? 7500,
+        nasceEm: chefe ? Math.max(0, chefe.respawnEm) : Math.max(0, 180 - this.tempo),
+      },
+      buffs: [Math.max(0, this.buffAte[0] - this.tempo), Math.max(0, this.buffAte[1] - this.tempo)],
+      torres: [0, 1].map(
+        (t) =>
+          this.estruturas.filter((e) => e.time === t && e.tipo === 'torre' && e.vida > 0).length
+      ) as [number, number],
+      inibidores: [0, 1].map(
+        (t) =>
+          this.estruturas.filter((e) => e.time === t && e.tipo === 'inibidor' && e.vida > 0).length
+      ) as [number, number],
+      proximaOnda: Math.max(0, this.proximaOnda - this.tempo),
+    };
   }
   atualizar(dt: number): void {
     if (this.estado !== 'jogando' || !Number.isFinite(dt) || dt <= 0) return;
@@ -361,6 +495,11 @@ export class SimulacaoMoba {
   private passo(dt: number): void {
     this.tempo += dt;
     this.wardRecarga = Math.max(0, this.wardRecarga - dt);
+    for (const tipo of ['lampejo', 'cura'] as const)
+      this.feiticos[tipo] = Math.max(0, this.feiticos[tipo] - dt);
+    for (const [id, ate] of this.revelados) if (ate <= this.tempo) this.revelados.delete(id);
+    for (const [id, e] of this.lentidaoItens)
+      if (e.ate <= this.tempo) this.lentidaoItens.delete(id);
     if (this.tempo >= this.proximaOnda) {
       this.gerarOnda();
       this.proximaOnda += 30;
@@ -409,7 +548,7 @@ export class SimulacaoMoba {
       h.renasceEm = Math.max(0, h.renasceEm - dt);
       h.respawnEm = h.renasceEm;
       if (h.renasceEm <= 0) {
-        Object.assign(h, BASES_MOBA[h.time]);
+        this.voltarFonte(h);
         h.vivo = true;
         h.vida = h.vidaMax;
         h.mana = h.manaMax;
@@ -424,21 +563,21 @@ export class SimulacaoMoba {
       2 +
       (d.passiva.tipo === 'regeneracao' ? h.vidaMax * 0.005 : 0) +
       h.inventario.reduce((s, id) => s + (itemMoba(id)?.regeneracao ?? 0), 0);
-    h.vida = Math.min(h.vidaMax, h.vida + regen * dt);
+    this.curar(h, regen * dt);
     h.mana = Math.min(h.manaMax, h.mana + dt * (3 + (d.passiva.tipo === 'mana' ? 4 : 0)));
     if ((this.escudoAte.get(h.id) ?? 0) <= this.tempo) {
       h.escudo = 0;
       this.escudoAte.delete(h.id);
     }
     if (dist(h, BASES_MOBA[h.time]) < 12) {
-      h.vida = Math.min(h.vidaMax, h.vida + dt * h.vidaMax * 0.12);
+      this.curar(h, dt * h.vidaMax * 0.12);
       h.mana = Math.min(h.manaMax, h.mana + dt * h.manaMax * 0.15);
     }
     if (h.recall > 0) {
       h.recall -= dt;
       if (h.recall <= 0) {
         h.recall = 0;
-        Object.assign(h, BASES_MOBA[h.time]);
+        this.voltarFonte(h);
         this.fx('recall', h.x, h.z, 4, h.cor, 1);
         this.destinos.delete(h.id);
         if (h.id === this.localId) {
@@ -451,9 +590,13 @@ export class SimulacaoMoba {
   private pensar(h: HeroiMoba): void {
     this.aprenderAutomatico(h);
     if (dist(h, BASES_MOBA[h.time]) < 12) {
-      const opcoes = ITENS_MOBA.filter(
-        (i) => i.custo <= h.ouro && !h.inventario.includes(i.id)
-      ).sort((a, b) => b.custo - a.custo);
+      const opcoes = recomendadosPorClasse(heroiMoba(h.defId).classe)
+        .filter(
+          (i) =>
+            !h.inventario.includes(i.id) &&
+            (custoCompra(h.inventario, i.id)?.custo ?? Infinity) <= h.ouro
+        )
+        .sort((a, b) => b.custo - a.custo);
       if (opcoes[0]) this.comprarPara(h, opcoes[0].id);
     }
     if (h.recall > 0) return;
@@ -475,6 +618,22 @@ export class SimulacaoMoba {
       this.destinos.set(h.id, BASES_MOBA[h.time]);
       return;
     }
+    const torreHostil = this.estruturas.find(
+      (e) => e.tipo === 'torre' && e.time !== h.time && e.vida > 0 && dist(e, h) < 17
+    );
+    if (
+      torreHostil &&
+      !this.unidades.some((u) => u.time === h.time && u.vivo && dist(u, torreHostil) < 16) &&
+      !inimigos.some((u) => ehHeroi(u) && u.vida < u.vidaMax * 0.18)
+    ) {
+      h.alvo = null;
+      const sentido = h.time === 0 ? -1 : 1;
+      this.destinos.set(
+        h.id,
+        pontoRota(h.rota, clamp(progressoRota(h.rota, h.x, h.z) + sentido * 0.07, 0, 1))
+      );
+      return;
+    }
     const alvo = this.alvoPerto(h, 22);
     h.alvo = alvo?.id ?? null;
     if (alvo) {
@@ -493,6 +652,27 @@ export class SimulacaoMoba {
       this.destinos.set(h.id, { x: alvo.x, z: alvo.z });
       return;
     }
+    // Três companheiros agrupam para o Guardião; depois voltam às rotas.
+    const guardiao = this.unidades.find((u) => u.tipo === 'chefe' && u.vivo);
+    const aliadosProntos = this.herois.filter(
+      (a) => a.time === h.time && a.vivo && a.nivel >= 6 && a.vida > a.vidaMax * 0.65
+    );
+    const indiceEquipe = this.herois.filter((a) => a.time === h.time).indexOf(h);
+    if (
+      guardiao &&
+      indiceEquipe >= 2 &&
+      aliadosProntos.length >= 3 &&
+      Math.floor(this.tempo % 150) < 38
+    ) {
+      if (dist(h, guardiao) < 18) h.alvo = guardiao.id;
+      this.destinos.set(h.id, guardiao);
+      return;
+    }
+    // Após abrir uma rota, o grupo converge ao núcleo com as supertropas.
+    const rotaAberta = this.estruturas.find(
+      (e) => e.time !== h.time && e.tipo === 'inibidor' && e.vida <= 0
+    );
+    if (rotaAberta && this.tempo > 600) h.rota = rotaAberta.rota;
     // Cada dupla acompanha sua rota; o quinto herói alterna selva e avanço.
     const indice = this.herois.filter((a) => a.time === h.time).indexOf(h);
     if (indice === 4 && Math.floor(this.tempo / 80) % 3 === 1) {
@@ -578,9 +758,13 @@ export class SimulacaoMoba {
       dz = p.z - u.z,
       d = Math.hypot(dx, dz);
     if (d < 0.05) return;
-    const passo = Math.min(d, u.velocidade * (u.lento > 0 ? 0.58 : 1) * dt);
-    u.x = clamp(u.x + (dx / d) * passo, -86, 86);
-    u.z = clamp(u.z + (dz / d) * passo, -86, 86);
+    const lentidao = this.lentidaoItens.get(u.id);
+    const fator = Math.min(
+      u.lento > 0 ? 0.58 : 1,
+      lentidao && lentidao.ate > this.tempo ? 1 - lentidao.valor : 1
+    );
+    const passo = Math.min(d, u.velocidade * fator * dt);
+    Object.assign(u, moverNoTerreno(u, p, u.raio, passo));
     u.progresso = progressoRota(u.rota, u.x, u.z);
   }
   private todosInimigos(u: UnidadeMoba): UnidadeMoba[] {
@@ -626,12 +810,20 @@ export class SimulacaoMoba {
   private ataqueBasico(u: UnidadeMoba, a: Alvo): void {
     if (u.recargaAtaque > 0 || !vivo(a) || (ehEstrutura(a) && !this.vulneravel(a))) return;
     let dano = u.dano;
+    this.revelados.set(u.id, this.tempo + 3);
     if (ehHeroi(u)) {
       const p = heroiMoba(u.defId).passiva.tipo;
       const golpes = (this.golpes.get(u.id) ?? 0) + 1;
       this.golpes.set(u.id, golpes);
       if (p === 'critico' && golpes % 5 === 0) dano *= 1.65;
-      u.recargaAtaque = p === 'celeridade' ? 0.67 : 0.92;
+      const furia = this.efeitoItem(u, 'furia'),
+        estado = this.estadoItem(u);
+      if (furia) {
+        estado.stacks = estado.furiaAte > this.tempo ? Math.min(4, estado.stacks + 1) : 1;
+        estado.furiaAte = this.tempo + (furia.duracao ?? 3);
+      }
+      u.recargaAtaque =
+        (p === 'celeridade' ? 0.67 : 0.92) / (1 + (furia ? estado.stacks * furia.valor : 0));
     } else u.recargaAtaque = u.tipo === 'cerco' ? 1.8 : 1.25;
     if (u.alcance > 5 && this.projeteis.length < 24) {
       const dx = a.x - u.x,
@@ -745,7 +937,8 @@ export class SimulacaoMoba {
       }
     }
     let a = u.alvo ? this.buscar(u.alvo) : undefined;
-    if (a && (!vivo(a) || dist(u, a) > 22)) a = undefined;
+    if (a && (!vivo(a) || dist(u, a) > 22 || (u.time !== 2 && !this.visivel(u.time, a.x, a.z))))
+      a = undefined;
     if (u.time === 2) {
       const casa = u.tipo === 'chefe' ? CHEFE_MOBA : CAMPOS_MOBA[Math.round(u.progresso)];
       if (dist(u, casa) > 17) {
@@ -757,7 +950,14 @@ export class SimulacaoMoba {
       if (!a) return;
     } else if (!a) {
       const alvos = [...this.unidades, ...this.herois]
-        .filter((v) => v.vivo && v.time !== u.time && v.time !== 2 && dist(u, v) < 12)
+        .filter(
+          (v) =>
+            v.vivo &&
+            v.time !== u.time &&
+            v.time !== 2 &&
+            dist(u, v) < 12 &&
+            this.visivel(u.time as TimeMoba, v.x, v.z)
+        )
         .sort((v, w) => {
           const ag = this.aggro.get(u.id);
           if (ag && ag.ate > this.tempo) {
@@ -798,10 +998,19 @@ export class SimulacaoMoba {
     const ag = this.aggro.get(e.id);
     let a =
       ag && ag.ate > this.tempo
-        ? this.herois.find((h) => h.id === ag.alvo && h.vivo && dist(e, h) < 18)
+        ? this.herois.find(
+            (h) => h.id === ag.alvo && h.vivo && dist(e, h) < 18 && this.visivel(e.time, h.x, h.z)
+          )
         : undefined;
     const candidatos = [...this.unidades, ...this.herois]
-      .filter((u) => u.vivo && u.time !== e.time && u.time !== 2 && dist(e, u) < 18)
+      .filter(
+        (u) =>
+          u.vivo &&
+          u.time !== e.time &&
+          u.time !== 2 &&
+          dist(e, u) < 18 &&
+          this.visivel(e.time, u.x, u.z)
+      )
       .sort((u, v) => (ehHeroi(u) ? 100 : 0) + dist(e, u) - (ehHeroi(v) ? 100 : 0) - dist(e, v));
     const alvo = a ?? candidatos[0];
     if (!alvo) return;
@@ -847,13 +1056,15 @@ export class SimulacaoMoba {
     const dano =
         Math.abs(s.dano) * (1 + (h.niveis[slot] - 1) * 0.24) + h.dano * (slot === 3 ? 0.6 : 0.25),
       raio = Math.max(1.2, s.raio);
-    this.fx(s.tipo, p.x, p.z, raio, s.cor, Math.min(1.5, s.duracao || 0.5));
+    this.revelados.set(h.id, this.tempo + 3);
+    if (s.tipo !== 'salto' && s.tipo !== 'troca')
+      this.fx(s.tipo, p.x, p.z, raio, s.cor, Math.min(1.5, s.duracao || 0.5), h.x, h.z);
     switch (s.tipo) {
       case 'cura':
         for (const a of this.herois.filter(
           (a) => a.time === h.time && a.vivo && dist(a, h) <= Math.max(raio, 9)
         )) {
-          a.vida = Math.min(a.vidaMax, a.vida + dano);
+          this.curar(a, dano);
           a.lento = 0;
         }
         break;
@@ -867,10 +1078,10 @@ export class SimulacaoMoba {
         break;
       case 'salto': {
         const inicio = { x: h.x, z: h.z };
-        h.x = clamp(p.x, -86, 86);
-        h.z = clamp(p.z, -86, 86);
+        Object.assign(h, moverNoTerreno(h, p, h.raio, s.alcance, false));
         this.fx('raio', inicio.x, inicio.z, 1, s.cor, 0.35, h.x, h.z);
-        this.area(h, p, raio, dano, s);
+        this.fx(s.tipo, h.x, h.z, raio, s.cor, Math.min(1.5, s.duracao || 0.5), inicio.x, inicio.z);
+        this.area(h, h, raio, dano, s);
         break;
       }
       case 'troca': {
@@ -884,10 +1095,10 @@ export class SimulacaoMoba {
           this.ferir(a, dano, h.id, true);
           a.lento = Math.max(a.lento, 2);
         } else {
-          h.x = clamp(p.x, -86, 86);
-          h.z = clamp(p.z, -86, 86);
-          this.area(h, p, raio, dano, s);
+          Object.assign(h, moverNoTerreno(h, p, h.raio, s.alcance, false));
+          this.area(h, h, raio, dano, s);
         }
+        this.fx(s.tipo, h.x, h.z, raio, s.cor, Math.min(1.5, s.duracao || 0.5));
         break;
       }
       case 'projetil': {
@@ -939,8 +1150,11 @@ export class SimulacaoMoba {
         if (a) {
           this.ferir(a, dano, h.id, true);
           const ad = dist(a, h) || 1;
-          a.x = h.x + ((a.x - h.x) / ad) * 2.5;
-          a.z = h.z + ((a.z - h.z) / ad) * 2.5;
+          const destinoPuxao = {
+            x: h.x + ((a.x - h.x) / ad) * 2.5,
+            z: h.z + ((a.z - h.z) / ad) * 2.5,
+          };
+          Object.assign(a, moverNoTerreno(a, destinoPuxao, a.raio, ad, false));
           a.controle = Math.max(a.controle, s.duracao || 1);
         }
         break;
@@ -953,8 +1167,7 @@ export class SimulacaoMoba {
             id: this.id(),
             tipo: 'invocacao',
             time: h.time,
-            x: p.x + Math.cos(i * 2) * 2,
-            z: p.z + Math.sin(i * 2) * 2,
+            ...ajustarDestino(p.x + Math.cos(i * 2) * 2, p.z + Math.sin(i * 2) * 2, 0.7),
             vida,
             vidaMax: vida,
             dano: dano * 0.35,
@@ -1106,6 +1319,11 @@ export class SimulacaoMoba {
     const dono = this.buscar(donoId);
     if (!dono || dono.time === a.time) return;
     let dano = bruto;
+    if (ehHeroi(dono)) {
+      this.revelados.set(dono.id, this.tempo + 3);
+      if (dono.time !== this.local.time)
+        dano *= this.dificuldade === 'iniciante' ? 0.84 : this.dificuldade === 'desafio' ? 1.12 : 1;
+    }
     if (ehEstrutura(a)) {
       const aliados = this.unidades.some((u) => u.time === dono.time && u.vivo && dist(u, a) < 17);
       if (!aliados) dano *= 0.2;
@@ -1113,6 +1331,21 @@ export class SimulacaoMoba {
       if (dono.time !== 2 && this.buffAte[dono.time] > this.tempo) dano *= 1.3;
     } else dano *= 100 / (100 + Math.max(0, a.armadura) * (magico ? 0.65 : 1));
     if (ehHeroi(a)) {
+      const efeito = this.efeitoItem(a, 'escudo'),
+        estado = this.estadoItem(a);
+      if (
+        efeito &&
+        a.vida - dano <= a.vidaMax * 0.35 &&
+        estado.escudoProximo <= this.tempo + 1e-6
+      ) {
+        a.escudo += efeito.valor;
+        estado.escudoProximo = this.tempo + (efeito.recarga ?? 22);
+        this.escudoAte.set(
+          a.id,
+          Math.max(this.escudoAte.get(a.id) ?? 0, this.tempo + (efeito.duracao ?? 4))
+        );
+        this.fx('escudo', a.x, a.z, 3, '#bc9cff', 0.8);
+      }
       const abs = Math.min(a.escudo, dano);
       a.escudo -= abs;
       dano -= abs;
@@ -1133,10 +1366,54 @@ export class SimulacaoMoba {
       }
     }
     if ('time' in a && a.time === 2 && 'alvo' in a) a.alvo = donoId;
+    const vidaAntes = a.vida;
     a.vida = Math.max(0, a.vida - dano);
+    const danoEfetivo = vidaAntes - a.vida;
     if (ehHeroi(dono) && !magico && heroiMoba(dono.defId).passiva.tipo === 'vampirismo')
-      dono.vida = Math.min(dono.vidaMax, dono.vida + dano * 0.13);
+      this.curar(dono, danoEfetivo * 0.13);
     if (a.vida <= 0) this.morrer(a, dono);
+    if (ehHeroi(dono) && !magico && !ehEstrutura(a)) {
+      const vamp = this.efeitoItem(dono, 'vampirismo');
+      if (vamp) this.curar(dono, danoEfetivo * vamp.valor);
+      const gelido = this.efeitoItem(dono, 'gelido');
+      if (gelido && a.vivo)
+        this.lentidaoItens.set(a.id, {
+          ate: this.tempo + (gelido.duracao ?? 1.3),
+          valor: gelido.valor,
+        });
+      const ferida = this.efeitoItem(dono, 'ferida');
+      if (ferida && ehHeroi(a) && a.vivo) {
+        const e = this.estadoItem(a);
+        e.feridaAte = this.tempo + (ferida.duracao ?? 3);
+        e.ferida = ferida.valor;
+      }
+      const eco = this.efeitoItem(dono, 'eco'),
+        estado = this.estadoItem(dono);
+      if (eco && estado.ecoProximo <= this.tempo + 1e-6 && a.vivo) {
+        estado.ecoProximo = this.tempo + (eco.recarga ?? 8);
+        this.ferir(a, eco.valor, dono.id, true);
+        this.fx('impacto', a.x, a.z, 3, '#f2d4ff', 0.5);
+      }
+    }
+  }
+  private estadoItem(h: HeroiMoba) {
+    let estado = this.estadosItens.get(h.id);
+    if (!estado) {
+      estado = { furiaAte: 0, stacks: 0, escudoProximo: 0, ecoProximo: 0, feridaAte: 0, ferida: 0 };
+      this.estadosItens.set(h.id, estado);
+    }
+    return estado;
+  }
+  private efeitoItem(h: HeroiMoba, tipo: TipoEfeitoItemMoba) {
+    return h.inventario
+      .map((id) => itemMoba(id)?.efeito)
+      .filter((e) => e?.tipo === tipo)
+      .sort((a, b) => b!.valor - a!.valor)[0];
+  }
+  private curar(h: HeroiMoba, valor: number): void {
+    const estado = this.estadosItens.get(h.id),
+      fator = estado && estado.feridaAte > this.tempo ? 1 - estado.ferida : 1;
+    h.vida = Math.min(h.vidaMax, h.vida + Math.max(0, valor) * fator);
   }
   private morrer(a: Alvo, dono: Alvo): void {
     if (ehEstrutura(a)) {
@@ -1164,6 +1441,13 @@ export class SimulacaoMoba {
       this.escudoAte.delete(a.id);
       this.destinos.delete(a.id);
       this.retirando.delete(a.id);
+      const estadoItem = this.estadosItens.get(a.id);
+      if (estadoItem) {
+        estadoItem.furiaAte = 0;
+        estadoItem.stacks = 0;
+        estadoItem.feridaAte = 0;
+      }
+      this.lentidaoItens.delete(a.id);
       if (a.id === this.localId) {
         this.direcao = { x: 0, z: 0 };
         this.destino = null;

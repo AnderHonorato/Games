@@ -58,9 +58,9 @@ describe('catálogo e modelos dos 25 guardiões MOBA', () => {
     expect(heroiMoba('id-inexistente')).toBe(HEROIS_MOBA[0]);
   });
 
-  it('expõe 14 itens compráveis com atributos positivos', () => {
-    expect(ITENS_MOBA).toHaveLength(14);
-    expect(new Set(ITENS_MOBA.map((i) => i.id)).size).toBe(14);
+  it('expõe 28 itens compráveis com atributos positivos', () => {
+    expect(ITENS_MOBA).toHaveLength(28);
+    expect(new Set(ITENS_MOBA.map((i) => i.id)).size).toBe(28);
     for (const item of ITENS_MOBA) {
       expect(itemMoba(item.id)).toBe(item);
       expect(item.custo).toBeGreaterThan(0);

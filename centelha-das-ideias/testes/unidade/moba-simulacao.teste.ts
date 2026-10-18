@@ -290,8 +290,7 @@ describe('combate, objetivos, loja e progressão', () => {
     expect(local.recall).toBe(0);
     expect(sim.retornarBase()).toBe(true);
     avancar(sim, 8.1);
-    expect(local.x).toBeCloseTo(BASES_MOBA[0].x);
-    expect(local.z).toBeCloseTo(BASES_MOBA[0].z);
+    expect(Math.hypot(local.x - BASES_MOBA[0].x, local.z - BASES_MOBA[0].z)).toBeCloseTo(6.8);
   });
   it('cura na fonte recupera vida e mana após o retorno', () => {
     const sim = partida();

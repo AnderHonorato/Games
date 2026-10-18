@@ -1,6 +1,6 @@
 body.modo-moba {
   margin: 0;
-  background: #0b1c25;
+  background: #081b27;
   color: #edf5ed;
   font-family: Inter, system-ui, sans-serif;
   overflow: hidden;
@@ -16,6 +16,8 @@ body.modo-moba canvas.moba-canvas {
   touch-action: none;
 }
 .moba-ui {
+  --ouro: #ead29a;
+  --azul: #73d7e8;
   position: fixed;
   inset: 0;
   z-index: 10;
@@ -34,215 +36,468 @@ body.modo-moba canvas.moba-canvas {
   font: inherit;
   cursor: pointer;
   pointer-events: auto;
-  background: #183c47;
-  border: 1px solid #68908a;
-  border-radius: 9px;
-  min-height: 44px;
-  padding: 9px 13px;
+  background: #153440;
+  border: 1px solid #3c6066;
+  border-radius: 8px;
+  min-height: 42px;
+  padding: 8px 12px;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    transform 0.15s;
 }
 .moba-ui button:hover {
-  background: #2a5560;
-  border-color: #d4eecc;
+  background: #244b55;
+  border-color: #c9bc91;
+}
+.moba-ui button:active {
+  transform: scale(0.96);
 }
 .moba-ui button:focus-visible,
-.moba-ui summary:focus-visible {
-  outline: 3px solid #ffe69a;
+.moba-ui summary:focus-visible,
+.moba-ui select:focus-visible,
+.moba-ui input:focus-visible {
+  outline: 2px solid #f3d78b;
   outline-offset: 3px;
 }
 .moba-ui button:disabled {
-  opacity: 0.42;
+  opacity: 0.43;
   cursor: default;
 }
 .moba-ui small {
   font-size: 11px;
 }
+.moba-svg {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
 .moba-menu {
   position: absolute;
   inset: 0;
-  overflow: auto;
-  padding: 24px 28px 28px;
-  background: linear-gradient(100deg, rgba(7, 22, 31, 0.98) 45%, rgba(7, 22, 31, 0.65));
+  overflow: hidden;
+  padding: 26px 32px 32px;
+  background:
+    radial-gradient(ellipse at 85% 20%, #2c4c5244, transparent 45%),
+    linear-gradient(90deg, #071822fc 0%, #071822fc 55%, #07182255 64%, #102b3240 100%);
   pointer-events: auto;
 }
+.moba-menu::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(45deg, transparent 49.9%, #cdb78108 50%, transparent 50.1%);
+  background-size: 70px 70px;
+}
 .moba-menu-cab {
+  position: relative;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 18px;
-  max-width: 1400px;
-  margin: auto auto 18px;
+  gap: 24px;
+  max-width: 1440px;
+  margin: auto auto 22px;
+  height: 92px;
+}
+.moba-menu-cab > div:first-child {
+  margin-right: auto;
 }
 .moba-kicker {
-  letter-spacing: 0.19em;
-  color: #b4d8b9;
-  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: #c3b887;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
 }
 .moba-menu h1 {
-  font-size: 32px;
-  line-height: 1.15;
-  margin: 4px 0 8px;
+  font-family: Georgia, serif;
+  font-size: 43px;
+  font-weight: 400;
+  line-height: 1.1;
+  margin: 6px 0 8px;
+  letter-spacing: -1px;
 }
 .moba-menu h1 em {
-  font-size: 20px;
-  font-weight: 400;
+  color: #ebd39a;
   font-style: normal;
-  color: #bfd3d1;
 }
 .moba-menu p {
   line-height: 1.5;
-  color: #c0d4d1;
-  margin: 5px 0 12px;
+  color: #afc4c7;
+  margin: 4px 0 10px;
+}
+.moba-menu-cab p {
+  font-size: 12px;
+}
+.moba-selo {
+  border-left: 1px solid #6a725c;
+  padding: 4px 22px;
+  color: #ead29a;
+  font-size: 29px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+.moba-selo span {
+  display: block;
+  color: #a9c5c6;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 .moba-selecao {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(270px, 1fr);
-  gap: 25px;
-  max-width: 1400px;
+  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr);
+  gap: 34px;
+  max-width: 1440px;
+  height: calc(100% - 114px);
   margin: auto;
 }
 .moba-catalogo {
   min-width: 0;
+  overflow: auto;
+  padding: 0 5px 15px 0;
+  scrollbar-width: thin;
+  scrollbar-color: #446563 transparent;
 }
 .moba-filtros {
   display: flex;
   gap: 5px;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 .moba-filtros button {
+  font-size: 11px;
   text-transform: capitalize;
-  padding: 6px 10px;
-  font-size: 12px;
-  min-height: 36px;
+  padding: 5px 10px;
+  min-height: 32px;
+  background: transparent;
+  border-color: transparent;
+  border-radius: 20px;
+  color: #afc4c7;
 }
 .moba-filtros button[aria-pressed='true'] {
-  background: #c0d894;
-  color: #17333b;
-  border-color: #e7f3c1;
+  color: #f6e8bd;
+  border-color: #bca977;
+  background: #c8b07116;
 }
 .moba-herois {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 9px;
+  gap: 10px;
 }
 .moba-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
-  min-height: 112px !important;
-  padding: 10px 3px !important;
-  background: linear-gradient(145deg, #234754, #102d37) !important;
-  border-color: #355663 !important;
+  gap: 2px;
+  min-height: 119px !important;
+  padding: 9px 3px 8px !important;
+  background: linear-gradient(155deg, #20414b, #0d2835) !important;
+  border-color: #34525c !important;
   position: relative;
   overflow: hidden;
+  border-radius: 9px !important;
 }
-.moba-card:before {
+.moba-card::before {
   content: '';
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 3px;
+  width: 100px;
+  height: 100px;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
   background: var(--heroi);
+  filter: blur(45px);
+  opacity: 0.2;
+  pointer-events: none;
+}
+.moba-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--heroi) !important;
 }
 .moba-card.selecionado {
-  border-color: #ebda92 !important;
-  background: linear-gradient(145deg, #526758, #203d42) !important;
-  box-shadow: 0 0 0 1px #ebda92;
+  border-color: #e7cc86 !important;
+  background: linear-gradient(155deg, #4b574a, #19343f) !important;
+  box-shadow:
+    0 0 0 1px #e7cc86,
+    0 8px 25px #0004;
 }
 .moba-retrato {
-  width: 43px;
-  height: 43px;
-  display: grid;
-  place-items: center;
-  border-radius: 50% 50% 36% 36%;
-  border: 2px solid var(--heroi);
-  color: var(--heroi);
-  font-weight: 900;
-  font-size: 20px;
-  background: #10232f;
-  text-shadow: 0 0 15px var(--heroi);
+  width: 66px;
+  height: 66px;
+  display: block;
+  position: relative;
+  filter: drop-shadow(0 4px 5px #061720aa);
+  transition: transform 0.2s;
+}
+.moba-retrato svg {
+  width: 100%;
+  height: 100%;
+}
+.moba-card:hover .moba-retrato {
+  transform: rotate(-4deg) scale(1.06);
 }
 .moba-card strong {
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 700;
 }
 .moba-card small {
-  color: #aec8ca;
+  font-size: 9px;
+  color: #92adb3;
   text-transform: capitalize;
+}
+.moba-escolhido {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 6px;
+  letter-spacing: 0.05em;
+  color: #f4e1ab;
+}
+.moba-catalogo-rodape {
+  font-size: 10px;
+  margin-top: 16px !important;
+  color: #79979f !important;
 }
 .moba-detalhe {
   min-width: 0;
   position: relative;
-  padding: 0 18px 15px;
-  border-left: 1px solid #50716d;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #446563 transparent;
+  padding: 0 10px 15px 22px;
+  border-left: 1px solid #6f795545;
+}
+.moba-detalhe-titulo {
+  position: relative;
+  z-index: 1;
 }
 .moba-detalhe h2 {
-  font-size: 34px;
-  margin: 5px 0;
+  font-family: Georgia, serif;
+  font-size: 46px;
+  font-weight: 400;
+  margin: 3px 0;
+  letter-spacing: -1px;
+}
+.moba-dificuldade {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  color: #92afb4;
+  letter-spacing: 0.05em;
+}
+.moba-dificuldade i {
+  width: 13px;
+  height: 4px;
+  transform: skewX(-25deg);
+  background: #31505a;
+}
+.moba-dificuldade i.ativo {
+  background: #d6c391;
 }
 .moba-preview {
-  height: 135px;
+  position: relative;
+  height: 215px;
   pointer-events: none;
-  background: radial-gradient(ellipse at 50% 90%, #6e9b7c22, transparent 65%);
-  border-bottom: 1px solid #56766c;
-  margin-bottom: 10px;
+  background: radial-gradient(ellipse at 50% 76%, #b5e1ce18, transparent 62%);
+  border-bottom: 1px solid #b6ab7136;
+  margin-bottom: 12px;
 }
-.moba-detalhe p {
-  font-size: 13px;
+.moba-preview::after {
+  content: '';
+  position: absolute;
+  bottom: 8px;
+  left: 20%;
+  width: 60%;
+  height: 30px;
+  border: 1px solid #a9bd8244;
+  border-radius: 50%;
+  transform: rotate(-9deg);
+  box-shadow: 0 0 18px #b3c88315;
+}
+.moba-preview-legenda {
+  position: absolute;
+  bottom: 9px;
+  right: 0;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: #b4c9b6;
+  z-index: 1;
+}
+.moba-descricao {
+  font-size: 12px;
+  line-height: 1.6 !important;
+}
+.moba-atributos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 14px;
+  margin: 16px 0;
+}
+.moba-atributos > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.moba-atributos span {
+  font-size: 9px;
+  color: #98b3b7;
+  width: 58px;
+}
+.moba-atributos i {
+  height: 4px;
+  flex: 1;
+  background: #2a454d;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.moba-atributos b {
+  height: 100%;
+  display: block;
+  background: linear-gradient(90deg, #649d9c, #d5d3a5);
 }
 .moba-passiva {
-  border-left: 3px solid #a8d598;
-  padding: 7px 10px;
-  background: #23454a99;
-  margin: 10px 0;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid #435c5e;
+  background: #284b4f44;
+  border-radius: 7px;
+  padding: 9px;
+  margin: 12px 0;
+}
+.moba-passiva > span {
+  color: #b8d5ac;
+}
+.moba-passiva b {
+  font-size: 11px;
+  font-weight: 600;
+}
+.moba-passiva em {
+  font-style: normal;
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  color: #d8c58e;
+  margin-left: 4px;
 }
 .moba-passiva small {
   display: block;
-  color: #bdd0cb;
+  color: #9cb8b9;
   margin-top: 4px;
+  font-size: 10px;
+  line-height: 1.5;
 }
 .moba-kit details {
-  padding: 8px 0;
-  border-bottom: 1px solid #42635d;
+  padding: 7px 0;
+  border-bottom: 1px solid #345057;
   pointer-events: auto;
 }
 .moba-kit summary {
   cursor: pointer;
   list-style: none;
-  font-size: 13px;
+  font-size: 11px;
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
 }
-.moba-kit summary b {
-  background: #34585d;
-  padding: 3px 6px;
-  border-radius: 4px;
-  color: #f8dfa2;
+.moba-kit summary::-webkit-details-marker {
+  display: none;
+}
+.moba-kit-icone {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #587171;
+  border-radius: 7px;
+  background: #15313d;
+  flex-shrink: 0;
+}
+.moba-kit-icone svg {
+  width: 26px;
+  height: 26px;
+}
+.moba-kit-icone b {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  font-size: 8px;
+  background: #d6c18e;
+  color: #172d36;
+  padding: 1px 3px;
+  border-radius: 2px;
 }
 .moba-kit summary small {
+  display: block;
+  margin-top: 3px;
+  font-size: 9px;
+  color: #8aa8b1;
+}
+.moba-kit-abrir {
   margin-left: auto;
-  white-space: nowrap;
-  color: #b8d0cb;
+  color: #c1af7d;
+  font-size: 18px;
+}
+.moba-kit details[open] .moba-kit-abrir {
+  transform: rotate(45deg);
 }
 .moba-kit p {
-  padding: 6px 0;
+  padding: 9px 0 5px 44px;
+  font-size: 11px;
   margin: 0;
 }
+.moba-opcoes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 17px 0 0;
+}
+.moba-opcoes label {
+  font-size: 9px;
+  color: #9eb8bb;
+  letter-spacing: 0.03em;
+}
+.moba-ui select,
+.moba-ui input {
+  font: inherit;
+  background: #102c37;
+  color: #edf5ed;
+  border: 1px solid #42606a;
+  border-radius: 7px;
+  padding: 9px;
+  pointer-events: auto;
+  min-width: 0;
+}
+.moba-opcoes select {
+  width: 100%;
+  margin-top: 5px;
+  font-size: 11px;
+}
 .moba-jogar {
-  background: #d8df9b !important;
+  background: linear-gradient(120deg, #e7d49c, #b4c38b) !important;
   color: #17333b !important;
   font-weight: 800 !important;
   width: 100%;
-  margin: 16px 0 8px;
-  min-height: 50px !important;
+  margin: 13px 0 8px;
+  min-height: 47px !important;
+  border-color: #e4d6a2 !important;
+  box-shadow: 0 4px 20px #bca97716;
+  letter-spacing: 0.02em;
+}
+.moba-jogar span {
+  float: right;
+  font-size: 20px;
 }
 .moba-detalhe > small {
   display: block;
-  color: #a6c6bc;
+  color: #779aa4;
+  font-size: 9px;
   text-align: center;
 }
 .moba-hud {
@@ -251,64 +506,123 @@ body.modo-moba canvas.moba-canvas {
 }
 .moba-top {
   position: absolute;
-  top: 12px;
+  top: 9px;
   left: 12px;
   right: 12px;
   display: flex;
-  gap: 10px;
+  gap: 13px;
   align-items: center;
-  background: #102d38eb;
-  border: 1px solid #597b72;
-  border-radius: 12px;
-  padding: 7px 12px;
+  background: linear-gradient(90deg, #0b2430ed, #142e35e8);
+  border: 1px solid #5b706652;
+  border-radius: 7px;
+  padding: 4px 9px;
   pointer-events: auto;
-  box-shadow: 0 4px 20px #00131a77;
+  box-shadow: 0 3px 18px #00121b66;
+  height: 43px;
 }
 .moba-top strong {
-  font-size: 16px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
   margin-right: auto;
+  color: #d7cca3;
 }
 .moba-top strong span {
-  font-size: 12px;
-  color: #adc8bf;
+  font-size: 9px;
+  color: #85a6af;
+  letter-spacing: 0.01em;
   font-weight: 400;
+  margin-left: 8px;
 }
-.moba-top b {
+.moba-top [data-score] {
   color: #f6e4b5;
-  font-size: 22px;
-  letter-spacing: 0.1em;
+  font-size: 19px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 .moba-top time {
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
-  color: #c3d6cc;
+  color: #a8c5ca;
 }
 .moba-top button {
-  min-width: 44px;
-  min-height: 36px;
-  padding: 4px 10px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 4px 7px;
+  background: transparent;
+  border-color: #58717455;
+  border-radius: 5px;
+  font-size: 10px;
+}
+.moba-top button svg {
+  width: 21px;
+  height: 21px;
+}
+.moba-top [data-acao='som'] {
+  color: #a7c3bd;
+  min-width: 66px;
+  font-size: 9px;
+}
+.moba-top button span {
+  margin-left: 5px;
+  font-size: 10px;
+}
+.moba-objetivos {
+  position: absolute;
+  left: 18px;
+  top: 62px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 10px;
+  color: #d5d6b4;
+  background: #102c35d9;
+  padding: 5px 8px;
+  border-radius: 5px;
+  border: 1px solid #64735d40;
+}
+.moba-objetivos > span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.moba-objetivos svg {
+  width: 19px;
+  height: 19px;
+}
+.moba-guardiao {
+  color: #b9bbd3;
+}
+.moba-guardiao.disponivel {
+  color: #e6c28d;
+}
+.moba-buff {
+  color: #a9f2d4;
 }
 .moba-eventos {
   position: absolute;
-  top: 78px;
-  left: 26%;
-  right: 15%;
-  font-size: 12px;
+  top: 64px;
+  left: 39%;
+  right: 10%;
+  font-size: 10px;
   text-align: center;
-  text-shadow: 0 2px 3px #00151b;
+  color: #d9e2d5;
+  text-shadow: 0 2px 4px #00151b;
   min-height: 20px;
 }
 .moba-feedback,
 .moba-death {
   position: absolute;
-  left: 25%;
-  right: 25%;
-  top: 36%;
+  left: 27%;
+  right: 27%;
+  top: 34%;
   text-align: center;
   color: #fff0bd;
-  background: #092631d9;
+  background: #092631ec;
+  border: 1px solid #c3b58166;
   border-radius: 8px;
-  padding: 9px;
-  empty-cells: hide;
+  padding: 10px;
+  box-shadow: 0 5px 30px #0004;
+  font-size: 12px;
 }
 .moba-feedback:empty,
 .moba-death:empty {
@@ -316,40 +630,81 @@ body.modo-moba canvas.moba-canvas {
 }
 .moba-death {
   top: 43%;
-  font-size: 20px;
+  font-size: 17px;
+}
+.moba-alvo {
+  position: absolute;
+  top: 105px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  border: 1px solid #ad767255;
+  border-radius: 6px;
+  background: #10272fe8;
+  overflow: hidden;
+}
+.moba-alvo > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  padding: 4px 7px;
+}
+.moba-alvo svg {
+  width: 18px;
+  height: 18px;
+  color: #edafa0;
+}
+.moba-alvo small {
+  margin-left: auto;
+  font-size: 8px;
+  color: #afc4bc;
+}
+.moba-alvo > i {
+  display: block;
+  height: 4px;
+  background: #3f2934;
+}
+.moba-alvo b {
+  display: block;
+  height: 100%;
+  background: #db8978;
 }
 .moba-minimapa {
   position: absolute;
-  left: 14px;
-  bottom: 14px;
-  width: 180px;
-  height: 180px;
-  border: 2px solid #87b6a4;
-  border-radius: 8px;
+  left: 13px;
+  bottom: 13px;
+  width: 163px;
+  height: 163px;
+  border: 2px solid #749894;
+  border-radius: 7px;
+  box-shadow: 0 5px 20px #00141caa;
   pointer-events: auto;
   touch-action: none;
   background: #133b3e;
 }
 .moba-status {
   position: absolute;
-  left: 210px;
-  bottom: 17px;
-  width: 260px;
-  background: #112e39e8;
-  border: 1px solid #60857a;
-  padding: 12px;
-  border-radius: 10px;
+  left: 190px;
+  bottom: 13px;
+  width: 219px;
+  background: linear-gradient(140deg, #122d37ed, #0a222deb);
+  border: 1px solid #607b6d99;
+  padding: 9px;
+  border-radius: 8px;
+  box-shadow: 0 5px 20px #00141c66;
 }
 .moba-nome {
   font-weight: 700;
-  margin-bottom: 7px;
-  color: #e5eac4;
+  font-size: 11px;
+  margin-bottom: 5px;
+  color: #e2d8b6;
 }
 .moba-bar {
-  height: 17px;
+  height: 14px;
   position: relative;
-  background: #061f2b;
-  margin: 4px 0;
+  background: #051b28;
+  margin: 3px 0;
   border-radius: 3px;
   overflow: hidden;
 }
@@ -357,114 +712,239 @@ body.modo-moba canvas.moba-canvas {
   display: block;
   height: 100%;
   width: 100%;
-  background: #54c48c;
-  transition: width 0.1s linear;
+  background: linear-gradient(90deg, #329b82, #7ace9b);
+  transition: width 0.12s linear;
 }
 .moba-bar span {
   position: absolute;
   inset: 0;
   text-align: center;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 9px;
+  font-weight: 600;
   text-shadow: 0 1px 2px #001c28;
-  line-height: 17px;
+  line-height: 14px;
+}
+.moba-mana {
+  height: 10px;
 }
 .moba-mana i {
-  background: #438fcb;
+  background: linear-gradient(90deg, #357fac, #6bbbdc);
+}
+.moba-mana span {
+  font-size: 8px;
+  line-height: 10px;
 }
 .moba-xp {
-  height: 9px;
+  height: 3px;
 }
 .moba-xp i {
-  background: #d1ba6c;
+  background: #d4be7a;
 }
 .moba-xp span {
-  font-size: 8px;
-  line-height: 9px;
+  display: none;
 }
 .moba-numeros {
-  font-size: 11px;
-  color: #d6dba5;
-  margin-top: 7px;
+  font-size: 9px;
+  color: #d2cca6;
+  margin-top: 6px;
 }
 .moba-inventario {
   display: flex;
   gap: 4px;
-  margin-top: 8px;
+  margin-top: 7px;
 }
-.moba-inventario span {
-  width: 30px;
-  height: 25px;
-  border: 1px solid #6a8c7f;
-  border-radius: 4px;
+.moba-inventario > span {
+  width: 27px;
+  height: 27px;
+  border: 1px solid #54726c88;
+  border-radius: 5px;
   display: grid;
   place-items: center;
-  background: #254a4c;
-  font-size: 10px;
+  background: #1d3b4366;
+  color: #d9cf9f;
+}
+.moba-inventario svg {
+  width: 22px;
+  height: 22px;
+}
+.moba-inventario i {
+  display: block;
+  width: 5px;
+  height: 5px;
+  transform: rotate(45deg);
+  background: #607d7366;
 }
 .moba-acoes {
   position: absolute;
-  right: 18px;
-  bottom: 18px;
-  max-width: 48%;
+  right: 16px;
+  bottom: 13px;
   pointer-events: auto;
+  max-width: 47%;
+  width: 390px;
 }
 .moba-skills {
   display: flex;
-  gap: 8px;
-  margin-bottom: 9px;
+  gap: 7px;
+  margin-bottom: 8px;
   justify-content: flex-end;
+  align-items: flex-end;
 }
 .moba-slot {
   position: relative;
   flex: 1;
-  max-width: 100px;
+  min-width: 0;
 }
 .moba-slot > [data-skill] {
+  touch-action: none;
   width: 100%;
-  min-width: 64px;
-  height: 76px;
+  height: 66px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 5px;
+  padding: 4px;
   position: relative;
-  box-shadow: 0 4px 10px #00191c;
+  border: 1px solid #8f9d7d;
+  background: radial-gradient(circle at 50% 30%, #45665d, #102c37);
+  box-shadow: 0 4px 12px #00191c99;
+  border-radius: 8px;
+}
+.moba-skill-icon {
+  color: var(--skill, #d6d7a0);
+  filter: drop-shadow(0 0 5px #c3e7c933);
+}
+.moba-skill-icon svg {
+  width: 31px;
+  height: 31px;
 }
 .moba-slot b {
-  font-size: 23px;
-  color: #fff0bc;
+  position: absolute;
+  left: 4px;
+  top: 3px;
+  font-size: 10px;
+  color: #eee3ba;
 }
 .moba-slot small {
-  font-size: 10px;
-  max-width: 85px;
+  font-size: 8px;
+  max-width: 67px;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
+  margin-top: 2px;
+  color: #c1d3c8;
 }
 .moba-slot em {
-  font-size: 12px;
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  font-size: 10px;
   font-style: normal;
-  color: #9bd2fa;
+  color: #a8d7f1;
+  text-shadow: 0 1px 2px #000;
 }
 .moba-slot [data-indisponivel='true'] {
-  background: #21323c;
-  filter: saturate(0.5);
+  filter: saturate(0.45);
+  background: radial-gradient(circle at 50% 30%, #2a3c43, #132a34);
+}
+.moba-slot [data-indisponivel='true'] .moba-skill-icon {
+  opacity: 0.6;
+}
+.moba-skill-nivel {
+  display: flex;
+  position: absolute;
+  bottom: -4px;
+  left: 9px;
+  right: 9px;
+  gap: 2px;
+}
+.moba-skill-nivel i {
+  height: 3px;
+  flex: 1;
+  background: #30434a;
+  border: 1px solid #53706b;
+}
+.moba-skill-nivel i.aprendido {
+  background: #dfc47e;
+  border-color: #e8d19a;
 }
 .moba-evoluir {
   position: absolute;
   right: 0;
-  top: -38px;
+  top: -29px;
   width: 100%;
-  height: 34px;
-  min-height: 34px !important;
+  height: 25px;
+  min-height: 25px !important;
   padding: 0 !important;
   z-index: 2;
-  background: #d9db94 !important;
+  background: linear-gradient(#efe0a6, #adbc85) !important;
   color: #193940 !important;
-  font-size: 23px !important;
+  font-size: 19px !important;
   font-weight: 800 !important;
+  border-color: #d1d69c !important;
+  border-radius: 6px !important;
+}
+.moba-tooltip {
+  display: none;
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 12px);
+  width: 240px;
+  text-align: left;
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre-line;
+  background: #0e2734f7;
+  border: 1px solid #b1ae76;
+  padding: 12px;
+  border-radius: 7px;
+  color: #d9e5d4;
+  z-index: 40;
+  pointer-events: none;
+  box-shadow: 0 5px 25px #0009;
+}
+.moba-slot button:hover .moba-tooltip,
+.moba-slot button:focus-visible .moba-tooltip {
+  display: block;
+}
+.moba-feiticos {
+  display: flex;
+  gap: 4px;
+}
+.moba-feiticos button {
+  position: relative;
+  width: 37px;
+  height: 44px;
+  min-height: 44px;
+  padding: 5px;
+  background: linear-gradient(140deg, #3b4c45, #172d37);
+  border-color: #b6a36d;
+}
+.moba-feiticos svg {
+  width: 26px;
+  height: 26px;
+  color: #e5d69e;
+}
+.moba-feiticos button:nth-child(2) svg {
+  color: #a1dca7;
+}
+.moba-feiticos b {
+  position: absolute;
+  left: 3px;
+  bottom: 1px;
+  font-size: 8px;
+}
+.moba-feiticos small {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: #fff6db;
+  font-size: 16px;
+  text-shadow: 0 1px 4px #000;
+}
+.moba-feiticos button[data-indisponivel='true'] svg {
+  opacity: 0.25;
 }
 .moba-util {
   display: flex;
@@ -475,15 +955,29 @@ body.modo-moba canvas.moba-canvas {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  font-size: 19px;
-  padding: 6px 10px;
-  min-width: 60px;
+  justify-content: center;
+  gap: 1px;
+  min-width: 51px;
+  min-height: 45px;
+  padding: 4px 8px;
+  border-color: #53716c88;
+  background: #0d2b35dc;
+}
+.moba-util [data-acao='ataque'] {
+  border-color: #d5be7c;
+  background: linear-gradient(130deg, #536655, #263f43);
+  margin-right: 3px;
+  min-width: 61px;
+}
+.moba-util svg {
+  width: 22px;
+  height: 22px;
+  color: #e1d7ad;
 }
 .moba-util small {
-  font-size: 10px;
+  font-size: 8px;
   white-space: nowrap;
-  color: #b8d1c7;
+  color: #aac8c4;
 }
 .moba-joystick,
 .moba-touch-hint {
@@ -492,68 +986,239 @@ body.modo-moba canvas.moba-canvas {
 .moba-modal {
   position: absolute;
   inset: 0;
-  background: #03121bc9;
+  background: #03121bd6;
   display: flex;
   align-items: center;
   justify-content: center;
   pointer-events: auto;
   padding: 20px;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(7px);
 }
 .moba-modal-caixa {
-  width: min(760px, 100%);
+  width: min(850px, 100%);
   max-height: 92%;
   overflow: auto;
-  border: 1px solid #85ad93;
-  border-radius: 16px;
-  padding: 25px;
-  background: linear-gradient(140deg, #1b4249, #102d39);
+  border: 1px solid #7b8d70;
+  border-radius: 14px;
+  padding: 27px;
+  background:
+    radial-gradient(ellipse at 100% 0, #31524b88, transparent 60%),
+    linear-gradient(140deg, #16343f, #0c2634);
   box-shadow: 0 25px 80px #0009;
+  scrollbar-width: thin;
+  scrollbar-color: #6b8170 #12313e;
 }
 .moba-modal h2 {
-  margin: 0 0 15px;
-  color: #f4e7b6;
-  font-size: 27px;
+  margin: 3px 0 17px;
+  color: #f0dfac;
+  font-family: Georgia, serif;
+  font-weight: 400;
+  font-size: 30px;
 }
 .moba-modal h2 small {
   display: block;
-  margin-top: 6px;
+  margin-top: 7px;
   color: #bdd2c8;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 11px;
 }
 .moba-modal p {
-  color: #c4d8cf;
-  line-height: 1.6;
+  color: #afc8c9;
+  line-height: 1.7;
+  font-size: 12px;
 }
 .moba-modal button {
   margin: 5px;
-  min-height: 46px;
+  min-height: 42px;
 }
 .moba-ajuda-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18px;
+  gap: 22px;
+}
+.moba-ajuda-grid b {
+  color: #e0d5ae;
+}
+.moba-modal-cab {
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.moba-modal-cab button {
+  font-size: 25px;
+  min-width: 40px;
+  line-height: 1;
+  margin: 0;
+}
+.moba-caixa-loja {
+  width: min(980px, 100%);
+}
+.moba-loja-nav {
+  position: sticky;
+  top: -27px;
+  background: #102e3bef;
+  padding: 10px 0;
+  z-index: 3;
+  backdrop-filter: blur(8px);
+}
+.moba-loja-nav input {
+  width: 100%;
+  font-size: 12px;
+  padding: 11px;
+}
+.moba-categorias {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 9px;
+}
+.moba-categorias button {
+  margin: 0;
+  min-height: 29px;
+  font-size: 10px;
+  padding: 5px 9px;
+  border-radius: 16px;
+  background: transparent;
+}
+.moba-categorias button[aria-pressed='true'] {
+  border-color: #c8b17d;
+  color: #f5dfa9;
+  background: #95844b22;
+}
+.moba-venda {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin: 5px 0 10px;
+}
+.moba-venda button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  text-align: left;
+  margin: 0;
+  padding: 5px 8px;
+  min-height: 38px;
+}
+.moba-venda svg {
+  width: 23px;
+  height: 23px;
+  color: #d6c791;
+}
+.moba-venda small {
+  display: block;
+  font-size: 8px;
+  color: #acc0ae;
 }
 .moba-loja-itens {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
 }
 .moba-loja-itens button {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 7px;
   text-align: left;
   padding: 13px;
   margin: 0;
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background: linear-gradient(145deg, #21434c, #112e3b);
+  min-height: 158px;
 }
-.moba-loja-itens span {
+.moba-item-icone {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #74856a;
+  border-radius: 7px;
+  color: #ded39e;
+  background: #becf6f0c;
+}
+.moba-item-icone.categoria-magia {
+  color: #bbaff5;
+  border-color: #9e93bd;
+}
+.moba-item-icone.categoria-defesa {
+  color: #a1cfb6;
+  border-color: #80a18d;
+}
+.moba-item-icone.categoria-ataque {
+  color: #e7b18d;
+  border-color: #bd9478;
+}
+.moba-item-icone.categoria-suporte {
+  color: #addce5;
+  border-color: #85b5bd;
+}
+.moba-item-icone svg {
+  width: 31px;
+  height: 31px;
+}
+.moba-loja-itens strong {
   font-size: 12px;
-  color: #b7cfc7;
+  font-weight: 600;
+}
+.moba-loja-itens .moba-item-descricao {
+  font-size: 10px;
+  color: #a7c2c2;
+  line-height: 1.5;
+}
+.moba-item-passiva {
+  font-size: 9px;
+  color: #beb4d3;
+  line-height: 1.5;
+}
+.moba-item-passiva strong {
+  font-size: 9px;
+  color: #ddcfeb;
+}
+.moba-item-receita {
+  font-size: 8px;
+  line-height: 1.5;
+  color: #829fa5;
 }
 .moba-loja-itens b {
   color: #efdd8e;
   font-size: 12px;
+  margin-top: auto;
+}
+.moba-loja-itens b small {
+  text-decoration: line-through;
+  color: #849b97;
+  font-size: 9px;
+  margin-left: 3px;
+}
+.moba-loja-itens > button > small {
+  font-size: 8px;
+  color: #aac5a7;
+}
+.moba-loja-vazia {
+  grid-column: 1/-1;
+  text-align: center;
+  padding: 20px;
+}
+.moba-resumo-objetivos {
+  display: flex;
+  gap: 16px;
+  padding: 8px 10px;
+  background: #081f2d88;
+  border: 1px solid #57715e55;
+  border-radius: 6px;
+  margin: 10px 0;
+  font-size: 11px;
+  color: #c8ceac;
+  align-items: center;
+}
+.moba-resumo-objetivos svg {
+  width: 23px;
+  height: 23px;
 }
 .moba-tabela {
   overflow: auto;
@@ -561,20 +1226,72 @@ body.modo-moba canvas.moba-canvas {
 .moba-modal table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 11px;
 }
 .moba-modal td,
 .moba-modal th {
   text-align: left;
-  padding: 9px 6px;
-  border-bottom: 1px solid #46645f;
+  padding: 8px 6px;
+  border-bottom: 1px solid #46645f88;
   white-space: nowrap;
 }
+.moba-modal th {
+  font-size: 9px;
+  color: #99b5bb;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
 .moba-modal tr.aliado td:first-child {
-  color: #8fe5e6;
+  color: #a0dfde;
 }
 .moba-modal tr.inimigo td:first-child {
-  color: #ffb0b1;
+  color: #f2b1aa;
+}
+.moba-modal tr.voce {
+  background: #b0d5a00c;
+}
+.moba-placar-heroi {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.moba-placar-heroi > svg {
+  width: 32px;
+  height: 32px;
+}
+.moba-placar-heroi small {
+  display: block;
+  margin-top: 3px;
+  font-size: 8px;
+  color: #85a4ad;
+}
+.moba-placar-itens {
+  display: flex;
+  gap: 3px;
+}
+.moba-placar-itens > span {
+  display: block;
+  width: 23px;
+  height: 23px;
+  border: 1px solid #6e8a6f66;
+  border-radius: 4px;
+  color: #d7cb9c;
+}
+.moba-placar-itens svg {
+  width: 20px;
+  height: 20px;
+}
+.moba-pausa-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.moba-pausa-acoes button {
+  margin: 0;
+}
+.moba-pausa-acoes .moba-jogar {
+  margin-bottom: 8px;
 }
 .moba-erro {
   position: fixed;
@@ -590,467 +1307,842 @@ body.modo-moba .seletor-modos {
   left: 50%;
   transform: translateX(-50%);
   bottom: 3px;
-  opacity: 0.6;
+  opacity: 0.7;
 }
 body.modo-moba:has(.moba-menu[hidden]) .seletor-modos {
   display: none;
 }
-@media (max-width: 1000px) {
+@media (max-width: 1050px) {
   .moba-menu {
-    padding: 14px 18px 30px;
+    padding: 18px 21px 28px;
   }
   .moba-menu-cab {
-    margin-bottom: 10px;
+    height: 77px;
+    margin-bottom: 15px;
+    gap: 15px;
   }
   .moba-menu h1 {
-    font-size: 25px;
+    font-size: 34px;
   }
-  .moba-menu h1 em {
-    font-size: 16px;
-  }
-  .moba-selecao {
-    gap: 15px;
-    grid-template-columns: minmax(0, 1.5fr) minmax(240px, 1fr);
-  }
-  .moba-herois {
-    gap: 6px;
-  }
-  .moba-card {
-    min-height: 91px !important;
-    padding: 7px 2px !important;
-  }
-  .moba-card strong {
-    font-size: 11px;
-  }
-  .moba-card small {
-    font-size: 9px;
-  }
-  .moba-retrato {
-    height: 34px;
-    width: 34px;
-    font-size: 17px;
-  }
-  .moba-preview {
-    height: 110px;
-  }
-  .moba-detalhe {
-    padding: 0 10px;
-  }
-  .moba-detalhe h2 {
-    font-size: 27px;
-  }
-  .moba-minimapa {
-    width: 130px;
-    height: 130px;
-    left: 10px;
-    bottom: 10px;
-  }
-  .moba-status {
-    left: 150px;
-    width: 220px;
-    padding: 8px;
-    bottom: 10px;
-  }
-  .moba-acoes {
-    right: 10px;
-    bottom: 10px;
-    max-width: 48%;
-  }
-  .moba-skills {
-    gap: 5px;
-  }
-  .moba-slot > [data-skill] {
-    height: 64px;
-    min-width: 57px;
-  }
-  .moba-util button {
-    min-width: 46px;
-    padding: 5px 7px;
-  }
-  .moba-util small {
-    font-size: 9px;
-  }
-  .moba-top {
-    top: 7px;
-    left: 7px;
-    right: 7px;
-    padding: 5px 9px;
-  }
-  .moba-top strong span {
-    display: none;
-  }
-  .moba-eventos {
-    top: 63px;
-    left: 20%;
-    right: 10%;
+  .moba-menu-cab p {
     font-size: 10px;
   }
-  .moba-feedback {
-    left: 20%;
-    right: 20%;
+  .moba-selecao {
+    height: calc(100% - 92px);
+    gap: 20px;
+    grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr);
+  }
+  .moba-herois {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .moba-card {
+    min-height: 108px !important;
+  }
+  .moba-retrato {
+    width: 57px;
+    height: 57px;
+  }
+  .moba-filtros {
+    gap: 2px;
+    margin-bottom: 10px;
+  }
+  .moba-filtros button {
+    font-size: 9px;
+    padding: 5px 8px;
+    min-height: 29px;
+  }
+  .moba-detalhe {
+    padding-left: 15px;
+  }
+  .moba-preview {
+    height: 190px;
+  }
+  .moba-detalhe h2 {
+    font-size: 38px;
+  }
+  .moba-selo {
+    font-size: 24px;
+    padding: 4px 15px;
+  }
+  .moba-minimapa {
+    width: 132px;
+    height: 132px;
+  }
+  .moba-status {
+    left: 157px;
+    width: 196px;
+  }
+  .moba-acoes {
+    width: 350px;
+  }
+  .moba-slot > [data-skill] {
+    height: 61px;
   }
   .moba-slot small {
-    font-size: 9px;
-    max-width: 65px;
+    font-size: 7px;
+    max-width: 54px;
+  }
+  .moba-feiticos button {
+    width: 32px;
+  }
+  .moba-util button {
+    padding: 4px 6px;
+    min-width: 47px;
   }
 }
 @media (pointer: coarse) {
   .moba-joystick {
     display: block;
     position: absolute;
-    left: 26px;
-    bottom: 105px;
-    width: 112px;
-    height: 112px;
-    background: #b8ded31f;
-    border: 2px solid #c2ecdb77;
+    left: 20px;
+    bottom: 17px;
+    width: 96px;
+    height: 96px;
+    background: radial-gradient(circle, #b8ded320, #bedfc70b);
+    border: 1px solid #c2ecdb66;
+    box-shadow: inset 0 0 25px #021a2744;
     border-radius: 50%;
     pointer-events: auto;
     touch-action: none;
   }
   .moba-joystick i {
     position: absolute;
-    left: 33px;
-    top: 33px;
+    left: 27px;
+    top: 27px;
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    background: #c5e7d6b3;
-    border: 1px solid #f6ffe4;
+    background: radial-gradient(circle at 35% 25%, #d0e0c2aa, #68978dbb);
+    border: 1px solid #cbdcc4;
     pointer-events: none;
+    box-shadow: 0 3px 10px #00121b66;
   }
   .moba-minimapa {
-    top: 70px;
-    left: 10px;
+    top: 61px;
+    left: 11px;
     bottom: auto;
-    width: 118px;
-    height: 118px;
+    width: 115px;
+    height: 115px;
   }
   .moba-status {
-    left: 150px;
-    bottom: 12px;
-    width: 205px;
+    left: 133px;
+    width: 185px;
+    bottom: 14px;
+  }
+  .moba-objetivos {
+    left: 137px;
+    top: 60px;
+    font-size: 9px;
+    gap: 7px;
+  }
+  .moba-eventos {
+    top: 91px;
+    left: 30%;
+    right: 8%;
+    font-size: 9px;
   }
   .moba-touch-hint {
     display: block;
     position: absolute;
-    bottom: 4px;
-    left: 20px;
-    font-size: 8px;
-    color: #d1e8df;
+    bottom: 2px;
+    left: 18px;
+    font-size: 7px;
+    color: #b5d3cb;
   }
-  .moba-util button {
-    min-width: 50px;
-    min-height: 46px;
+  .moba-slot button:hover .moba-tooltip {
+    display: none;
+  }
+  .moba-top {
+    top: 7px;
+    left: 8px;
+    right: 8px;
   }
   .moba-evoluir {
-    min-height: 40px !important;
-    top: -42px;
+    min-height: 29px !important;
+    height: 29px;
+    top: -33px;
   }
-  .moba-slot > [data-skill] {
-    min-width: 58px;
+  .moba-skills {
+    gap: 6px;
+  }
+  .moba-alvo {
+    top: 112px;
   }
 }
 @media (max-height: 500px) {
   .moba-menu {
-    padding: 10px 15px 26px;
-  }
-  .moba-menu-cab h1 {
-    font-size: 22px;
-  }
-  .moba-menu-cab p {
-    font-size: 11px;
-    margin-bottom: 0;
+    padding: 11px 15px 25px;
   }
   .moba-menu-cab {
-    margin-bottom: 8px;
-  }
-  .moba-kicker {
-    font-size: 9px;
-  }
-  .moba-selecao {
-    grid-template-columns: minmax(0, 1.6fr) minmax(230px, 1fr);
+    height: 56px;
+    margin-bottom: 11px;
     gap: 12px;
   }
-  .moba-filtros {
-    gap: 3px;
-    margin-bottom: 6px;
+  .moba-menu h1 {
+    font-size: 26px;
+    margin: 3px 0 5px;
   }
-  .moba-filtros button {
+  .moba-menu-cab p {
+    font-size: 9px;
+    margin: 0;
+  }
+  .moba-kicker {
+    font-size: 8px;
+    letter-spacing: 0.16em;
+  }
+  .moba-menu-cab > button {
     font-size: 10px;
-    min-height: 30px;
-    padding: 4px 6px;
+    min-height: 34px;
+    padding: 6px 10px;
+  }
+  .moba-selo {
+    font-size: 22px;
+  }
+  .moba-selo span {
+    font-size: 8px;
+  }
+  .moba-selecao {
+    height: calc(100% - 67px);
+    gap: 15px;
+    grid-template-columns: minmax(0, 1.3fr) minmax(255px, 1fr);
+  }
+  .moba-catalogo {
+    padding-right: 4px;
   }
   .moba-card {
-    min-height: 78px !important;
-    gap: 3px;
+    min-height: 90px !important;
+    padding: 5px 2px !important;
   }
   .moba-retrato {
-    height: 27px;
-    width: 27px;
-    font-size: 14px;
+    width: 48px;
+    height: 48px;
   }
   .moba-card strong {
     font-size: 10px;
   }
-  .moba-preview {
-    height: 94px;
+  .moba-card small {
+    font-size: 8px;
+  }
+  .moba-herois {
+    gap: 6px;
+  }
+  .moba-filtros {
+    margin-bottom: 7px;
+    gap: 2px;
+  }
+  .moba-filtros button {
+    font-size: 8px;
+    min-height: 27px;
+    padding: 4px 7px;
+  }
+  .moba-detalhe {
+    padding: 0 7px 15px 13px;
   }
   .moba-detalhe h2 {
-    font-size: 23px;
-    margin: 3px 0;
+    font-size: 32px;
   }
-  .moba-detalhe p {
-    font-size: 11px;
-    line-height: 1.4;
+  .moba-preview {
+    height: 157px;
+    margin-bottom: 9px;
   }
-  .moba-passiva {
-    padding: 5px 8px;
-    margin: 7px 0;
-    font-size: 11px;
+  .moba-preview-legenda {
+    font-size: 7px;
   }
-  .moba-passiva small {
+  .moba-descricao {
     font-size: 10px;
   }
+  .moba-atributos {
+    margin: 10px 0;
+    gap: 6px 10px;
+  }
+  .moba-atributos span {
+    font-size: 8px;
+    width: 51px;
+  }
+  .moba-passiva {
+    padding: 7px;
+    margin: 10px 0;
+  }
+  .moba-passiva small {
+    font-size: 9px;
+  }
   .moba-kit summary {
-    font-size: 11px;
-    gap: 5px;
+    font-size: 10px;
   }
   .moba-kit summary small {
-    font-size: 9px;
+    font-size: 8px;
   }
   .moba-kit details {
-    padding: 5px 0;
+    padding: 6px 0;
+  }
+  .moba-opcoes select {
+    font-size: 10px;
+    padding: 7px;
   }
   .moba-jogar {
-    min-height: 44px !important;
-    margin: 10px 0 5px;
+    min-height: 42px !important;
   }
   .moba-top {
+    height: 37px;
     top: 5px;
-    left: 6px;
-    right: 6px;
+    left: 7px;
+    right: 7px;
+    padding: 3px 7px;
+    gap: 9px;
   }
   .moba-top strong {
-    font-size: 13px;
+    font-size: 10px;
   }
-  .moba-top b {
-    font-size: 17px;
+  .moba-top strong span {
+    display: none;
+  }
+  .moba-top [data-score] {
+    font-size: 16px;
+  }
+  .moba-top time {
+    font-size: 10px;
   }
   .moba-top button {
-    min-height: 34px;
-    min-width: 38px;
+    min-height: 28px;
+    min-width: 28px;
+    padding: 3px 6px;
   }
-  .moba-eventos {
-    top: 58px;
-    left: 23%;
-    right: 15%;
+  .moba-top button svg {
+    width: 19px;
+    height: 19px;
+  }
+  .moba-top button span {
     font-size: 9px;
   }
+  .moba-top [data-acao='som'] {
+    font-size: 8px;
+    min-width: 59px;
+  }
   .moba-minimapa {
-    width: 100px;
-    height: 100px;
+    width: 96px;
+    height: 96px;
+    left: 9px;
+    top: 51px;
+    bottom: auto;
   }
   .moba-status {
-    left: 124px;
-    width: 190px;
-    bottom: 10px;
+    left: 116px;
+    width: 177px;
+    bottom: 11px;
     padding: 7px;
   }
   .moba-nome {
-    font-size: 11px;
+    font-size: 10px;
     margin-bottom: 4px;
   }
   .moba-bar {
-    height: 13px;
+    height: 12px;
     margin: 3px 0;
   }
   .moba-bar span {
-    font-size: 9px;
-    line-height: 13px;
+    font-size: 8px;
+    line-height: 12px;
+  }
+  .moba-mana {
+    height: 8px;
+  }
+  .moba-mana span {
+    font-size: 7px;
+    line-height: 8px;
   }
   .moba-xp {
-    height: 6px;
-  }
-  .moba-xp span {
-    display: none;
+    height: 3px;
   }
   .moba-numeros {
-    font-size: 9px;
+    font-size: 8px;
     margin-top: 5px;
   }
   .moba-inventario {
     margin-top: 5px;
     gap: 3px;
   }
-  .moba-inventario span {
-    width: 24px;
-    height: 21px;
+  .moba-inventario > span {
+    width: 23px;
+    height: 23px;
+  }
+  .moba-inventario svg {
+    width: 19px;
+    height: 19px;
   }
   .moba-acoes {
-    max-width: 49%;
-    bottom: 10px;
     right: 9px;
+    bottom: 10px;
+    width: 330px;
+    max-width: 48%;
   }
   .moba-slot > [data-skill] {
-    height: 57px;
-    min-width: 53px;
+    height: 52px;
+    padding: 2px;
   }
-  .moba-slot b {
-    font-size: 19px;
+  .moba-skill-icon svg {
+    width: 27px;
+    height: 27px;
   }
   .moba-slot small {
+    font-size: 6px;
+    max-width: 45px;
+  }
+  .moba-slot b {
     font-size: 8px;
-    max-width: 58px;
+    left: 3px;
+    top: 2px;
   }
   .moba-slot em {
-    font-size: 10px;
+    font-size: 9px;
+    right: 3px;
+    top: 2px;
   }
   .moba-skills {
     gap: 5px;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
+  }
+  .moba-feiticos {
+    gap: 3px;
+  }
+  .moba-feiticos button {
+    width: 30px;
+    height: 38px;
+    min-height: 38px;
+    padding: 3px;
+  }
+  .moba-feiticos svg {
+    width: 23px;
+    height: 23px;
+  }
+  .moba-feiticos small {
+    font-size: 13px;
   }
   .moba-util {
     gap: 4px;
   }
   .moba-util button {
+    min-height: 39px;
     min-width: 44px;
-    padding: 4px 6px;
-    font-size: 17px;
+    padding: 3px 5px;
   }
-  .moba-util small {
-    font-size: 8px;
+  .moba-util [data-acao='ataque'] {
+    min-width: 47px;
+    margin-right: 0;
   }
-  .moba-joystick {
-    left: 23px;
-    bottom: 110px;
-    width: 95px;
-    height: 95px;
-  }
-  .moba-joystick i {
-    left: 25px;
-    top: 25px;
-  }
-  .moba-modal {
-    padding: 12px;
-  }
-  .moba-modal-caixa {
-    max-height: 95%;
-    padding: 18px;
-  }
-  .moba-modal h2 {
-    font-size: 23px;
-  }
-  .moba-modal p {
-    font-size: 12px;
-  }
-  .moba-loja-itens {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  .moba-death {
-    font-size: 15px;
-  }
-  .moba-feedback {
-    font-size: 12px;
-  }
-}
-@media (max-width: 700px) {
-  .moba-menu h1 em {
-    display: block;
-    margin-top: 4px;
-  }
-  .moba-selecao {
-    grid-template-columns: minmax(0, 1.2fr) minmax(220px, 1fr);
-  }
-  .moba-herois {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 5px;
-  }
-  .moba-menu-cab > button {
-    padding: 7px;
-    font-size: 11px;
-  }
-  .moba-kit summary small {
-    display: none;
-  }
-  .moba-status {
-    left: 118px;
-    width: 170px;
-  }
-  .moba-acoes {
-    max-width: 48%;
-  }
-  .moba-util button {
-    min-width: 42px;
-    padding: 4px 5px;
+  .moba-util svg {
+    width: 21px;
+    height: 21px;
   }
   .moba-util small {
     font-size: 7px;
   }
-  .moba-slot > [data-skill] {
-    min-width: 50px;
+  .moba-joystick {
+    left: 16px;
+    bottom: 17px;
+    width: 87px;
+    height: 87px;
+  }
+  .moba-joystick i {
+    left: 23px;
+    top: 23px;
+    width: 39px;
+    height: 39px;
+  }
+  .moba-touch-hint {
+    font-size: 6px;
+    bottom: 2px;
+    left: 16px;
+  }
+  .moba-objetivos {
+    top: 51px;
+    left: 116px;
+    font-size: 8px;
+    padding: 4px 7px;
+    gap: 7px;
+  }
+  .moba-objetivos svg {
+    width: 16px;
+    height: 16px;
+  }
+  .moba-eventos {
+    top: 82px;
+    left: 27%;
+    right: 8%;
+    font-size: 8px;
+  }
+  .moba-alvo {
+    top: 105px;
+    width: 178px;
+  }
+  .moba-alvo > span {
+    font-size: 9px;
+  }
+  .moba-modal {
+    padding: 10px;
+  }
+  .moba-modal-caixa {
+    max-height: 95%;
+    padding: 17px;
+  }
+  .moba-modal h2 {
+    font-size: 25px;
+  }
+  .moba-modal p {
+    font-size: 11px;
+  }
+  .moba-loja-nav {
+    top: -17px;
+  }
+  .moba-loja-itens button {
+    padding: 10px;
+    gap: 6px;
+  }
+  .moba-resumo-objetivos {
+    font-size: 10px;
+    gap: 12px;
+  }
+  .moba-modal td,
+  .moba-modal th {
+    padding: 6px 5px;
+  }
+  .moba-feedback {
+    font-size: 11px;
+    padding: 8px;
+  }
+  .moba-death {
+    font-size: 14px;
+  }
+}
+@media (max-width: 720px) {
+  .moba-selecao {
+    grid-template-columns: minmax(0, 1.15fr) minmax(235px, 1fr);
+    gap: 11px;
+  }
+  .moba-herois {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+  }
+  .moba-menu-cab p {
+    max-width: 275px;
+  }
+  .moba-selo {
+    display: none;
+  }
+  .moba-detalhe {
+    padding-left: 10px;
+  }
+  .moba-detalhe > .moba-kicker {
+    font-size: 7px;
   }
   .moba-top {
     gap: 7px;
   }
-  .moba-top time {
-    font-size: 11px;
-  }
   .moba-top strong {
-    font-size: 11px;
+    font-size: 9px;
+    letter-spacing: 0.03em;
   }
-  .moba-top [data-acao='placar'] {
-    font-size: 10px;
+  .moba-top button span {
+    display: none;
   }
-  .moba-inventario span {
+  .moba-top [data-acao='som'] {
+    font-size: 7px;
+    min-width: 53px;
+  }
+  .moba-status {
+    left: 112px;
+    width: 153px;
+  }
+  .moba-numeros {
+    font-size: 7px;
+  }
+  .moba-inventario {
+    gap: 3px;
+  }
+  .moba-inventario > span {
+    width: 19px;
+    height: 20px;
+  }
+  .moba-inventario svg {
+    width: 17px;
+    height: 17px;
+  }
+  .moba-acoes {
+    max-width: 48%;
+    width: 280px;
+  }
+  .moba-skills {
+    gap: 4px;
+  }
+  .moba-slot > [data-skill] {
+    height: 48px;
+  }
+  .moba-slot small {
+    display: none;
+  }
+  .moba-skill-icon svg {
+    width: 25px;
+    height: 25px;
+  }
+  .moba-slot em {
+    font-size: 8px;
+  }
+  .moba-feiticos button {
+    width: 27px;
+    height: 35px;
+    min-height: 35px;
+  }
+  .moba-feiticos svg {
     width: 21px;
+    height: 21px;
   }
-  .moba-loja-itens {
-    grid-template-columns: repeat(2, 1fr);
+  .moba-feiticos b {
+    font-size: 7px;
   }
-  .moba-ajuda-grid {
-    gap: 8px;
+  .moba-util button {
+    min-width: 40px;
+    padding: 3px 4px;
+  }
+  .moba-util [data-acao='ataque'] {
+    min-width: 43px;
+  }
+  .moba-util small {
+    font-size: 6px;
+  }
+  .moba-objetivos {
+    left: 112px;
+    gap: 6px;
+    font-size: 8px;
+  }
+  .moba-objetivos svg {
+    width: 14px;
+    height: 14px;
   }
   .moba-eventos {
-    left: 25%;
-    right: 10%;
-    font-size: 8px;
+    left: 23%;
+    right: 5%;
+    font-size: 7px;
+  }
+  .moba-loja-itens {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .moba-resumo-objetivos {
+    gap: 8px;
+    font-size: 9px;
+  }
+  .moba-resumo-objetivos svg {
+    width: 19px;
+    height: 19px;
+  }
+  .moba-tabela table {
+    font-size: 10px;
+  }
+  .moba-placar-heroi > svg {
+    width: 27px;
+    height: 27px;
+  }
+  .moba-placar-itens svg {
+    width: 16px;
+    height: 16px;
+  }
+  .moba-placar-itens > span {
+    width: 19px;
+    height: 19px;
+  }
+  .moba-feedback {
+    left: 20%;
+    right: 20%;
+  }
+  .moba-ajuda-grid {
+    gap: 10px;
   }
 }
 @media (max-width: 550px) and (min-height: 501px) {
+  .moba-menu {
+    overflow: auto;
+    padding: 18px 15px 35px;
+  }
+  .moba-menu-cab {
+    height: auto;
+  }
+  .moba-menu h1 {
+    font-size: 29px;
+  }
+  .moba-menu-cab p {
+    font-size: 9px;
+  }
   .moba-selecao {
+    height: auto;
     grid-template-columns: 1fr;
   }
-  .moba-detalhe {
-    border-left: 0;
-    border-top: 1px solid #50716d;
-    padding: 16px 0;
+  .moba-catalogo {
+    max-height: 300px;
   }
   .moba-herois {
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .moba-card {
+    min-height: 85px !important;
+  }
+  .moba-retrato {
+    width: 44px;
+    height: 44px;
+  }
+  .moba-detalhe {
+    overflow: visible;
+    border-left: 0;
+    border-top: 1px solid #59684e66;
+    padding: 15px 0;
   }
   .moba-preview {
-    height: 120px;
+    height: 180px;
   }
   .moba-status {
-    bottom: 100px;
-    left: 10px;
+    bottom: 125px;
+    left: 12px;
     width: 175px;
   }
   .moba-acoes {
-    max-width: 72%;
-    right: 10px;
+    max-width: 80%;
+    width: 310px;
   }
   .moba-minimapa {
-    width: 95px;
-    height: 95px;
+    width: 90px;
+    height: 90px;
+    top: 56px;
   }
   .moba-top strong {
-    font-size: 10px;
+    display: none;
+  }
+  .moba-objetivos {
+    left: 110px;
+    top: 58px;
+    max-width: calc(100% - 120px);
+    flex-wrap: wrap;
+  }
+  .moba-eventos {
+    top: 98px;
+    left: 29%;
+    right: 8%;
+  }
+  .moba-alvo {
+    top: 143px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .moba-ui button,
+  .moba-retrato,
   .moba-bar i {
     transition: none;
+  }
+  .moba-card:hover {
+    transform: none;
+  }
+}
+
+/* A escolha continua visível enquanto o jogador conhece o kit. */
+.moba-detalhe {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+.moba-detalhe-conteudo {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #446563 transparent;
+  padding-right: 3px;
+}
+.moba-preparar {
+  flex-shrink: 0;
+  padding: 1px 0 9px;
+  background: linear-gradient(180deg, #102c3200, #102c3288);
+  position: relative;
+  z-index: 2;
+}
+.moba-preparar small {
+  display: block;
+  text-align: center;
+  color: #89a8ac;
+  font-size: 8px;
+}
+.moba-preparar .moba-jogar {
+  margin-top: 10px;
+}
+.moba-modal {
+  z-index: 100;
+}
+.moba-opcoes {
+  margin-bottom: 12px;
+}
+@media (max-width: 550px) and (min-height: 501px) {
+  .moba-detalhe {
+    overflow: visible;
+  }
+  .moba-detalhe-conteudo {
+    overflow: visible;
+    flex: auto;
+  }
+}
+@media (max-height: 500px) {
+  .moba-caixa-loja .moba-modal-cab .moba-kicker {
+    display: none;
+  }
+  .moba-caixa-loja .moba-modal-cab h2 {
+    margin: 0 0 4px;
+    font-size: 23px;
+  }
+  .moba-caixa-loja .moba-modal-cab h2 small {
+    display: inline;
+    margin-left: 10px;
+    font-size: 9px;
+  }
+  .moba-caixa-loja .moba-modal-cab > button {
+    min-height: 29px;
+    min-width: 29px;
+    padding: 3px;
+    font-size: 21px;
+  }
+  .moba-caixa-loja .moba-loja-aviso {
+    font-size: 9px;
+    line-height: 1.3;
+    margin: 5px 0;
+  }
+  .moba-caixa-loja .moba-loja-nav {
+    padding: 6px 0;
+  }
+  .moba-caixa-loja .moba-loja-nav input {
+    padding: 7px;
+    font-size: 10px;
+  }
+  .moba-caixa-loja .moba-categorias {
+    flex-wrap: nowrap;
+    overflow: auto;
+    scrollbar-width: thin;
+    margin-top: 6px;
+    padding-bottom: 3px;
+  }
+  .moba-caixa-loja .moba-categorias button {
+    white-space: nowrap;
+    min-height: 25px;
+    font-size: 8px;
+    padding: 4px 7px;
+  }
+  .moba-caixa-loja .moba-venda {
+    margin: 3px 0 7px;
+  }
+  .moba-caixa-loja .moba-venda button {
+    min-height: 30px;
+    padding: 3px 6px;
+    font-size: 8px;
+  }
+  .moba-caixa-loja .moba-venda svg {
+    width: 19px;
+    height: 19px;
+  }
+  .moba-caixa-loja .moba-venda small {
+    font-size: 7px;
   }
 }

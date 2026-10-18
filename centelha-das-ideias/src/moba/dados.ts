@@ -1,4 +1,4 @@
-import type { ClasseMoba, DefHeroiMoba, DefSkillMoba, ItemMoba, TipoHabilidadeMoba } from './tipos';
+import type { ClasseMoba, DefHeroiMoba, DefSkillMoba, TipoHabilidadeMoba } from './tipos';
 
 type Skill = [
   nome: string,
@@ -606,128 +606,9 @@ export const HEROIS_MOBA: DefHeroiMoba[] = [
   ),
 ];
 
-export const ITENS_MOBA: ItemMoba[] = [
-  {
-    id: 'botas-brisa',
-    nome: 'Botas da Brisa',
-    descricao: 'Passos leves para atravessar o bosque.',
-    custo: 350,
-    velocidade: 0.65,
-  },
-  {
-    id: 'lamina-sol',
-    nome: 'Lâmina do Sol',
-    descricao: 'Uma espada leve de luz dourada.',
-    custo: 900,
-    dano: 27,
-  },
-  {
-    id: 'cajado-lua',
-    nome: 'Cajado da Lua',
-    descricao: 'Magia e energia em uma ponta estrelada.',
-    custo: 950,
-    dano: 18,
-    mana: 180,
-  },
-  {
-    id: 'colete-musgo',
-    nome: 'Colete de Musgo',
-    descricao: 'Proteção macia para a linha de frente.',
-    custo: 850,
-    vida: 220,
-    armadura: 13,
-  },
-  {
-    id: 'coracao-carvalho',
-    nome: 'Coração de Carvalho',
-    descricao: 'Vida e recuperação de uma árvore antiga.',
-    custo: 1350,
-    vida: 380,
-    regeneracao: 6,
-  },
-  {
-    id: 'ampulheta-mel',
-    nome: 'Ampulheta de Mel',
-    descricao: 'A magia flui em intervalos menores.',
-    custo: 1050,
-    mana: 140,
-    recarga: 0.12,
-  },
-  {
-    id: 'arco-vagalume',
-    nome: 'Arco de Vagalume',
-    descricao: 'Golpes fortes com um toque de agilidade.',
-    custo: 1250,
-    dano: 31,
-    velocidade: 0.2,
-  },
-  {
-    id: 'escudo-concha',
-    nome: 'Escudo de Concha',
-    descricao: 'Uma carapaça reluzente contra os ataques.',
-    custo: 1000,
-    armadura: 27,
-    vida: 120,
-  },
-  {
-    id: 'chaleira-viva',
-    nome: 'Chaleira Viva',
-    descricao: 'Chá encantado para uma luta longa.',
-    custo: 800,
-    vida: 140,
-    mana: 120,
-    regeneracao: 4,
-  },
-  {
-    id: 'coroa-aurora',
-    nome: 'Coroa da Aurora',
-    descricao: 'Poder e reservas para grandes feitiços.',
-    custo: 1700,
-    dano: 40,
-    mana: 280,
-    recarga: 0.08,
-  },
-  {
-    id: 'martelo-cometa',
-    nome: 'Martelo Cometa',
-    descricao: 'Impacto pesado sem abrir mão da resistência.',
-    custo: 1600,
-    dano: 35,
-    vida: 230,
-  },
-  {
-    id: 'manto-neblina',
-    nome: 'Manto de Neblina',
-    descricao: 'Proteção ágil tecida com nuvens.',
-    custo: 1150,
-    armadura: 18,
-    velocidade: 0.35,
-    recarga: 0.06,
-  },
-  {
-    id: 'semente-eterna',
-    nome: 'Semente Eterna',
-    descricao: 'Vitalidade que floresce ao longo da batalha.',
-    custo: 1800,
-    vida: 480,
-    regeneracao: 9,
-  },
-  {
-    id: 'relogio-estelar',
-    nome: 'Relógio Estelar',
-    descricao: 'Tempo precioso para um kit de habilidades.',
-    custo: 1500,
-    mana: 250,
-    recarga: 0.18,
-    dano: 15,
-  },
-];
+export { ITENS_MOBA, itemMoba } from './itens';
 
 const heroisPorId = new Map(HEROIS_MOBA.map((h) => [h.id, h]));
-const itensPorId = new Map(ITENS_MOBA.map((i) => [i.id, i]));
 export function heroiMoba(id: string): DefHeroiMoba {
   return heroisPorId.get(id) ?? HEROIS_MOBA[0];
-}
-export function itemMoba(id: string): ItemMoba | undefined {
-  return itensPorId.get(id);
 }

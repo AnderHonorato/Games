@@ -1,6 +1,6 @@
 /** A troca de modo só navega ao ativar o link; perfil e demais parâmetros persistem. */
 export type ModoJogo = 'aventura' | 'sobrevivencia' | 'moba';
-export const VERSAO_JOGO = 'v0.5.0';
+export const VERSAO_JOGO = 'v0.6.0';
 
 export function modoDaUrl(): ModoJogo {
   const modo = new URLSearchParams(window.location.search).get('modo');

@@ -1,12 +1,12 @@
 # Claude — A Centelha das Ideias
 
-Jogo 3D (Three.js), versão 0.5.0, com três modos:
+Jogo 3D (Three.js), versão 0.6.0, com três modos:
 
 - **Sobrevivência (padrão)** — roguelike: escolha uma mente (Claude, GPT, Gemini, Llama, Mistral
   ou DeepSeek, Aurora, Nox, Byte, Aeria e Fênix), sobreviva a hordas crescentes do Ruído, colete cristais de experiência e monte sua
   build com até 10 habilidades ativas e 5 passivas, cada uma evoluindo até o nível 10.
 - **MOBA 5×5 contra bots** — 25 guardiões animais, seis classes, 100 habilidades, três rotas,
-  torres, inibidores, núcleo, selva, loja e visão (abra com `?modo=moba`). Você controla um herói;
+  torres, inibidores, núcleo, selva, loja com receitas, visão e terreno tático (abra com `?modo=moba`). Você controla um herói;
   os outros nove são bots. PvP online e partidas ranqueadas ainda não estão disponíveis.
 - **Aventura clássica** — o Claude explora ilhas flutuantes onde as ideias viraram lugares
   (abra com `?modo=aventura` ou pelo link no menu).
@@ -80,13 +80,13 @@ As habilidades disparam sozinhas, cada uma com recarga e velocidade próprias.
   próprios; sem voz disponível, usa bipes com entonação). Inimigos resmungam com vozes sintetizadas.
 - Recorde de tempo salvo por personagem no navegador.
 
-### MOBA — Guardiões da Centelha
+### MOBA — Guardiões da Centelha (0.6)
 
 Escolha entre 25 heróis com passiva e quatro habilidades próprias, distribua pontos ao subir de nível
 (até 18; ultimate disponível no nível 6) e destrua o núcleo inimigo. Há três rotas com duas torres
 e um inibidor por equipe, tropas a cada 30 s, seis campos de selva e um chefe com bônus contra estruturas.
 Ouro por abates e último golpe, assistência, morte e renascimento, neblina, sentinelas e sinais fazem parte da partida.
-A loja tem 14 itens e seis espaços; comprar e vender exige estar na base. Venda devolve 70% do custo.
+A loja tem 28 itens com componentes, receitas e seis efeitos exclusivos; há seis espaços; comprar e vender exige estar na base. Venda devolve 70% do custo.
 
 | Ação                  | Teclado/mouse                            | Celular                      |
 | --------------------- | ---------------------------------------- | ---------------------------- |
@@ -95,8 +95,15 @@ A loja tem 14 itens e seis espaços; comprar e vender exige estar na base. Venda
 | Evoluir habilidade    | Shift + Q/W/E/R                          | Botão +                      |
 | Ataque básico         | J ou Espaço; clique no inimigo           | Atacar ou toque no inimigo   |
 | Loja / retorno à base | B / H                                    | Loja / Retorno               |
+| Lampejo / cura        | F / T                                    | Botões F / T                 |
 | Sentinela / sinal     | G / P                                    | Ward / Sinal                 |
 | Placar / pausa        | Tab / Esc                                | Placar / II                  |
+
+Arraste um botão de habilidade para prever o alcance e mirar; solte para conjurar. Esc cancela o gesto.
+Escolha rota e dificuldade antes de entrar. Ruínas bloqueiam movimento; moitas escondem inimigos até
+um aliado entrar, uma sentinela revelar ou o inimigo atacar. Lampejo percorre até 12m sem atravessar ruínas;
+Cura recupera 28% da vida e remove lentidão. Os dois feitiços têm recargas próprias.
+O som do MOBA tem trilha e timbres de habilidades e pode ser desligado no HUD ou pausa.
 
 O toque breve em W lança a segunda habilidade; para mover sem essa ação use as setas ou clique.
 As partidas são locais contra bots. A cooperação da Sobrevivência continua separada e disponível.

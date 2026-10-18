@@ -74,7 +74,7 @@ try {
     await page.goto(url.href);
     await page.waitForFunction(() => window.__sobrevivencia);
     assert.equal(await page.locator('.rg-carta-personagem').count(), 11);
-    assert.match(await page.locator('.rg-menu .rg-modo-versao').textContent(), /v0\.5\.0/);
+    assert.match(await page.locator('.rg-menu .rg-modo-versao').textContent(), /v0\.6\.0/);
     assert.equal(
       await page.locator('.rg-menu [aria-current="page"]').getAttribute('data-modo'),
       'sobrevivencia'
@@ -120,7 +120,7 @@ try {
     assert.equal(await page.evaluate(() => window.__centelha.estado().estado), 'titulo');
     assert.match(
       await page.locator('.tela-titulo .modo-versao-aventura').textContent(),
-      /Aventura.*v0\.5\.0/
+      /Aventura.*v0\.6\.0/
     );
     await cabe(page, page.locator('.tela-titulo .seletor-modos'), 'modos na aventura');
     await cabe(

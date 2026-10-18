@@ -4,10 +4,13 @@ import { RenderMoba } from './render';
 import { InterfaceMoba } from './ui';
 import { EntradaMoba } from './entrada';
 import { BASES_MOBA } from './rotas';
+import { AudioMoba } from './audio';
 export function iniciarMoba(canvas: HTMLCanvasElement, raiz: HTMLElement): void {
   document.body.classList.add('modo-moba');
   canvas.classList.add('moba-canvas');
   const sim = new SimulacaoMoba();
+  const audio = new AudioMoba();
+  const eventos = new AbortController();
   let render: RenderMoba;
   try {
     render = new RenderMoba(canvas);
@@ -26,12 +29,18 @@ export function iniciarMoba(canvas: HTMLCanvasElement, raiz: HTMLElement): void 
     (d) => render.selecionar(d),
     () => {
       entrada?.soltar();
-      sim.iniciar(ui.escolhido);
+      sim.iniciar(ui.escolhido, 0, { rota: ui.rota, dificuldade: ui.dificuldade });
       ui.atualizar();
     },
     () => entrada?.soltar()
   );
   entrada = new EntradaMoba(canvas, sim, render, ui);
+  const gesto = () => audio.desbloquear();
+  window.addEventListener('pointerdown', gesto, { signal: eventos.signal, capture: true });
+  window.addEventListener('keydown', gesto, { signal: eventos.signal, capture: true });
+  const suspender = () => audio.atualizar(sim, ui.sons);
+  window.addEventListener('blur', suspender, { signal: eventos.signal });
+  document.addEventListener('visibilitychange', suspender, { signal: eventos.signal });
   let anterior = performance.now(),
     acumulado = 0,
     tempoUI = 0,
@@ -47,6 +56,7 @@ export function iniciarMoba(canvas: HTMLCanvasElement, raiz: HTMLElement): void 
       acumulado -= 1 / 60;
     }
     render.desenhar(sim, dt);
+    audio.atualizar(sim, ui.sons);
     tempoUI += dt;
     if (tempoUI >= 0.1) {
       ui.atualizar();
@@ -108,7 +118,7 @@ export function iniciarMoba(canvas: HTMLCanvasElement, raiz: HTMLElement): void 
     ui.atualizar();
     return true;
   };
-  const api = { sim, snapshot, fixture, versao: '0.5.0' };
+  const api = { sim, snapshot, fixture, versao: '0.6.0' };
   (window as unknown as { __moba: typeof api }).__moba = api;
   window.addEventListener(
     'pagehide',
@@ -119,6 +129,8 @@ export function iniciarMoba(canvas: HTMLCanvasElement, raiz: HTMLElement): void 
       entrada?.descartar();
       ui.descartar();
       render.descartar();
+      audio.descartar();
+      eventos.abort();
     },
     { once: true }
   );

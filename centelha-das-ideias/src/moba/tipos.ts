@@ -1,6 +1,19 @@
 /** Contratos compartilhados do modo MOBA; simulação independente do renderizador. */
 export type TimeMoba = 0 | 1;
 export type RotaMoba = 0 | 1 | 2;
+export type DificuldadeMoba = 'iniciante' | 'normal' | 'desafio';
+export type FeiticoMoba = 'lampejo' | 'cura';
+export interface OpcoesMoba {
+  rota?: RotaMoba;
+  dificuldade?: DificuldadeMoba;
+}
+export interface ObjetivosMoba {
+  guardiao: { vivo: boolean; vida: number; vidaMax: number; nasceEm: number };
+  buffs: [number, number];
+  torres: [number, number];
+  inibidores: [number, number];
+  proximaOnda: number;
+}
 export type ClasseMoba = 'tanque' | 'lutador' | 'assassino' | 'mago' | 'atirador' | 'suporte';
 export type TipoHabilidadeMoba =
   | 'projetil'
