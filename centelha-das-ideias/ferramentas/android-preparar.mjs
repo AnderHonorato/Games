@@ -4,6 +4,13 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const raiz = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+// O rótulo instalado deve corresponder ao jogo que será embutido no APK.
+const versaoJogo = JSON.parse(readFileSync(join(raiz, 'package.json'), 'utf8')).version;
+const gradle = readFileSync(join(raiz, 'android/app/build.gradle'), 'utf8');
+const versaoAndroid = gradle.match(/\bversionName\s+['"]([^'"]+)['"]/)?.[1];
+if (versaoAndroid !== versaoJogo) {
+  throw new Error(`Versão Android ${versaoAndroid ?? 'ausente'} difere do jogo ${versaoJogo}. Atualize android/app/build.gradle antes de gerar o APK.`);
+}
 const somenteCopiar = process.argv.includes('--somente-copiar');
 if (process.argv.slice(2).some((arg) => arg !== '--somente-copiar')) {
   throw new Error('Uso: node ferramentas/android-preparar.mjs [--somente-copiar]');
